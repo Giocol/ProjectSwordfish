@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Limb.generated.h"
 
+class UPoseableMeshComponent;
+
 USTRUCT(Blueprintable)
 struct FBoneTransformPair {
 	GENERATED_BODY()
@@ -13,15 +15,24 @@ struct FBoneTransformPair {
 	UPROPERTY(VisibleInstanceOnly)
 	FName Name;
 	UPROPERTY(VisibleInstanceOnly)
-	FRotator State;
+	FRotator State; // In component space.
 };
 USTRUCT(Blueprintable)
 struct FLeg {
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleInstanceOnly)
-	TArray<FBoneTransformPair> Bones;
+	TArray<FBoneTransformPair> Bones; 
 	UPROPERTY(VisibleInstanceOnly)
-	FVector Target;
+	USceneComponent* IKTarget;
 
+	void Update(UPoseableMeshComponent* Mesh);
+	
+private:
+	bool CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
+	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh, bool bDraw = false);
+
+	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
+	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
+	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 };

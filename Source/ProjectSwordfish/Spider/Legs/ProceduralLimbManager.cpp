@@ -20,14 +20,14 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	for(int i = 0; i < Legs.Num(); ++i) {
+		Legs[i].Update(Mesh);
+		
 		//Legs[i].Rotate(1, FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime));
-		for(int j = Legs[i].Bones.Num() - 1; j >= 0; --j) {
-			Legs[i].Bones[j].State += FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime);
-			//Legs[i].Rotate(j, FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime));
-		}
+		//for(int j = Legs[i].Bones.Num() - 1; j >= 0; --j) {
+		//	Legs[i].Bones[j].State += FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime);
+		//	//Legs[i].Rotate(j, FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime));
+		//}
 	}
-	
-	SetBonePositions(true);
 }
 
 bool UProceduralLimbManager::FindLegs() {
@@ -46,15 +46,30 @@ bool UProceduralLimbManager::FindLegs() {
 		if(foundTip != INDEX_NONE && foundEnd != INDEX_NONE) {
 			Legs.Add(FLeg());
 			Legs.Last().Bones.Add(FBoneTransformPair(Bone, Mesh->GetBoneRotationByName(Bone, EBoneSpaces::ComponentSpace)));
-			Legs.Last().Target = Mesh->GetBoneLocationByName(Bone, EBoneSpaces::WorldSpace);
-			FindHip(Bone);
+			Legs.Last().IKTarget = Cast<USceneComponent>(
+				GetOwner()->AddComponentByClass(USceneComponent::StaticClass(),
+					true,
+					FTransform::Identity,
+					false));
+			Legs.Last().IKTarget->SetWorldLocation(Mesh->GetBoneLocationByName(Bone, EBoneSpaces::WorldSpace));
+			
+			auto name = FString::Printf(TEXT("IK_"));
+			boneAsString.RemoveAt(foundTip, templateName.Len());
+			boneAsString.RemoveFromEnd("_end");
+			name.AppendChars(*boneAsString, boneAsString.Len());
+			FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(EAttachmentRule::KeepWorld, true);
+			//Legs.Last().IKTarget->AttachToComponent(GetOwner()->GetRootComponent(), AttachmentRules);
+			Legs.Last().IKTarget->Rename(*name);
+			GetOwner()->AddInstanceComponent(Legs.Last().IKTarget);
+			//Legs.Last().IKTarget = Mesh->GetBoneLocationByName(Bone, EBoneSpaces::WorldSpace);
+			RecurseToHip(Bone);
 		}
 	}
 
 	return true;
 }
 
-void UProceduralLimbManager::FindHip(FName From) {
+void UProceduralLimbManager::RecurseToHip(FName From) {
 	
 	FName Parent = Mesh->GetParentBone(From);
 	if(Parent.IsNone())
@@ -65,7 +80,7 @@ void UProceduralLimbManager::FindHip(FName From) {
 	auto templateName = HipJointsName.ToString();
 	auto s = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
 	if(s == INDEX_NONE)
-		FindHip(Parent);
+		RecurseToHip(Parent);
 }
 
 void UProceduralLimbManager::GetBoundsCornersWorld(FVector& BottomLeft, FVector& BottomRight, FVector& TopLeft,
@@ -88,25 +103,5 @@ TArray<FVector> UProceduralLimbManager::GetBoundsCornersWorldArray() const {
 
 FVector UProceduralLimbManager::GetBoundsScale() const {
 	return FVector(Bounds.Max.X - Bounds.Min.X, Bounds.Max.Y - Bounds.Min.Y, 0);;
-}
-
-
-void UProceduralLimbManager::SetBonePositions(bool bDraw) {
-	for (auto Leg : Legs) {
-		for (int i = 0; i < Leg.Bones.Num(); ++i) {
-
-			Mesh->SetBoneRotationByName(Leg.Bones[i].Name, Leg.Bones[i].State, EBoneSpaces::ComponentSpace);
-			
-			if(bDraw && i < Leg.Bones.Num() - 1) {
-				FTransform T = GetOwner()->GetActorTransform();
-				FVector Current = Mesh->GetBoneLocationByName(Leg.Bones[i].Name, EBoneSpaces::WorldSpace);
-				FVector Next =  Mesh->GetBoneLocationByName(Leg.Bones[i+1].Name, EBoneSpaces::WorldSpace);
-				DrawDebugLine(GetWorld(), Current, Next, FColor::Blue, false, -1, -1);
-				
-			} else if (bDraw) {
-				DrawDebugPoint(GetWorld(), Leg.Target, 15.f, FColor::Green, false, -1, -1);
-			}
-		}
-	}
 }
 

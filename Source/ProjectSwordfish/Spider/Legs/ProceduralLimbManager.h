@@ -35,13 +35,12 @@ public:
 
 private:
 	bool FindLegs();
-	void FindHip(FName From);
+	void RecurseToHip(FName From);
 
 	void GetBoundsCornersWorld(FVector& BottomLeft, FVector& BottomRight, FVector& TopLeft, FVector& TopRight) const;
 	TArray<FVector> GetBoundsCornersWorldArray() const;
 	FVector GetBoundsScale() const;
 	
-	void SetBonePositions(bool bDraw = false);
 
 protected:
 	
