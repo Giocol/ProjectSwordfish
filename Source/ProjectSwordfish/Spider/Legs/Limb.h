@@ -6,10 +6,10 @@
 class UPoseableMeshComponent;
 
 USTRUCT(Blueprintable)
-struct FBoneTransformPair {
+struct FLimbSegment {
 	GENERATED_BODY()
-	FBoneTransformPair() {}
-	FBoneTransformPair(FName Name, FRotator State)
+	FLimbSegment() {}
+	FLimbSegment(FName Name, FRotator State)
 		: Name(Name), State(State) { };
 
 	UPROPERTY(VisibleInstanceOnly)
@@ -22,7 +22,7 @@ struct FLeg {
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleInstanceOnly)
-	TArray<FBoneTransformPair> Bones; 
+	TArray<FLimbSegment> Bones; 
 	UPROPERTY(VisibleInstanceOnly)
 	USceneComponent* IKTarget;
 

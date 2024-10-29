@@ -10,11 +10,8 @@ bool FLeg::CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, 
 	if(!Mesh || !IKTarget)
 		return false;
 	
-	FTransform MeshTransform = Mesh->GetComponentTransform();
 	FVector ComponentSpaceTarget = Mesh->GetComponentTransform().InverseTransformPosition(IKTarget->GetComponentLocation());
 	auto Space = EBoneSpaces::ComponentSpace;
-
-	auto StartRotation = Bones;
 	
 	int k = 0;
 	while(true) {

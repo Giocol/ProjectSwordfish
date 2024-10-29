@@ -45,7 +45,7 @@ bool UProceduralLimbManager::FindLegs() {
 
 		if(foundTip != INDEX_NONE && foundEnd != INDEX_NONE) {
 			Legs.Add(FLeg());
-			Legs.Last().Bones.Add(FBoneTransformPair(Bone, Mesh->GetBoneRotationByName(Bone, EBoneSpaces::ComponentSpace)));
+			Legs.Last().Bones.Add(FLimbSegment(Bone, FRotator::ZeroRotator));
 			Legs.Last().IKTarget = Cast<USceneComponent>(
 				GetOwner()->AddComponentByClass(USceneComponent::StaticClass(),
 					true,
@@ -74,7 +74,7 @@ void UProceduralLimbManager::RecurseToHip(FName From) {
 	FName Parent = Mesh->GetParentBone(From);
 	if(Parent.IsNone())
 		return;
-	Legs.Last().Bones.Add(FBoneTransformPair(Parent, Mesh->GetBoneRotationByName(Parent, EBoneSpaces::ComponentSpace)));
+	Legs.Last().Bones.Add(FLimbSegment(Parent, Mesh->GetBoneRotationByName(Parent, EBoneSpaces::ComponentSpace)));
 	
 	auto boneAsString = Parent.ToString();
 	auto templateName = HipJointsName.ToString();
