@@ -1,12 +1,16 @@
 ﻿#include "Limb.h"
 
 #include "Components/PoseableMeshComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
-void FLeg::Update(UPoseableMeshComponent* Mesh) {
-	CCDIK(Mesh, 1.f, 10, true);
+void FLeg::Update(UPoseableMeshComponent* Mesh, bool bDraw) {
+	CCDIK_SmartBounce(Mesh, 1.f, 15, 0.1f);
+	if (bDraw) {
+		DrawIK(Mesh);
+	}
 }
 
-bool FLeg::CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw) {
+bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
 	if(!Mesh || !IKTarget)
 		return false;
 	
@@ -16,51 +20,37 @@ bool FLeg::CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, 
 	int k = 0;
 	while(true) {
 		for (int i = 1; i < Bones.Num(); ++i) {
-			
 			FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
 			FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
 			FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
-			float CosAngle = ToEnd.GetSafeNormal().Dot(ToTarget.GetSafeNormal());
-			if(CosAngle == 0)
-				continue;
-			float Angle = FMath::Acos(CosAngle);
-			FVector Axis = ToEnd.GetSafeNormal().Cross(ToTarget.GetSafeNormal()).GetSafeNormal();
+			FQuat IKRotation = GetRotatorBetween(ToEnd, ToTarget);
+			Bones[i].State += IKRotation.Rotator();
 			
-			Bones[i].State += FQuat::MakeFromRotationVector(Axis * Angle).Rotator();
-			ApplyBoneTransformation(Mesh, bDraw);
-
-			CosAngle = ToEnd.GetSafeNormal().Dot(ToTarget.GetSafeNormal());
-			Angle = CosAngle != 0.f ? FMath::Acos(CosAngle) : 0.f;
+			ApplyBoneTransformation(Mesh);
+			IKRotation = GetRotatorBetween(i, ComponentSpaceTarget, Mesh, Space);
 			
-			if(GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).Length() < Threshold)
+			float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
+			if(sqrDist < Threshold * Threshold)
 				return true;
-			if(k / Bones.Num() > Iterations) {
-				//Bones = StartRotation;
+			if(k / (Bones.Num() - 1) > Iterations)
 				return false;
-			}
-			if(Angle > 0.001) {
+			if(IKRotation.GetAngle() > 0.01)
 				i = 0;
-			}
 			k++;
 		}
 	}
 }
 
-void FLeg::ApplyBoneTransformation(UPoseableMeshComponent* Mesh, bool bDraw) {
+void FLeg::ApplyBoneTransformation(UPoseableMeshComponent* Mesh) {
 	if(!Mesh || !IKTarget) return;
 	
 	for (int i = 0; i < Bones.Num(); ++i) {
 		Mesh->SetBoneRotationByName(Bones[i].Name, Bones[i].State, EBoneSpaces::ComponentSpace);
-			
-		//if(bDraw && i < Bones.Num() - 1) {
-		//	FTransform T = Mesh->GetOwner()->GetActorTransform();
-		//	DrawDebugLine(Mesh->GetWorld(), GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace), GetCurrentLocation(i + 1, Mesh, EBoneSpaces::WorldSpace), FColor::Blue, false, -1, -1);
-		//		
-		//} 
 	}
-	if (bDraw) {
-		DrawDebugSphere(Mesh->GetWorld(), IKTarget->GetComponentLocation(), 10.f, 4, FColor::Green, false, -1, -1);
-	}
+}
+
+void FLeg::DrawIK(UPoseableMeshComponent* Mesh) {
+	DrawDebugSphere(Mesh->GetWorld(), IKTarget->GetComponentLocation(), 10.f, 4, FColor::Green, false, -1, -1);
 }
 
 FVector FLeg::GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
@@ -75,4 +65,15 @@ FVector FLeg::GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpac
 
 FVector FLeg::GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
 	return  Target - GetEndLocation(Mesh, InSpace);
+}
+
+FQuat FLeg::GetRotatorBetween(FVector ToEnd, FVector ToTarget) {
+	return FQuat::FindBetweenVectors(ToEnd, ToTarget);
+}
+
+FQuat FLeg::GetRotatorBetween(int Id, FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
+	FVector CurrentLocation = GetCurrentLocation(Id, Mesh, InSpace);
+	FVector ToEnd = GetEndLocation(Mesh, InSpace) - CurrentLocation;
+	FVector ToTarget = Target - CurrentLocation;
+	return GetRotatorBetween(ToEnd, ToTarget);
 }

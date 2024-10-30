@@ -16,18 +16,9 @@ void UProceduralLimbManager::BeginPlay() {
 	FindLegs();
 }
 
-void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	for(int i = 0; i < Legs.Num(); ++i) {
-		Legs[i].Update(Mesh);
-		
-		//Legs[i].Rotate(1, FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime));
-		//for(int j = Legs[i].Bones.Num() - 1; j >= 0; --j) {
-		//	Legs[i].Bones[j].State += FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime);
-		//	//Legs[i].Rotate(j, FRotator(5 * DeltaTime, 5 * DeltaTime, 5 * DeltaTime));
-		//}
-	}
+void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
+	for(int i = 0; i < Legs.Num(); ++i) 
+		Legs[i].Update(Mesh, true);
 }
 
 bool UProceduralLimbManager::FindLegs() {
@@ -45,7 +36,7 @@ bool UProceduralLimbManager::FindLegs() {
 
 		if(foundTip != INDEX_NONE && foundEnd != INDEX_NONE) {
 			Legs.Add(FLeg());
-			Legs.Last().Bones.Add(FLimbSegment(Bone, FRotator::ZeroRotator));
+			Legs.Last().RestPose.Add(FLimbSegment(Bone, FRotator::ZeroRotator));
 			Legs.Last().IKTarget = Cast<USceneComponent>(
 				GetOwner()->AddComponentByClass(USceneComponent::StaticClass(),
 					true,
@@ -65,7 +56,9 @@ bool UProceduralLimbManager::FindLegs() {
 			RecurseToHip(Bone);
 		}
 	}
-
+	for(auto& Leg : Legs) {
+		Leg.Bones = Leg.RestPose;
+	}
 	return true;
 }
 
@@ -74,7 +67,7 @@ void UProceduralLimbManager::RecurseToHip(FName From) {
 	FName Parent = Mesh->GetParentBone(From);
 	if(Parent.IsNone())
 		return;
-	Legs.Last().Bones.Add(FLimbSegment(Parent, Mesh->GetBoneRotationByName(Parent, EBoneSpaces::ComponentSpace)));
+	Legs.Last().RestPose.Add(FLimbSegment(Parent, Mesh->GetBoneRotationByName(Parent, EBoneSpaces::ComponentSpace)));
 	
 	auto boneAsString = Parent.ToString();
 	auto templateName = HipJointsName.ToString();
@@ -104,4 +97,5 @@ TArray<FVector> UProceduralLimbManager::GetBoundsCornersWorldArray() const {
 FVector UProceduralLimbManager::GetBoundsScale() const {
 	return FVector(Bounds.Max.X - Bounds.Min.X, Bounds.Max.Y - Bounds.Min.Y, 0);;
 }
+
 
