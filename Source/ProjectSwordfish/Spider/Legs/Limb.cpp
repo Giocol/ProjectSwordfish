@@ -16,10 +16,16 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 	
 	FVector ComponentSpaceTarget = Mesh->GetComponentTransform().InverseTransformPosition(IKTarget->GetComponentLocation());
 	auto Space = EBoneSpaces::ComponentSpace;
-	
+	Bones = RestPose;
 	int k = 0;
 	while(true) {
 		for (int i = 1; i < Bones.Num(); ++i) {
+			float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
+			if(sqrDist < Threshold * Threshold)
+				return true;
+			if(k / (Bones.Num() - 1) > Iterations)
+				return false;
+			
 			FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
 			FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
 			FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
@@ -29,12 +35,7 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 			ApplyBoneTransformation(Mesh);
 			IKRotation = GetRotatorBetween(i, ComponentSpaceTarget, Mesh, Space);
 			
-			float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
-			if(sqrDist < Threshold * Threshold)
-				return true;
-			if(k / (Bones.Num() - 1) > Iterations)
-				return false;
-			if(IKRotation.GetAngle() > 0.01)
+			if(IKRotation.GetAngle() > 0.001)
 				i = 0;
 			k++;
 		}
