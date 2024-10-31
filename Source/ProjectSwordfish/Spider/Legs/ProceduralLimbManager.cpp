@@ -13,16 +13,25 @@ void UProceduralLimbManager::BeginPlay() {
 
 	if(auto o = Cast<ASpider>(GetOwner()))
 		Mesh = o->GetMesh();
-	FindLegs();
+	//FindLegs();
 }
 
 void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
-	for(int i = 0; i < Legs.Num(); ++i) 
-		Legs[i].Update(Mesh, true);
+	for(int i = 0; i < Legs.Num(); ++i) {
+		Legs[i].UpdateIK(Mesh, true);
+		FVector Displacement;
+		if(Legs[i].PrefersTargetRelocation(Mesh, 15.f, Displacement)) {
+			FVector ComponentSpaceLocation = Legs[i].RestingTargetLocation - 1 * Displacement;
+			FVector WorldSpaceLocation = Mesh->GetComponentTransform().TransformPosition(ComponentSpaceLocation);
+			Legs[i].IKTarget->SetWorldLocation(WorldSpaceLocation);
+			GEngine->AddOnScreenDebugMessage(i, .1f, FColor::Emerald, TEXT("I want to relocate!"));
+		}
+	}
 }
 
-bool UProceduralLimbManager::FindLegs() {
-	if(!Mesh) return false;
+void UProceduralLimbManager::FindLegs() {
+	if(!Mesh) return;
+	Legs.Empty();
 
 	TArray<FName> Bones;
 	Mesh->GetBoneNames(Bones);
@@ -43,6 +52,7 @@ bool UProceduralLimbManager::FindLegs() {
 					FTransform::Identity,
 					false));
 			Legs.Last().IKTarget->SetWorldLocation(Mesh->GetBoneLocationByName(Bone, EBoneSpaces::WorldSpace));
+			Legs.Last().RestingTargetLocation = Mesh->GetBoneLocationByName(Bone, EBoneSpaces::ComponentSpace);
 			
 			auto name = FString::Printf(TEXT("IK_"));
 			boneAsString.RemoveAt(foundTip, templateName.Len());
@@ -64,7 +74,6 @@ bool UProceduralLimbManager::FindLegs() {
 		}
 		Leg.Bones = Leg.RestPose;
 	}
-	return true;
 }
 
 void UProceduralLimbManager::RecurseToHip(FName From) {
@@ -80,27 +89,3 @@ void UProceduralLimbManager::RecurseToHip(FName From) {
 	if(s == INDEX_NONE)
 		RecurseToHip(Parent);
 }
-
-void UProceduralLimbManager::GetBoundsCornersWorld(FVector& BottomLeft, FVector& BottomRight, FVector& TopLeft,
-	FVector& TopRight) const
-{
-	FVector Offset = GetOwner()->GetActorLocation();
-	FRotator Rotation = GetOwner()->GetActorRotation();
-	
-	BottomLeft = Rotation.RotateVector(FVector(Bounds.Min.X, Bounds.Min.Y, 0) + Offset);
-	BottomRight = Rotation.RotateVector(FVector(Bounds.Max.X, Bounds.Min.Y, 0) + Offset);
-	TopLeft = Rotation.RotateVector(FVector(Bounds.Min.X, Bounds.Max.Y, 0) + Offset);
-	TopRight = Rotation.RotateVector(FVector(Bounds.Max.X, Bounds.Max.Y, 0) + Offset);
-}
-
-TArray<FVector> UProceduralLimbManager::GetBoundsCornersWorldArray() const {
-	FVector BottomLeft, BottomRight, TopLeft, TopRight;
-	GetBoundsCornersWorld(BottomLeft, BottomRight, TopLeft, TopRight);
-	return { BottomLeft, BottomRight, TopLeft, TopRight };
-}
-
-FVector UProceduralLimbManager::GetBoundsScale() const {
-	return FVector(Bounds.Max.X - Bounds.Min.X, Bounds.Max.Y - Bounds.Min.Y, 0);;
-}
-
-

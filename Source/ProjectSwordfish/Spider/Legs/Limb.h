@@ -25,15 +25,22 @@ struct FLeg {
 	UPROPERTY(VisibleInstanceOnly)
 	TArray<FLimbSegment> Bones;
 	UPROPERTY(VisibleInstanceOnly)
-	TArray<FLimbSegment> RestPose; 
+	TArray<FLimbSegment> RestPose;
 	UPROPERTY(VisibleInstanceOnly)
 	USceneComponent* IKTarget;
+	FVector RestingTargetLocation;
+	
+	UPROPERTY(VisibleInstanceOnly)
+		bool bIsRelocating = false;
 
-	void Update(UPoseableMeshComponent* Mesh, bool bDraw = false);
+	void UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw = false);
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
+
+	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
+	
 private:
 	bool CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
 	bool CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);

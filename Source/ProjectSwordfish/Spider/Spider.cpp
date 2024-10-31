@@ -1,12 +1,16 @@
 ﻿#include "Spider.h"
 
+#include "Components/BoxComponent.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Legs/ProceduralLimbManager.h"
 
 ASpider::ASpider() {
-
+	Root = CreateDefaultSubobject<USceneComponent>("Root");
+	RootComponent = Root;
+	Collision = CreateDefaultSubobject<UBoxComponent>("Collision");
+	Collision->SetupAttachment(Root);
 	Mesh = CreateDefaultSubobject<UPoseableMeshComponent>("Mesh");
-	RootComponent = Mesh;
+	Mesh->SetupAttachment(Root);
 	LimbManager = CreateDefaultSubobject<UProceduralLimbManager>("Limb Manager");
 	PrimaryActorTick.bCanEverTick = true;
 }

@@ -3,7 +3,7 @@
 #include "Components/PoseableMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
-void FLeg::Update(UPoseableMeshComponent* Mesh, bool bDraw) {
+void FLeg::UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw) {
 	CCDIK_BackwardBounce(Mesh, 1.f, 35, 0.2f);
 	if (bDraw) {
 		DrawIK(Mesh);
@@ -133,6 +133,19 @@ FVector FLeg::GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpac
 
 FVector FLeg::GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
 	return  Target - GetEndLocation(Mesh, InSpace);
+}
+
+bool FLeg::PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement) {
+	if(!Mesh)
+		return false;
+	FVector CurrentEndEffectorPosition = Mesh->GetBoneLocationByName(Bones[0].Name, EBoneSpaces::ComponentSpace);
+	Displacement = CurrentEndEffectorPosition - RestingTargetLocation;
+	float Distance = Displacement.Length();
+	if(Distance > MaxDistance) {
+		Displacement = Displacement.GetClampedToMaxSize(MaxDistance);
+		return true;
+	}
+	return false;
 }
 
 FQuat FLeg::GetRotatorBetween(FVector ToEnd, FVector ToTarget) {

@@ -23,6 +23,7 @@ class PROJECTSWORDFISH_API UProceduralLimbManager : public UActorComponent
 {
 	GENERATED_BODY()
 
+
 public:
 	UProceduralLimbManager();
 
@@ -33,19 +34,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+	void FindLegs();
 private:
-	bool FindLegs();
 	void RecurseToHip(FName From);
 
-	void GetBoundsCornersWorld(FVector& BottomLeft, FVector& BottomRight, FVector& TopLeft, FVector& TopRight) const;
-	TArray<FVector> GetBoundsCornersWorldArray() const;
-	FVector GetBoundsScale() const;
+	//bool TryFindNewLimbTarget(FVector From, FVector& To);
 	
 
 protected:
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Locomotion", meta=(AllowPrivateAccess="true"))
-		FBounds Bounds;
 	
 	UPROPERTY(EditDefaultsOnly)
 		FName HipJointsName = "Hip";
