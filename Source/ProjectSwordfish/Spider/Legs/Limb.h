@@ -15,7 +15,7 @@ struct FLimbSegment {
 	UPROPERTY(VisibleInstanceOnly)
 	FName Name;
 	UPROPERTY(VisibleInstanceOnly)
-	FRotator State; // In component space.
+	FQuat State; // In component space.
 	float Length = 0.f;
 };
 USTRUCT(Blueprintable)
@@ -37,6 +37,8 @@ struct FLeg {
 private:
 	bool CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
 	bool CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
+	bool JacobianIK_PseudoInverse(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
+	
 	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh);
 	void DrawIK(UPoseableMeshComponent* Mesh);
 

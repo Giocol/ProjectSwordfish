@@ -4,7 +4,7 @@
 #include "Kismet/KismetMathLibrary.h"
 
 void FLeg::Update(UPoseableMeshComponent* Mesh, bool bDraw) {
-	CCDIK_SmartBounce(Mesh, 1.f, 35, 0.1f);
+	CCDIK_BackwardBounce(Mesh, 1.f, 35, 0.2f);
 	if (bDraw) {
 		DrawIK(Mesh);
 	}
@@ -22,11 +22,11 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 	int k = 0;
 	while(true) {
 		for (int i = 1; i < Bones.Num(); ++i) {
-			FVector RotationAxis = Bones[i].State.Quaternion().GetRotationAxis();
-			FVector RestRotationAxis = RestPose[i].State.Quaternion().GetRotationAxis();
+			FVector RotationAxis = Bones[i].State.GetRotationAxis();
+			FVector RestRotationAxis = RestPose[i].State.GetRotationAxis();
 			FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, RestRotationAxis);
 			float Angle = PoleCorrection.GetAngle();
-			Bones[i].State += PoleCorrection.Rotator();
+			Bones[i].State = PoleCorrection * Bones[i].State;
 			ApplyBoneTransformation(Mesh);
 			
 			FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
@@ -37,7 +37,7 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 			FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
 			FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
 			FQuat IKRotation = GetRotatorBetween(ToEnd, ToTarget);
-			Bones[i].State += IKRotation.Rotator();
+			Bones[i].State = IKRotation * Bones[i].State;
 			
 			ApplyBoneTransformation(Mesh);
 			
@@ -50,32 +50,46 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 			if(IKRotation.GetAngle() > 0.001)
 				i = 0;
 			k++;
+			
 		}
 	}
 }
 
 bool FLeg::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
-
-	FVector ComponentSpaceTarget = Mesh->GetOwner()->GetTransform().InverseTransformPosition(IKTarget->GetComponentLocation());
+	auto Transform = Mesh->GetOwner()->GetTransform();
+	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget->GetComponentLocation());
 	auto Space = EBoneSpaces::ComponentSpace;
 	
-	Bones = RestPose;
+	
+	// Bones = RestPose;
+	int Max = FMath::Clamp(Bones.Num() - 1, 0, 3);
 	int k = 0;
-	while(k < Threshold) {
-		for(int b = Bones.Num() - 1; b > 0; b--) {
-			for(int i = 1; i < b; i++) {
-				
+	while(k < Iterations) {
+		for(int b = Max; b > 0; b--) {
+			for(int i = 1; i <= b; i++) {
+				FVector RotationAxis = Bones[i].State.GetRotationAxis();
+				FVector RestRotationAxis = RestPose[i].State.GetRotationAxis();
 				FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
+
 				FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
 				FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
 				FQuat IKRotation = GetRotatorBetween(ToEnd, ToTarget);
-				Bones[i].State += IKRotation.Rotator();
+				IKRotation = FQuat::Slerp(FQuat::Identity, IKRotation, 1.2);
+				// FVector Axis;
+				// float Angle;
+				// IKRotation.ToAxisAndAngle(Axis, Angle);
+				// Angle = FMath::Clamp(Angle, 0.f, Angle-Tolerance);
+				// IKRotation = FQuat::MakeFromRotationVector(Axis * Angle);
+				
+				FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, RestRotationAxis);
+				// IKRotation = PoleCorrection * IKRotation;
+				
+				Bones[i].State = IKRotation * Bones[i].State;
 
-				float Angle = FMath::RadiansToDegrees(IKRotation.GetAngle());
 				ApplyBoneTransformation(Mesh);
-
+				
 				float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
-				if(sqrDist < Threshold * Threshold)
+				if(sqrDist < Threshold * Threshold) 
 					return true;
 			}
 		}
@@ -84,16 +98,27 @@ bool FLeg::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, i
 	return false;
 }
 
+bool FLeg::JacobianIK_PseudoInverse(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
+	return true;
+}
+
 void FLeg::ApplyBoneTransformation(UPoseableMeshComponent* Mesh) {
 	if(!Mesh || !IKTarget) return;
 	
 	for (int i = 0; i < Bones.Num(); ++i) {
-		Mesh->SetBoneRotationByName(Bones[i].Name, Bones[i].State, EBoneSpaces::ComponentSpace);
+		Mesh->SetBoneRotationByName(Bones[i].Name, Bones[i].State.Rotator(), EBoneSpaces::ComponentSpace);
 	}
 }
 
 void FLeg::DrawIK(UPoseableMeshComponent* Mesh) {
 	DrawDebugSphere(Mesh->GetWorld(), IKTarget->GetComponentLocation(), 10.f, 4, FColor::Green, false, -1, -1);
+	auto Transform = Mesh->GetOwner()->GetTransform();
+	
+	for (int i = 0; i < Bones.Num(); i++) {
+		auto CurrentLocationWorld = GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace);
+		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Bones[i].State.GetRotationAxis()) * 20.f, FColor::Red);
+		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(RestPose[i].State.GetRotationAxis()) * 20.f, FColor::Green);
+	}
 }
 
 FVector FLeg::GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
