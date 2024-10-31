@@ -76,6 +76,10 @@ void UProceduralLimbManager::FindLegs() {
 	}
 }
 
+void UProceduralLimbManager::temp() {
+	
+}
+
 void UProceduralLimbManager::RecurseToHip(FName From) {
 	
 	FName Parent = Mesh->GetParentBone(From);

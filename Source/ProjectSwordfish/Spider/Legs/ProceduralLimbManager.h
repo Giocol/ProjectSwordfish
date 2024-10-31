@@ -8,15 +8,6 @@
 
 #include "ProceduralLimbManager.generated.h"
 
-USTRUCT(Blueprintable)
-struct FBounds {
-	GENERATED_BODY()
-	
-	UPROPERTY(EditDefaultsOnly)
-		FVector2D Min = FVector2D(-100.f, -100.f);
-	UPROPERTY(EditDefaultsOnly)
-		FVector2D Max= FVector2D(100.f, 100.f);
-};
 
 UCLASS(ClassGroup=(Locomotion), meta=(BlueprintSpawnableComponent))
 class PROJECTSWORDFISH_API UProceduralLimbManager : public UActorComponent
@@ -35,6 +26,8 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	void FindLegs();
+
+	void temp();
 private:
 	void RecurseToHip(FName From);
 
