@@ -16,7 +16,7 @@ struct FLimbSegment {
 	FName Name;
 	UPROPERTY(VisibleInstanceOnly)
 	FRotator State; // In component space.
-	FVector RestVector;
+	float Length = 0.f;
 };
 USTRUCT(Blueprintable)
 struct FLeg {
@@ -31,14 +31,14 @@ struct FLeg {
 
 	void Update(UPoseableMeshComponent* Mesh, bool bDraw = false);
 	
-private:
-	bool CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
-	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh);
-	void DrawIK(UPoseableMeshComponent* Mesh);
-
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
+private:
+	bool CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
+	bool CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
+	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh);
+	void DrawIK(UPoseableMeshComponent* Mesh);
 
 	FQuat GetRotatorBetween(FVector ToEnd, FVector ToTarget);
 	FQuat GetRotatorBetween(int Id, FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);

@@ -57,6 +57,11 @@ bool UProceduralLimbManager::FindLegs() {
 		}
 	}
 	for(auto& Leg : Legs) {
+		for(int i = 1; i < Leg.RestPose.Num(); ++i) {
+			FVector Displacement = Mesh->GetBoneLocationByName(Leg.RestPose[i-1].Name, EBoneSpaces::ComponentSpace);
+				- Mesh->GetBoneLocationByName(Leg.RestPose[i].Name, EBoneSpaces::ComponentSpace);
+			Leg.RestPose[i].Length = Displacement.Length();
+		}
 		Leg.Bones = Leg.RestPose;
 	}
 	return true;
@@ -67,8 +72,8 @@ void UProceduralLimbManager::RecurseToHip(FName From) {
 	FName Parent = Mesh->GetParentBone(From);
 	if(Parent.IsNone())
 		return;
-	Legs.Last().RestPose.Add(FLimbSegment(Parent, Mesh->GetBoneRotationByName(Parent, EBoneSpaces::ComponentSpace)));
-	
+	Legs.Last().RestPose.Add(
+		FLimbSegment(Parent, Mesh->GetBoneRotationByName(Parent, EBoneSpaces::ComponentSpace)));
 	auto boneAsString = Parent.ToString();
 	auto templateName = HipJointsName.ToString();
 	auto s = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
