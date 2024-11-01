@@ -10,22 +10,24 @@ struct FLimbSegment {
 	GENERATED_BODY()
 	FLimbSegment() {}
 	FLimbSegment(FName Name, FRotator State)
-		: Name(Name), State(State) { };
+		: Name(Name), RestState(State), CurrentState(State) { };
 
 	UPROPERTY(VisibleInstanceOnly)
 	FName Name;
 	UPROPERTY(VisibleInstanceOnly)
-	FQuat State; // In component space.
+	FQuat RestState;
+	UPROPERTY(VisibleInstanceOnly)
+	FQuat CurrentState; // In component space.
+	
 	float Length = 0.f;
 };
-USTRUCT(Blueprintable)
-struct FLeg {
-	GENERATED_BODY()
 
+UCLASS(Blueprintable)
+class ULimb : public UObject {
+	GENERATED_BODY()
+public:
 	UPROPERTY(VisibleInstanceOnly)
 	TArray<FLimbSegment> Bones;
-	UPROPERTY(VisibleInstanceOnly)
-	TArray<FLimbSegment> RestPose;
 	UPROPERTY(VisibleInstanceOnly)
 	USceneComponent* IKTarget;
 	FVector RestingTargetLocation;
@@ -34,14 +36,14 @@ struct FLeg {
 		bool bIsRelocating = false;
 
 	void UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw = false);
+	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
+protected:
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 
-	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
 	
-private:
 	bool CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
 	bool CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
 	bool JacobianIK_PseudoInverse(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);

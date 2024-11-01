@@ -41,7 +41,7 @@ protected:
 		FName EndEffectorsName = "Tip";
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-	TArray<FLeg> Legs;
+	TArray<ULimb*> Limbs;
 
 	UPROPERTY()
 	class UPoseableMeshComponent* Mesh;
