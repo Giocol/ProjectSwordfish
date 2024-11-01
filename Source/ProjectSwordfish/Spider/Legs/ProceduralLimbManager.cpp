@@ -13,7 +13,7 @@ void UProceduralLimbManager::BeginPlay() {
 	Super::BeginPlay();
 
 	if(auto o = Cast<ASpider>(GetOwner()))
-		Mesh = o->GetMesh();
+		AutoDetectLimbs(o->GetMesh());
 	//FindLegs();
 }
 
@@ -30,12 +30,14 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
-void UProceduralLimbManager::AutoDetectLimbs() {
-	if(!Mesh) return;
+void UProceduralLimbManager::AutoDetectLimbs(UPoseableMeshComponent* InMesh) {
+	if(!InMesh) return;
+	Mesh = InMesh;
 	Legs.Empty();
 
 	TArray<FName> Bones;
 	Mesh->GetBoneNames(Bones);
+	//Mesh->GetSkinnedAsset()->GetSkeleton()->
 
 	for(FName Bone : Bones) {
 		auto boneAsString = Bone.ToString();

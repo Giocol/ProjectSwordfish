@@ -12,6 +12,7 @@ ASpider::ASpider() {
 	Mesh = CreateDefaultSubobject<UPoseableMeshComponent>("Mesh");
 	Mesh->SetupAttachment(Root);
 	LimbManager = CreateDefaultSubobject<UProceduralLimbManager>("Limb Manager");
+	//LimbManager->AutoDetectLimbs(Mesh);
 	PrimaryActorTick.bCanEverTick = true;
 }
 

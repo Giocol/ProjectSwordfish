@@ -25,7 +25,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	void AutoDetectLimbs();
+	void AutoDetectLimbs(UPoseableMeshComponent* InMesh);
 
 private:
 	void RecurseToHip(FName From);
@@ -40,9 +40,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		FName EndEffectorsName = "Tip";
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	TArray<FLeg> Legs;
-	
+
+	UPROPERTY()
 	class UPoseableMeshComponent* Mesh;
 };
 
