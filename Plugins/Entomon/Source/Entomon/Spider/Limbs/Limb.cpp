@@ -8,7 +8,7 @@
 void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw) {
 	auto it = CCDIK_BackwardBounce(Mesh, 1.f, 35, 0.2f);
 	if(it > 0)
-		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Orange, FString::Printf(TEXT("%i"), it));
+		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString::Printf(TEXT("%i"), it));
 	if (bDraw) {
 		DrawIK(Mesh);
 	}
