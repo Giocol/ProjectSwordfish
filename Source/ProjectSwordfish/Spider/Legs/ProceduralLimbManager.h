@@ -25,9 +25,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	void FindLegs();
+	void AutoDetectLimbs();
 
-	void temp();
 private:
 	void RecurseToHip(FName From);
 

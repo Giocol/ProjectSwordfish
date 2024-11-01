@@ -4,8 +4,9 @@
 #include "ProjectSwordfish/Spider/Spider.h"
 
 UProceduralLimbManager::UProceduralLimbManager() {
+	//AutoDetectLimbs();
+	
 	PrimaryComponentTick.bCanEverTick = true;
-
 }
 
 void UProceduralLimbManager::BeginPlay() {
@@ -29,7 +30,7 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
-void UProceduralLimbManager::FindLegs() {
+void UProceduralLimbManager::AutoDetectLimbs() {
 	if(!Mesh) return;
 	Legs.Empty();
 
@@ -74,10 +75,6 @@ void UProceduralLimbManager::FindLegs() {
 		}
 		Leg.Bones = Leg.RestPose;
 	}
-}
-
-void UProceduralLimbManager::temp() {
-	
 }
 
 void UProceduralLimbManager::RecurseToHip(FName From) {

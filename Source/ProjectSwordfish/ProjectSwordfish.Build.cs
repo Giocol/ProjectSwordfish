@@ -10,7 +10,7 @@ public class ProjectSwordfish : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "LocomotionEditor" });
+		//PrivateDependencyModuleNames.AddRange(new string[] { "LocomotionEditor" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
