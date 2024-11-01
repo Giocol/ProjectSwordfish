@@ -26,13 +26,6 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	void AutoDetectLimbs(UPoseableMeshComponent* InMesh);
-
-private:
-	void RecurseToHip(FName From);
-
-	//bool TryFindNewLimbTarget(FVector From, FVector& To);
-	
-
 protected:
 	
 	UPROPERTY(EditDefaultsOnly)

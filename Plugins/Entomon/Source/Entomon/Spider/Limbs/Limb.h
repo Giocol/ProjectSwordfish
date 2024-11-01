@@ -3,33 +3,17 @@
 #include "CoreMinimal.h"
 #include "Limb.generated.h"
 
+class ULimbSegment;
 class UPoseableMeshComponent;
-
-USTRUCT(Blueprintable)
-struct FLimbSegment {
-	GENERATED_BODY()
-	FLimbSegment() {}
-	FLimbSegment(FName Name, FRotator State)
-		: Name(Name), RestState(State), CurrentState(State) { };
-
-	UPROPERTY(VisibleInstanceOnly)
-	FName Name;
-	UPROPERTY(VisibleInstanceOnly)
-	FQuat RestState;
-	UPROPERTY(VisibleInstanceOnly)
-	FQuat CurrentState; // In component space.
-	
-	float Length = 0.f;
-};
 
 UCLASS(Blueprintable)
 class ULimb : public UObject {
 	GENERATED_BODY()
 public:
 	UPROPERTY(VisibleInstanceOnly)
-	TArray<FLimbSegment> Bones;
+	TArray<ULimbSegment*> Bones;
 	UPROPERTY(VisibleInstanceOnly)
-	USceneComponent* IKTarget;
+	FVector IKTarget;
 	FVector RestingTargetLocation;
 	
 	UPROPERTY(VisibleInstanceOnly)
@@ -37,7 +21,10 @@ public:
 
 	void UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw = false);
 	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
+
+	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 protected:
+	ULimbSegment* MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, FName HipNameToSearchFor, bool bIsRoot = false);
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
