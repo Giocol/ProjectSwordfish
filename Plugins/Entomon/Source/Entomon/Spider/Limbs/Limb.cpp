@@ -14,7 +14,7 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 	if(!Mesh || !IKTarget)
 		return false;
 	
-	auto Transform = Mesh->GetOwner()->GetTransform();
+	auto Transform = Mesh->GetComponentTransform();
 	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget->GetComponentLocation());
 	
 	auto Space = EBoneSpaces::ComponentSpace;
@@ -56,7 +56,7 @@ bool FLeg::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int 
 }
 
 bool FLeg::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
-	auto Transform = Mesh->GetOwner()->GetTransform();
+	auto Transform = Mesh->GetComponentTransform();
 	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget->GetComponentLocation());
 	auto Space = EBoneSpaces::ComponentSpace;
 	
@@ -112,7 +112,7 @@ void FLeg::ApplyBoneTransformation(UPoseableMeshComponent* Mesh) {
 
 void FLeg::DrawIK(UPoseableMeshComponent* Mesh) {
 	DrawDebugSphere(Mesh->GetWorld(), IKTarget->GetComponentLocation(), 10.f, 4, FColor::Green, false, -1, -1);
-	auto Transform = Mesh->GetOwner()->GetTransform();
+	auto Transform = Mesh->GetComponentTransform();
 	
 	for (int i = 0; i < Bones.Num(); i++) {
 		auto CurrentLocationWorld = GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace);

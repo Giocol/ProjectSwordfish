@@ -10,7 +10,7 @@
 
 
 UCLASS(ClassGroup=(Locomotion), meta=(BlueprintSpawnableComponent))
-class PROJECTSWORDFISH_API UProceduralLimbManager : public UActorComponent
+class ENTOMON_API UProceduralLimbManager : public UActorComponent
 {
 	GENERATED_BODY()
 

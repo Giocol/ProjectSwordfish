@@ -1,7 +1,7 @@
 ﻿#include "ProceduralLimbManager.h"
 
 #include "Components/PoseableMeshComponent.h"
-#include "ProjectSwordfish/Spider/Spider.h"
+#include "Entomon/Spider/MultiLeggedPawn.h"
 
 UProceduralLimbManager::UProceduralLimbManager() {
 	//AutoDetectLimbs();
@@ -12,7 +12,7 @@ UProceduralLimbManager::UProceduralLimbManager() {
 void UProceduralLimbManager::BeginPlay() {
 	Super::BeginPlay();
 
-	if(auto o = Cast<ASpider>(GetOwner()))
+	if(auto o = Cast<AMultiLeggedPawn>(GetOwner()))
 		AutoDetectLimbs(o->GetMesh());
 	//FindLegs();
 }
@@ -24,7 +24,7 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 		if(Legs[i].PrefersTargetRelocation(Mesh, 15.f, Displacement)) {
 			FVector ComponentSpaceLocation = Legs[i].RestingTargetLocation - 1 * Displacement;
 			FVector WorldSpaceLocation = Mesh->GetComponentTransform().TransformPosition(ComponentSpaceLocation);
-			Legs[i].IKTarget->SetWorldLocation(WorldSpaceLocation);
+			//Legs[i].IKTarget->SetWorldLocation(WorldSpaceLocation);
 			GEngine->AddOnScreenDebugMessage(i, .1f, FColor::Emerald, TEXT("I want to relocate!"));
 		}
 	}

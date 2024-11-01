@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
-#include "Spider.generated.h"
+#include "MultiLeggedPawn.generated.h"
 
 class UProceduralLimbManager;
 
 UCLASS()
-class PROJECTSWORDFISH_API ASpider : public APawn
+class ENTOMON_API AMultiLeggedPawn : public APawn
 {
 	GENERATED_BODY()
 
 public:
-	ASpider();
+	AMultiLeggedPawn();
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
 	

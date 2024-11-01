@@ -1,10 +1,10 @@
-﻿#include "Spider.h"
+﻿#include "MultiLeggedPawn.h"
 
 #include "Components/BoxComponent.h"
 #include "Components/PoseableMeshComponent.h"
-#include "Legs/ProceduralLimbManager.h"
+#include "Limbs/ProceduralLimbManager.h"
 
-ASpider::ASpider() {
+AMultiLeggedPawn::AMultiLeggedPawn() {
 	Root = CreateDefaultSubobject<USceneComponent>("Root");
 	RootComponent = Root;
 	Collision = CreateDefaultSubobject<UBoxComponent>("Collision");
@@ -16,18 +16,18 @@ ASpider::ASpider() {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void ASpider::BeginPlay()
+void AMultiLeggedPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
-void ASpider::Tick(float DeltaTime)
+void AMultiLeggedPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
-void ASpider::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AMultiLeggedPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
