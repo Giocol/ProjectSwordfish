@@ -6,7 +6,9 @@
 
 
 void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw) {
-	CCDIK_BackwardBounce(Mesh, 1.f, 35, 0.2f);
+	auto it = CCDIK_BackwardBounce(Mesh, 1.f, 35, 0.2f);
+	if(it > 0)
+		GEngine->AddOnScreenDebugMessage(-1, 0.01, FColor::Orange, FString::Printf(TEXT("%i"), it));
 	if (bDraw) {
 		DrawIK(Mesh);
 	}
@@ -57,11 +59,10 @@ bool ULimb::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int
 	}
 }
 
-bool ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
+int ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
 	auto Transform = Mesh->GetComponentTransform();
 	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget);
 	auto Space = EBoneSpaces::ComponentSpace;
-	
 	
 	// Bones = RestPose;
 	int Max = FMath::Clamp(Bones.Num() - 1, 0, 3);
@@ -69,10 +70,7 @@ bool ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, 
 	while(k < Iterations) {
 		for(int b = Max; b > 0; b--) {
 			for(int i = 1; i <= b; i++) {
-				FVector RotationAxis = Bones[i]->GetState().GetRotationAxis();
-				FVector RestRotationAxis = Bones[i]->GetRestState().GetRotationAxis(); 
 				FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
-
 				FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
 				FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
 				FQuat IKRotation = GetRotatorBetween(ToEnd, ToTarget);
@@ -83,7 +81,10 @@ bool ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, 
 				// Angle = FMath::Clamp(Angle, 0.f, Angle-Tolerance);
 				// IKRotation = FQuat::MakeFromRotationVector(Axis * Angle);
 				
-				FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, RestRotationAxis);
+				// FVector RotationAxis = Bones[i]->GetState().GetRotationAxis();
+				// FVector RestRotationAxis = Bones[i]->GetRestState().GetRotationAxis(); 
+				// FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, RestRotationAxis);
+				// PoleCorrection = FQuat::Slerp(FQuat::Identity, PoleCorrection, 0.1);
 				// IKRotation = PoleCorrection * IKRotation;
 				
 				Bones[i]->SetState(IKRotation * Bones[i]->GetState());
@@ -94,12 +95,12 @@ bool ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, 
 				
 				float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
 				if(sqrDist < Threshold * Threshold) 
-					return true;
+					return k;
 			}
 		}
 		k++;
 	}
-	return false;
+	return k;
 }
 
 bool ULimb::JacobianIK_PseudoInverse(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
