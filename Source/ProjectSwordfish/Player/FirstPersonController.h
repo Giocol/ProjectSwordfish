@@ -22,18 +22,25 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 
-	void HandleMovement(const FInputActionValue& value);
-	void HandleCameraMovement(const FInputActionValue& value);
+	void HandleMovement(const FInputActionValue& Value);
+	void HandleCameraMovement(const FInputActionValue& Value);
 
 private:
 	void InitSystems();
-	void SetupInputMappingContext();
+	void SetupInputMappingContext() const;
 	void SetupInputActions();
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputMappingContext> mappingContext = nullptr;
 
+	//TODO: make this two things handled by settings menu
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Settings", meta = (AllowPrivateAccess = "true"))
+	float Sensitivity = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Settings", meta = (AllowPrivateAccess = "true"))
+	bool bIsYawInputInverted = false;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions | Movement", meta = (AllowPrivateAccess = "true"));
 	TObjectPtr<UInputAction> characterMovementAction = nullptr;
 	

@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "MainCharacter.generated.h"
 
+class UCameraComponent;
+
 UCLASS()
 class PROJECTSWORDFISH_API AMainCharacter : public ACharacter {
 	GENERATED_BODY()
@@ -14,11 +16,15 @@ public:
 	AMainCharacter();
 	
 	void ProcessCharacterMovementInput(FVector2D input);
-	void ProcessCameraMovementInput(FVector2D input) const;
+	void ProcessCameraMovementInput(FVector2D Input);
 
 protected:
 	virtual void BeginPlay() override;
 
 public:
 	virtual void Tick(float DeltaTime) override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	UCameraComponent* Camera = nullptr;
 };

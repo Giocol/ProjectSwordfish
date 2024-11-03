@@ -28,19 +28,23 @@ void AFirstPersonController::OnUnPossess() {
 	Super::OnUnPossess();
 }
 
-void AFirstPersonController::HandleMovement(const FInputActionValue& value) {
-	FVector2D axis = value.Get<FVector2D>();
-	UE_LOG(LogTemp, Warning, TEXT("Movement input: %f, %f"), axis.X, axis.Y);
-	characterRef->ProcessCharacterMovementInput(axis);
+void AFirstPersonController::HandleMovement(const FInputActionValue& Value) {
+	const FVector2D Axis = Value.Get<FVector2D>();
+	//UE_LOG(LogTemp, Warning, TEXT("Movement input: %f, %f"), Axis.X, Axis.Y);
+	characterRef->ProcessCharacterMovementInput(Axis);
 }
 
-void AFirstPersonController::HandleCameraMovement(const FInputActionValue& value) {
-	FVector2D axis = value.Get<FVector2D>();
-	UE_LOG(LogTemp, Warning, TEXT("Camera input: %f, %f"), axis.X, axis.Y);
-	characterRef->ProcessCameraMovementInput(axis);
+void AFirstPersonController::HandleCameraMovement(const FInputActionValue& Value)
+{
+	FVector2D Axis = Value.Get<FVector2D>() * Sensitivity;
+	if(!bIsYawInputInverted)
+		Axis.X = -Axis.X;
+	//UE_LOG(LogTemp, Warning, TEXT("Camera input: %f, %f"), Axis.X, Axis.Y);
+	characterRef->ProcessCameraMovementInput(Axis);
 }
 
-void AFirstPersonController::SetupInputMappingContext() {
+void AFirstPersonController::SetupInputMappingContext() const
+{
 	inputSubsystemRef->ClearAllMappings();
 	inputSubsystemRef->AddMappingContext(mappingContext, 0);
 }
