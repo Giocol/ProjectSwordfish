@@ -19,7 +19,7 @@ void UProceduralLimbManager::BeginPlay() {
 
 void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	for(int i = 0; i < Limbs.Num(); ++i) {
-		Limbs[i]->UpdateIK(Mesh, true);
+		Limbs[i]->UpdateIK(Mesh,IKThreshold, IKIterations, true);
 		// FVector Displacement;
 		// if(Limbs[i]->PrefersTargetRelocation(Mesh, 15.f, Displacement)) {
 		// 	FVector ComponentSpaceLocation = Limbs[i]->RestingTargetLocation - 1 * Displacement;

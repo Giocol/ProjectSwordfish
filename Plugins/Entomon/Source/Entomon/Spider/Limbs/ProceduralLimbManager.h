@@ -28,6 +28,10 @@ public:
 	void AutoDetectLimbs(UPoseableMeshComponent* InMesh);
 protected:
 	
+	UPROPERTY(EditAnywhere, Category = "IK Solver")
+		int IKIterations = 10;
+	UPROPERTY(EditAnywhere, Category = "IK Solver")
+		float IKThreshold = 1.f;
 	UPROPERTY(EditDefaultsOnly)
 		FName HipJointsName = "Hip";
 	UPROPERTY(EditDefaultsOnly)

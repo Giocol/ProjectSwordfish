@@ -9,7 +9,7 @@
 UCLASS(Blueprintable)
 class ULimbSegment : public UObject {
 	GENERATED_BODY()
-	ULimbSegment() {}
+	ULimbSegment() { }
 
 public:
 	void Initialize(FName InName, FQuat InState);
@@ -18,6 +18,8 @@ public:
 	FQuat GetRestState() { return RestState; }
 	FQuat GetState() { return CurrentState; }
 	void SetState(FQuat State) { CurrentState = State; }
+	float GetLength() { return Length; }
+	void SetLength(float InLength) { Length = InLength; }
 	
 private:
 	UPROPERTY(VisibleInstanceOnly)
@@ -26,6 +28,8 @@ private:
 	FQuat RestState;
 	UPROPERTY(VisibleInstanceOnly)
 	FQuat CurrentState; // In component space.
-	
+	UPROPERTY(VisibleInstanceOnly)
 	float Length = 0.f;
+	
+	FVector DummyLocation = FVector::ZeroVector; // In component space.
 };

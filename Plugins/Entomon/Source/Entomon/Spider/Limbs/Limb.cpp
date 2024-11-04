@@ -5,94 +5,36 @@
 #include "Kismet/KismetMathLibrary.h"
 
 
-void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw) {
-	auto it = CCDIK_BackwardBounce(Mesh, 1.f, 35, 0.2f);
-	if(it > 0)
-		GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString::Printf(TEXT("%i"), it));
+void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw) {
+	auto it = Solve_FABRIK(Mesh, Threshold, Iterations);
+	//if(it > 0)
+	//	GEngine->AddOnScreenDebugMessage(-1, 1.f, FColor::Orange, FString::Printf(TEXT("%i"), it));
 	if (bDraw) {
-		DrawIK(Mesh);
+		DrawIK(Mesh, Threshold);
 	}
 }
 
-bool ULimb::CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
-	if(!Mesh)
-		return false;
-	
+int ULimb::Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
 	auto Transform = Mesh->GetComponentTransform();
-	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget);
-	
+	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget.GetLocation());
 	auto Space = EBoneSpaces::ComponentSpace;
-	//Bones = RestPose;
-	int k = 0;
-	while(true) {
-		for (int i = 1; i < Bones.Num(); ++i) {
-			FVector RotationAxis = Bones[i]->GetState().GetRotationAxis();
-			FVector RestRotationAxis = Bones[i]->GetRestState().GetRotationAxis();
-			FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, RestRotationAxis);
-			float Angle = PoleCorrection.GetAngle();
-			Bones[i]->GetState() = PoleCorrection * Bones[i]->GetState();
-			ApplyBoneTransformation(Mesh);
-			
-			FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
-			FVector CurrentLocationWorld = Transform.TransformPosition(CurrentLocation);
-			DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(RotationAxis) * 20.f, FColor::Red);
-			DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(RestRotationAxis) * 20.f, FColor::Green);
-			
-			FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
-			FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
-			FQuat IKRotation = GetRotatorBetween(ToEnd, ToTarget);
-			Bones[i]->GetState() = IKRotation * Bones[i]->GetState();
-			
-			ApplyBoneTransformation(Mesh);
-			
-			float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
-			if(sqrDist < Threshold * Threshold)
-				return true;
-			if(k / (Bones.Num() - 1) > Iterations)
-				return false;
-			auto newRotation = GetRotatorBetween(1, ComponentSpaceTarget, Mesh, Space);
-			if(IKRotation.GetAngle() > 0.001)
-				i = 0;
-			k++;
-			
-		}
-	}
-}
+	
+	
 
-int ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance) {
-	auto Transform = Mesh->GetComponentTransform();
-	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget);
-	auto Space = EBoneSpaces::ComponentSpace;
-	
-	// Bones = RestPose;
-	int Max = FMath::Clamp(Bones.Num() - 1, 0, 3);
+	int Max = FMath::Clamp(Joints.Num() - 1, 0, 3);
 	int k = 0;
 	while(k < Iterations) {
-		for(int b = Max; b > 0; b--) {
+		for(int b = Joints.Num() - 1; b > 0; b--) {
 			for(int i = 1; i <= b; i++) {
 				FVector CurrentLocation = GetCurrentLocation(i, Mesh, Space);
 				FVector ToEnd = GetCurrentLocation(0, Mesh, Space) - CurrentLocation;
 				FVector ToTarget = ComponentSpaceTarget - CurrentLocation;
 				FQuat IKRotation = GetRotatorBetween(ToEnd, ToTarget);
-				IKRotation = FQuat::Slerp(FQuat::Identity, IKRotation, 1.2);
-				// FVector Axis;
-				// float Angle;
-				// IKRotation.ToAxisAndAngle(Axis, Angle);
-				// Angle = FMath::Clamp(Angle, 0.f, Angle-Tolerance);
-				// IKRotation = FQuat::MakeFromRotationVector(Axis * Angle);
+				//IKRotation = FQuat::Slerp(FQuat::Identity, IKRotation, 1.2);
 				
-				// FVector RotationAxis = Bones[i]->GetState().GetRotationAxis();
-				// FVector RestRotationAxis = Bones[i]->GetRestState().GetRotationAxis(); 
-				// FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, RestRotationAxis);
-				// PoleCorrection = FQuat::Slerp(FQuat::Identity, PoleCorrection, 0.1);
-				// IKRotation = PoleCorrection * IKRotation;
-				
-				Bones[i]->SetState(IKRotation * Bones[i]->GetState());
+				Joints[i]->SetState(IKRotation * Joints[i]->GetState());
+				Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
 
-				Mesh->SetBoneRotationByName(Bones[i]->GetName(), Bones[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
-				//ApplyBoneTransformation(Mesh);
-				
-				
 				float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, Space).SquaredLength();
 				if(sqrDist < Threshold * Threshold) 
 					return k;
@@ -103,37 +45,152 @@ int ULimb::CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, i
 	return k;
 }
 
-bool ULimb::JacobianIK_PseudoInverse(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
-	return true;
+int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
+	if(!Mesh)
+		return false;
+	
+	FTransform ToComponentSpace = Mesh->GetComponentTransform();
+	FVector ComponentSpaceTarget = ToComponentSpace.InverseTransformPosition(IKTarget.GetLocation());
+	FVector StartJoint = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
+	FVector StartToTarget = ComponentSpaceTarget - StartJoint;
+	if(StartToTarget.Length() > MaxLength)
+		return false; // TODO: Make each joint stretch towards the target.
+	
+	int k;
+	for (k = 0; k < Iterations; k++) {
+		ForwardReach(Mesh, ComponentSpaceTarget);
+		BackwardReach(Mesh, ComponentSpaceTarget);
+		float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, EBoneSpaces::ComponentSpace).SquaredLength();
+		if(sqrDist < Threshold * Threshold)
+			break;
+		//EvaluateAngles(Mesh);
+	}
+	return k;
+}
+
+void ULimb::BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget) {
+	Mesh->SetBoneLocationByName(Joints[0]->GetName(), ComponentSpaceTarget, EBoneSpaces::ComponentSpace);
+	for(int i = 1; i < Joints.Num(); i++) {
+		FVector CurrentLocation = GetJointLocation(Mesh, i);
+		FVector NextLocation = GetJointLocation(Mesh, i-1);
+		FVector Offset = NextLocation - CurrentLocation;
+		float lengthRatio = 1.f - Joints[i]->GetLength() / Offset.Length();
+		FVector NewLocation = FMath::Lerp(CurrentLocation, NextLocation, lengthRatio);
+		Mesh->SetBoneLocationByName(Joints[i]->GetName(), NewLocation, EBoneSpaces::ComponentSpace);
+	}
+}
+void ULimb::ForwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget) {
+	Mesh->SetBoneLocationByName(Joints[Joints.Num()-1]->GetName(), HipLocation, EBoneSpaces::ComponentSpace);
+	for(int i = Joints.Num() - 2; i >= 0; i--) {
+		FVector CurrentLocation = GetJointLocation(Mesh, i);
+		FVector PreviousLocation = GetJointLocation(Mesh, i+1);
+		FVector Offset = PreviousLocation - CurrentLocation;
+		float lengthRatio = 1.f - Joints[i]->GetLength() / Offset.Length();
+		FVector NewLocation = FMath::Lerp(CurrentLocation, PreviousLocation, lengthRatio);
+		Mesh->SetBoneLocationByName(Joints[i]->GetName(), NewLocation, EBoneSpaces::ComponentSpace);
+		//Joints[i]->SetLocation(NewLocation);
+	}
+}
+
+void ULimb::EvaluateAngles(UPoseableMeshComponent* Mesh) {
+	for(int i = 1; i < Joints.Num(); i++) {
+		FVector FwdOffset = GetJointLocation(Mesh, i-1) - GetJointLocation(Mesh, i);
+		FVector TgtFwd = FwdOffset.GetSafeNormal();
+		FVector Fwd = Joints[i]->GetState().GetForwardVector();
+		FQuat RRot = FQuat::FindBetween(Fwd, TgtFwd);
+		float angle = FMath::RadiansToDegrees(RRot.GetAngle());
+		Joints[i]->SetState(RRot * Joints[i]->GetState());
+		Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
+	}
+}
+
+FVector ULimb::GetJointLocation(UPoseableMeshComponent* Mesh, int Id) {
+	
+	// FVector Result = HipLocation;
+	// for(int i = Id + 1; i < Joints.Num(); i++) 
+	// 	Result += Joints[i]->GetState().GetForwardVector() * Joints[i]->GetLength();
+	
+	return Mesh->GetBoneLocationByName(Joints[Id]->GetName(), EBoneSpaces::ComponentSpace);
+}
+
+
+FVector ULimb::GetPoleAxisVector(UPoseableMeshComponent* Mesh) {
+	FVector EndEffectorLocation = Mesh->GetBoneLocationByName(Joints[0]->GetName(), EBoneSpaces::ComponentSpace);
+	FVector StartEffectorLocation = Mesh->GetBoneLocationByName(Joints[Joints.Num()-1]->GetName(), EBoneSpaces::ComponentSpace);
+	return EndEffectorLocation - StartEffectorLocation;
+}
+FVector ULimb::GetPoleAxisVector_World(UPoseableMeshComponent* Mesh) {
+	auto Transform = Mesh->GetComponentTransform();
+	return Transform.TransformVector(GetPoleAxisVector(Mesh));
+}
+
+FVector ULimb::GetPoleNormal(UPoseableMeshComponent* Mesh, int Id) {
+	auto Axis = (GetPoleAxisVector_World(Mesh) - IKTarget.GetLocation()).GetSafeNormal();
+	auto PoleDir = IKTarget.GetRotation().GetUpVector();
+	FVector Result = PoleDir.Cross(Axis);
+	// if(Result.Z < 0)
+	// 	Result = -Result;
+	// float Dot1 = Result.Dot(PoleDir);
+	// float Dot2 = Result.Dot(Axis);
+	// auto BoneTransform = Mesh->GetBoneTransformByName(Bones[Id]->GetName(), EBoneSpaces::WorldSpace);
+	// Result = (Result - Result.ProjectOnTo(Axis)).GetSafeNormal();
+
+	FVector RotationAxis = Joints[Id]->GetRestState().GetRotationAxis();
+	if(RotationAxis.Dot(Result) < RotationAxis.Dot(-Result))
+		Result = -Result;
+	
+	return Result.GetSafeNormal();
+}
+
+void ULimb::CorrectPoles(UPoseableMeshComponent* Mesh) {
+	//if(Bones.Num() < 3) return;
+	for(int i = Joints.Num() - 3; i > 0; i--) {
+		// FVector RotationAxis = Bones[i]->GetState().GetRotationAxis();
+		// FVector TargetRotationAxis = IKTarget.GetRotation().GetUpVector();
+		// FQuat PoleCorrection = FQuat::FindBetween(RotationAxis, TargetRotationAxis);
+		// // PoleCorrection = FQuat::Slerp(FQuat::Identity, PoleCorrection, 0.1);
+		//
+		// Bones[i]->SetState(PoleCorrection * Bones[i]->GetState());
+		// Mesh->SetBoneRotationByName(Bones[i]->GetName(), Bones[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
+		Joints[i]->SetState(Joints[i]->GetRestState());
+		Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
+	}
 }
 
 void ULimb::ApplyBoneTransformation(UPoseableMeshComponent* Mesh) {
 	if(!Mesh) return;
 	
-	for (int i = 0; i < Bones.Num(); ++i) {
-		Mesh->SetBoneRotationByName(Bones[i]->GetName(), Bones[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
+	for (int i = 0; i < Joints.Num(); ++i) {
+		Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
 	}
 }
 
-void ULimb::DrawIK(UPoseableMeshComponent* Mesh) {
-	DrawDebugSphere(Mesh->GetWorld(), IKTarget, 10.f, 4, FColor::Green, false, -1, -1);
+void ULimb::DrawIK(UPoseableMeshComponent* Mesh, float Threshold) {
 	auto Transform = Mesh->GetComponentTransform();
-	
-	for (int i = 1; i < Bones.Num(); i++) {
+	FVector EndOffset = GetPoleAxisVector_World(Mesh);
+	FVector Start = GetCurrentLocation(Joints.Num()-1, Mesh, EBoneSpaces::WorldSpace);
+	DrawDebugLine(Mesh->GetWorld(), Start, Start + EndOffset, FColor::Blue);
+	// DrawDebugSphere(Mesh->GetWorld(), Start + EndOffset + GetPoleNormal(Mesh, 0) * 100, 10.f, 4, FColor::Orange);
+	DrawDebugBox(Mesh->GetWorld(), IKTarget.GetLocation(), FVector::OneVector * 2 * Threshold, FColor::Green);
+	DrawDebugDirectionalArrow(Mesh->GetWorld(), IKTarget.GetLocation(), IKTarget.GetLocation() + IKTarget.GetRotation().GetForwardVector() * 35.f, 50.f,
+		FColor::Purple, false, -1, 0, 1.5f);
+	for (int i = 1; i < Joints.Num(); i++) {
 		auto CurrentLocationWorld = GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace);
-		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Bones[i]->GetState().GetRotationAxis()) * 20.f, FColor::Red);
-		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Bones[i]->GetRestState().GetRotationAxis()) * 20.f, FColor::Green);
+		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Joints[i]->GetState().GetRotationAxis()) * 20.f, FColor::Red);
+		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Joints[i]->GetRestState().GetRotationAxis()) * 20.f, FColor::Green);
+		//DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + GetPoleNormal(Mesh, i) * 20.f, FColor::Turquoise);
+		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + (IKTarget.GetRotation().GetUpVector()).GetSafeNormal() * 20.f, FColor::Silver);
 	}
 }
 
 FVector ULimb::GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
-	return Mesh->GetBoneLocationByName(Bones[0]->GetName(), InSpace);
+	return Mesh->GetBoneLocationByName(Joints[0]->GetName(), InSpace);
 }
 
 FVector ULimb::GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
-	if(Id < 0 || Id >= Bones.Num())
+	if(Id < 0 || Id >= Joints.Num())
 		return FVector::ZeroVector;
-	return Mesh->GetBoneLocationByName(Bones[Id]->GetName(), InSpace);
+	return Mesh->GetBoneLocationByName(Joints[Id]->GetName(), InSpace);
 }
 
 FVector ULimb::GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
@@ -143,7 +200,7 @@ FVector ULimb::GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh
 bool ULimb::PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement) {
 	if(!Mesh)
 		return false;
-	FVector CurrentEndEffectorPosition = Mesh->GetBoneLocationByName(Bones[0]->GetName(), EBoneSpaces::ComponentSpace);
+	FVector CurrentEndEffectorPosition = Mesh->GetBoneLocationByName(Joints[0]->GetName(), EBoneSpaces::ComponentSpace);
 	Displacement = CurrentEndEffectorPosition - RestingTargetLocation;
 	float Distance = Displacement.Length();
 	if(Distance > MaxDistance) {
@@ -156,7 +213,7 @@ bool ULimb::PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDista
 bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
 	if(!Mesh) return false;
 	
-	Bones.Add(MakeNode(Mesh, EndEffectorName, HipNameToSearchFor, true));
+	Joints.Add(MakeNode(Mesh, EndEffectorName, true));
 	FName CurrentBone = EndEffectorName;
 	while(true) {
 		CurrentBone = Mesh->GetParentBone(CurrentBone);
@@ -165,26 +222,34 @@ bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FNam
 		auto boneAsString = CurrentBone.ToString();
 		auto templateName = HipNameToSearchFor.ToString();
 		auto s = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
-		Bones.Add(MakeNode(Mesh, CurrentBone, HipNameToSearchFor));
+		Joints.Add(MakeNode(Mesh, CurrentBone));
 		if(s != INDEX_NONE)
-			return true;
+			break;
 	}
+	if(Joints.Num() > 1) {
+		IKTarget.SetRotation(Joints[1]->GetState());
+	}
+	for(int i = 1; i < Joints.Num(); i++) {
+		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
+		FVector NextLocation = Mesh->GetBoneLocationByName(Joints[i-1]->GetName(), EBoneSpaces::ComponentSpace);
+		FVector Offset = NextLocation - CurrentLocation;
+		float Length = Offset.Length();
+		Joints[i]->SetLength(Length);
+		MaxLength += Length;
+	}
+	HipLocation = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
+	return true;
 }
 
-ULimbSegment* ULimb::MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, FName HipNameToSearchFor, bool bIsRoot) {
+ULimbSegment* ULimb::MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsRoot) {
 	auto Transform = Mesh->GetBoneTransformByName(BoneName, EBoneSpaces::ComponentSpace);
 	auto LimbSegment = NewObject<ULimbSegment>(this, ULimbSegment::StaticClass(), BoneName);
-	LimbSegment->Initialize(BoneName, Transform.GetRotation());
 	if(bIsRoot) {
 		FVector Location = Mesh->GetComponentTransform().TransformPosition(Transform.GetLocation());
 		RestingTargetLocation = Location;
-		IKTarget = Mesh->GetComponentTransform().TransformPosition(Transform.GetLocation());
-		//IKTarget->AttachToComponent(Mesh, FAttachmentTransformRules::KeepWorldTransform);
-		//auto IKTargetName = FString::Printf(TEXT("IK_"));
-		//IKTargetName.AppendChars(*BoneName.ToString(), BoneName.GetStringLength());
-		//IKTarget->Rename(*IKTargetName);
-		//Mesh->GetOwner()->AddInstanceComponent(IKTarget);
+		IKTarget.SetLocation(Mesh->GetComponentTransform().TransformPosition(Transform.GetLocation()));
 	}
+	LimbSegment->Initialize(BoneName, Transform.GetRotation());
 	return LimbSegment;
 }
 

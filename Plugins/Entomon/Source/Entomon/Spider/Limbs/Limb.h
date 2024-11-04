@@ -11,32 +11,45 @@ class ULimb : public UObject {
 	GENERATED_BODY()
 public:
 	UPROPERTY(VisibleInstanceOnly)
-	TArray<ULimbSegment*> Bones;
+	TArray<ULimbSegment*> Joints;
 	UPROPERTY(VisibleInstanceOnly)
-	FVector IKTarget;
+	FTransform IKTarget;
 	FVector RestingTargetLocation;
+	FVector HipLocation;
+	float MaxLength = 0.f;
 	
 	UPROPERTY(VisibleInstanceOnly)
 		bool bIsRelocating = false;
 
-	void UpdateIK(UPoseableMeshComponent* Mesh, bool bDraw = false);
+	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
+	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
 	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
 
-	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 protected:
-	ULimbSegment* MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, FName HipNameToSearchFor, bool bIsRoot = false);
+	ULimbSegment* MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsRoot = false);
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 
 	
-	bool CCDIK_SmartBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
-	int CCDIK_BackwardBounce(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
-	bool JacobianIK_PseudoInverse(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
+	int Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
+	int Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
+
+	void BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget);
+	void ForwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget);
+	void EvaluateAngles(UPoseableMeshComponent* Mesh);
+
+	FVector GetJointLocation(UPoseableMeshComponent* Mesh, int Id);
+
+	//FVector GetPoleLocation(UPoseableMeshComponent* Mesh);
+	FVector GetPoleNormal(UPoseableMeshComponent* Mesh, int Id);
+	FVector GetPoleAxisVector(UPoseableMeshComponent* Mesh);
+	FVector GetPoleAxisVector_World(UPoseableMeshComponent* Mesh);
+	void CorrectPoles(UPoseableMeshComponent* Mesh);
 	
 	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh);
-	void DrawIK(UPoseableMeshComponent* Mesh);
+	void DrawIK(UPoseableMeshComponent* Mesh, float Threshold);
 
 	FQuat GetRotatorBetween(FVector ToEnd, FVector ToTarget);
 	FQuat GetRotatorBetween(int Id, FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
