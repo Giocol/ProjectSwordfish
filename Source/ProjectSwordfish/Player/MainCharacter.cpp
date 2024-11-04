@@ -21,6 +21,12 @@ void AMainCharacter::ProcessCameraMovementInput(const FVector2D Input) {
 	AddControllerYawInput(Input.Y);
 }
 
+void AMainCharacter::ProcessInteract() {
+}
+
+void AMainCharacter::ProcessUse() {
+}
+
 void AMainCharacter::BeginPlay() {
 	Super::BeginPlay();
 	

@@ -17,6 +17,8 @@ public:
 	
 	void ProcessCharacterMovementInput(FVector2D input);
 	void ProcessCameraMovementInput(FVector2D Input);
+	void ProcessInteract();
+	void ProcessUse();
 
 protected:
 	virtual void BeginPlay() override;
@@ -26,5 +28,8 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	UCameraComponent* Camera = nullptr;
+		UCameraComponent* Camera = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		UStaticMeshComponent* Spear = nullptr;
 };

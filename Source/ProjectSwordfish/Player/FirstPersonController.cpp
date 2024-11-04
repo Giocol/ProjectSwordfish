@@ -34,13 +34,20 @@ void AFirstPersonController::HandleMovement(const FInputActionValue& Value) {
 	characterRef->ProcessCharacterMovementInput(Axis);
 }
 
-void AFirstPersonController::HandleCameraMovement(const FInputActionValue& Value)
-{
+void AFirstPersonController::HandleCameraMovement(const FInputActionValue& Value) {
 	FVector2D Axis = Value.Get<FVector2D>() * Sensitivity;
 	if(!bIsYawInputInverted)
 		Axis.X = -Axis.X;
 	//UE_LOG(LogTemp, Warning, TEXT("Camera input: %f, %f"), Axis.X, Axis.Y);
 	characterRef->ProcessCameraMovementInput(Axis);
+}
+
+void AFirstPersonController::HandleInteraction(const FInputActionValue& Value) {
+	characterRef->ProcessInteract();
+}
+
+void AFirstPersonController::HandleUse(const FInputActionValue& Value) {
+	characterRef->ProcessUse();
 }
 
 void AFirstPersonController::SetupInputMappingContext() const
@@ -50,12 +57,21 @@ void AFirstPersonController::SetupInputMappingContext() const
 }
 
 void AFirstPersonController::SetupInputActions() {
-	if(!characterMovementAction)
+	if(!CharacterMovementAction)
 		UE_LOG(LogTemp, Error, TEXT("Missing character movement action ref! Please plug it in the FirstPersonController BP!"));
 	
-	if(!cameraMovementAction)
+	if(!CameraMovementAction)
 		UE_LOG(LogTemp, Error, TEXT("Missing camera movement action ref! Please plug it in the FirstPersonController BP!"));
+
+	if(!InteractAction)
+		UE_LOG(LogTemp, Error, TEXT("Missing interact action ref! Please plug it in the FirstPersonController BP!"));
+
+	if(!UseAction)
+		UE_LOG(LogTemp, Error, TEXT("Missing use action ref! Please plug it in the FirstPersonController BP!"));
 	
-	inputComponentRef->BindAction(characterMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleMovement);
-	inputComponentRef->BindAction(cameraMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleCameraMovement);
+	inputComponentRef->BindAction(CharacterMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleMovement);
+	inputComponentRef->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleCameraMovement);
+	inputComponentRef->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleInteraction);
+	inputComponentRef->BindAction(UseAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleUse);
+
 }
