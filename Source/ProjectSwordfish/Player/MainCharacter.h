@@ -20,6 +20,8 @@ public:
 	void ProcessInteract();
 	void ProcessUse();
 
+	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(true); };
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -38,4 +40,7 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		UStaticMeshComponent* Spear = nullptr;
+
+	UPROPERTY(VisibleAnywhere, Category = "Fishing")
+		bool bHasSpear = false;
 };

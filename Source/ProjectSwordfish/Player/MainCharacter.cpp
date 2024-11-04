@@ -10,6 +10,8 @@ AMainCharacter::AMainCharacter() {
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->bUsePawnControlRotation = true;
 	Camera->SetupAttachment(RootComponent);
+	Spear = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Spear Mesh"));
+	Spear->SetupAttachment(RootComponent);
 }
 
 void AMainCharacter::ProcessCharacterMovementInput(const FVector2D input) {
@@ -34,11 +36,16 @@ void AMainCharacter::ProcessInteract() {
 }
 
 void AMainCharacter::ProcessUse() {
+	if(bHasSpear)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("I'm throwing the spear!"))
+	}
 }
 
 void AMainCharacter::BeginPlay() {
-	Super::BeginPlay();
+	Spear->SetVisibility(false);
 	
+	Super::BeginPlay();
 }
 
 void AMainCharacter::Tick(float DeltaTime) {
