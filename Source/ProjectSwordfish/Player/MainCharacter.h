@@ -26,10 +26,16 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 
+private:
+	void TraceInteract(FHitResult& OutHitResult) const;
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 		UCameraComponent* Camera = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		float InteractionRange = 20.f;
+	
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		UStaticMeshComponent* Spear = nullptr;
 };
