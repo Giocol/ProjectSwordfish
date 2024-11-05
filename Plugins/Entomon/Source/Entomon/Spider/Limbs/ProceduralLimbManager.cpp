@@ -43,9 +43,9 @@ void UProceduralLimbManager::AutoDetectLimbs(UPoseableMeshComponent* InMesh) {
 		auto boneAsString = Bone.ToString();
 		auto templateName = EndEffectorsName.ToString();
 		FString endName = "_end";
-		auto foundTip = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
-		auto foundEnd = boneAsString.Find(*endName, ESearchCase::CaseSensitive);
-
+		int32 foundTip = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
+		int32 foundEnd = boneAsString.Find(*endName, ESearchCase::CaseSensitive);
+		
 		if(foundTip != INDEX_NONE && foundEnd != INDEX_NONE) {
 			auto LimbName = boneAsString;
 			LimbName.RemoveAt(foundTip, templateName.Len());

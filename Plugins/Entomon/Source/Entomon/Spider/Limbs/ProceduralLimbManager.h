@@ -32,11 +32,15 @@ protected:
 		int IKIterations = 10;
 	UPROPERTY(EditAnywhere, Category = "IK Solver")
 		float IKThreshold = 1.f;
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Auto Limb Finder")
 		FName HipJointsName = "Hip";
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Auto Limb Finder")
 		FName EndEffectorsName = "Tip";
-
+	UPROPERTY(EditDefaultsOnly, Category = "Auto Limb Finder")
+		bool bUsesPoles = true;
+	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="bUsesPoles"))
+		FName PoleName = "Pole";
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 	TArray<ULimb*> Limbs;
 

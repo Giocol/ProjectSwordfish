@@ -25,6 +25,7 @@ public:
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
 	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
 
+	void ResetStates(UPoseableMeshComponent* Mesh);
 protected:
 	ULimbSegment* MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsRoot = false);
 	
@@ -33,14 +34,14 @@ protected:
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 
 	
-	int Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, float Tolerance);
+	int Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 	int Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 
-	void BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget);
-	void ForwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget);
-	void EvaluateAngles(UPoseableMeshComponent* Mesh);
+	void BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget, TArray<FVector>& JointLocations);
+	void ForwardReach(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
+	void EvaluateAngles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 
-	FVector GetJointLocation(UPoseableMeshComponent* Mesh, int Id);
+	FVector GetJointLocation(int Id, TArray<FVector> JointLocations);
 
 	//FVector GetPoleLocation(UPoseableMeshComponent* Mesh);
 	FVector GetPoleNormal(UPoseableMeshComponent* Mesh, int Id);
