@@ -47,7 +47,7 @@ protected:
 	FVector GetPoleNormal(UPoseableMeshComponent* Mesh, int Id);
 	FVector GetPoleAxisVector(UPoseableMeshComponent* Mesh);
 	FVector GetPoleAxisVector_World(UPoseableMeshComponent* Mesh);
-	void CorrectPoles(UPoseableMeshComponent* Mesh);
+	void CorrectPoles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 	
 	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh);
 	void DrawIK(UPoseableMeshComponent* Mesh, float Threshold);
