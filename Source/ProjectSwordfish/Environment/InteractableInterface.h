@@ -3,7 +3,7 @@
 
 class AMainCharacter;
 
-UINTERFACE()
+UINTERFACE(Blueprintable)
 class UInteractableInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -15,7 +15,7 @@ class IInteractableInterface
 
 public:
 	UFUNCTION()
-	virtual void Interact(AMainCharacter* InteractionInstigator);
+		virtual void Interact(AMainCharacter* InteractionInstigator);
 };
 
 inline void IInteractableInterface::Interact(AMainCharacter* InteractionInstigator)

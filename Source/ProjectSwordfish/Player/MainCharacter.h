@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "MainCharacter.generated.h"
 
+class ISpearableInterface;
 class UCameraComponent;
 
 UCLASS()
@@ -21,6 +22,9 @@ public:
 	void ProcessUse();
 
 	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(true); };
+	
+	UFUNCTION()
+	void OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 protected:
 	virtual void BeginPlay() override;
@@ -40,6 +44,12 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		UStaticMeshComponent* Spear = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		float SpearSpeed = 10.f;
+
+	UPROPERTY(VisibleAnywhere, Category = "Fishing")
+		AActor* CurrentlySpearedActor = nullptr;
 
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		bool bHasSpear = false;
