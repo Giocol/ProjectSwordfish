@@ -1,5 +1,6 @@
 ﻿#include "MultiLeggedPawn.h"
 
+#include "GaitPreset.h"
 #include "Components/BoxComponent.h"
 #include "Components/PoseableMeshComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
@@ -37,7 +38,8 @@ void AMultiLeggedPawn::Move(FVector Target) {
 
 void AMultiLeggedPawn::BeginPlay() {
 	TargetLocation = GetActorLocation();
-	
+	LimbManager->AutoDetectLimbs(Mesh);
+	ApplyGaitPreset(GaitPreset);
 	Super::BeginPlay();
 }
 
@@ -49,5 +51,14 @@ void AMultiLeggedPawn::Tick(float DeltaTime) {
 void AMultiLeggedPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AMultiLeggedPawn::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
+	if(!InGaitPreset)
+		return;
+	MovementComponent->MaxSpeed = InGaitPreset->MaxSpeed;
+	MovementComponent->Acceleration = InGaitPreset->Acceleration;
+	MovementComponent->Deceleration = InGaitPreset->Deceleration;
+	LimbManager->ApplyGaitPreset(InGaitPreset);
 }
 

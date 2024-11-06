@@ -2,6 +2,7 @@
 
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
+#include "Entomon/Spider/GaitPreset.h"
 
 UProceduralLimbManager::UProceduralLimbManager() {
 	//AutoDetectLimbs();
@@ -11,25 +12,52 @@ UProceduralLimbManager::UProceduralLimbManager() {
 
 void UProceduralLimbManager::BeginPlay() {
 	Super::BeginPlay();
-
-	if(auto o = Cast<AMultiLeggedPawn>(GetOwner()))
-		AutoDetectLimbs(o->GetMesh());
-	//FindLegs();
 }
 
 void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
+	float LastWalkCycleCounter = WalkCycleCounter;
+	if(WalkCycleDuration != 0)
+		WalkCycleCounter += DeltaTime / WalkCycleDuration;
+	if(WalkCycleCounter > 1.f)
+		WalkCycleCounter -= FMath::Floor(WalkCycleCounter);
+	TArray<ULimb*> UpdatedLimbs;
 	for(int i = 0; i < Limbs.Num(); ++i) {
-		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
-		FVector Displacement;
-		if(Limbs[i]->PrefersTargetRelocation(Mesh, 60.f, Displacement)) {
-			// GEngine->AddOnScreenDebugMessage(i, .1f, FColor::Emerald, TEXT("I want to relocate!"));
-			Displacement = Displacement.ProjectOnToNormal(FVector::UpVector);
-			FTransform Transform = Mesh->GetComponentTransform();
-			FVector WorldSpaceLocation = Transform.TransformPosition(Limbs[i]->RestingTargetLocation) - Transform.TransformVector(1 * Displacement);
-			Limbs[i]->IKTarget.SetLocation(WorldSpaceLocation);
+		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
+			|| WalkCycleCounter < LastWalkCycleCounter && (LastWalkCycleCounter > Limbs[i]->GaitOffset)) {
+			FVector Target = Mesh->GetComponentTransform().TransformPosition(Limbs[i]->RestingTargetLocation);
+			Limbs[i]->MoveTo(Target, DeltaTime);
+			UpdatedLimbs.Add(Limbs[i]);
 		}
+		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
+	}
+	if(UpdatedLimbs.Num() > 0) {
+		int i = 0;
 	}
 }
+
+void UProceduralLimbManager::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
+	WalkCycleDuration = InGaitPreset->WalkCycleDuration;
+	for(auto Limb : Limbs) {
+		bool bFoundMatch = true;
+		for(auto Gait : InGaitPreset->PerLimbGaitInfo) {
+			bFoundMatch = true;
+			auto name = Limb->GetName();
+			for(auto Keyword : Gait.Keywords) {
+				auto r = Limb->GetName().Find(Keyword.ToString());
+				if(r == INDEX_NONE) {
+					bFoundMatch = false;
+					break;
+				}
+			}
+			if(bFoundMatch) {
+				Limb->GaitOffset = Gait.GaitOffset; break;
+			}
+		}
+		if(!bFoundMatch)
+			UE_LOG(LogTemp, Error, TEXT("Error: Could not find limb with corresponding substrings"));
+	}
+}
+
 
 void UProceduralLimbManager::AutoDetectLimbs(UPoseableMeshComponent* InMesh) {
 	if(!InMesh) return;

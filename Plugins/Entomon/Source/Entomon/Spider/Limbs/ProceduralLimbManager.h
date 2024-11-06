@@ -8,12 +8,11 @@
 
 #include "ProceduralLimbManager.generated.h"
 
+class UGaitPreset;
 
 UCLASS(ClassGroup=(Locomotion), meta=(BlueprintSpawnableComponent))
-class ENTOMON_API UProceduralLimbManager : public UActorComponent
-{
+class ENTOMON_API UProceduralLimbManager : public UActorComponent {
 	GENERATED_BODY()
-
 
 public:
 	UProceduralLimbManager();
@@ -25,8 +24,16 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
+	TArray<ULimb*> GetLimbs() { return Limbs; }
+	void ApplyGaitPreset(UGaitPreset* GaitPreset);
+	
 	void AutoDetectLimbs(UPoseableMeshComponent* InMesh);
 protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
+		TArray<ULimb*> Limbs;
+	float WalkCycleCounter = 0.f;
+	
+	float WalkCycleDuration = 0.f;
 	
 	UPROPERTY(EditAnywhere, Category = "IK Solver")
 		int IKIterations = 10;
@@ -40,9 +47,6 @@ protected:
 		bool bUsesPoles = true;
 	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="bUsesPoles"))
 		FName PoleName = "Pole";
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-	TArray<ULimb*> Limbs;
 
 	UPROPERTY()
 	class UPoseableMeshComponent* Mesh;

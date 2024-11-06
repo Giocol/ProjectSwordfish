@@ -14,17 +14,20 @@ public:
 	TArray<ULimbSegment*> Joints;
 	UPROPERTY(VisibleInstanceOnly)
 	FTransform IKTarget;
+	
 	FVector RestingTargetLocation;
 	FVector HipLocation;
 	float MaxLength = 0.f;
 	
-	UPROPERTY(VisibleInstanceOnly)
-		bool bIsRelocating = false;
+	float GaitOffset = -1;
+	
+	bool bHasRelocated = false;
 
 	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
-	bool PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement);
+	void MoveTo(FVector Target, double DeltaTime);
 
+	
 	void ResetStates(UPoseableMeshComponent* Mesh);
 protected:
 	ULimbSegment* MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);

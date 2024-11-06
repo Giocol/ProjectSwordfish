@@ -4,6 +4,40 @@
 #include "Components/PoseableMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
+bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
+	if(!Mesh) return false;
+	
+	Joints.Add(MakeJoint(Mesh, EndEffectorName, true));
+	FName CurrentBone = EndEffectorName;
+	while(true) {
+		CurrentBone = Mesh->GetParentBone(CurrentBone);
+		if(CurrentBone.IsNone())
+			return false;
+		auto boneAsString = CurrentBone.ToString();
+		auto templateName = HipNameToSearchFor.ToString();
+		auto s = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
+		Joints.Add(MakeJoint(Mesh, CurrentBone));
+		if(s != INDEX_NONE)
+			break;
+	}
+	if(Joints.Num() > 1) {
+		FQuat Rot = Joints[1]->GetState();
+		IKTarget.SetRotation(FQuat::MakeFromRotationVector(Rot.GetUpVector() * PI / 2) * Rot);
+	}
+	for(int i = 1; i < Joints.Num(); i++) {
+		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
+		FVector NextLocation = Mesh->GetBoneLocationByName(Joints[i-1]->GetName(), EBoneSpaces::ComponentSpace);
+		FVector Offset = NextLocation - CurrentLocation;
+		float Length = Offset.Length();
+		Joints[i]->SetLength(Length);
+		MaxLength += Length;
+	}
+	HipLocation = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
+	// Pole
+	
+	
+	return true;
+}
 
 void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw) {
 	auto it = Solve_FABRIK(Mesh, Threshold, Iterations);
@@ -12,6 +46,11 @@ void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iteratio
 	if (bDraw) {
 		DrawIK(Mesh, Threshold);
 	}
+}
+
+void ULimb::MoveTo(FVector Target, double DeltaTime) {
+	IKTarget.SetLocation(Target);
+	//bHasRelocated = true;
 }
 
 int ULimb::Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
@@ -240,59 +279,13 @@ FVector ULimb::GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh
 	return  Target - GetEndLocation(Mesh, InSpace);
 }
 
-bool ULimb::PrefersTargetRelocation(UPoseableMeshComponent* Mesh, float MaxDistance, FVector& Displacement) {
-	if(!Mesh)
-		return false;
-	FVector CurrentEndEffectorPosition = Mesh->GetBoneLocationByName(Joints[0]->GetName(), EBoneSpaces::ComponentSpace);
-	Displacement = CurrentEndEffectorPosition - RestingTargetLocation;
-	float Distance = Displacement.Length();
-	if(Distance > MaxDistance) {
-		Displacement = Displacement.GetClampedToMaxSize(MaxDistance);
-		return true;
-	}
-	return false;
-}
+
 
 void ULimb::ResetStates(UPoseableMeshComponent* Mesh) {
 	for(int i = Joints.Num() - 1; i > 0; --i) {
 		Joints[i]->SetState(Joints[i]->GetRestState());
 		Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
 	}
-}
-
-bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
-	if(!Mesh) return false;
-	
-	Joints.Add(MakeJoint(Mesh, EndEffectorName, true));
-	FName CurrentBone = EndEffectorName;
-	while(true) {
-		CurrentBone = Mesh->GetParentBone(CurrentBone);
-		if(CurrentBone.IsNone())
-			return false;
-		auto boneAsString = CurrentBone.ToString();
-		auto templateName = HipNameToSearchFor.ToString();
-		auto s = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
-		Joints.Add(MakeJoint(Mesh, CurrentBone));
-		if(s != INDEX_NONE)
-			break;
-	}
-	if(Joints.Num() > 1) {
-		FQuat Rot = Joints[1]->GetState();
-		IKTarget.SetRotation(FQuat::MakeFromRotationVector(Rot.GetUpVector() * PI / 2) * Rot);
-	}
-	for(int i = 1; i < Joints.Num(); i++) {
-		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
-		FVector NextLocation = Mesh->GetBoneLocationByName(Joints[i-1]->GetName(), EBoneSpaces::ComponentSpace);
-		FVector Offset = NextLocation - CurrentLocation;
-		float Length = Offset.Length();
-		Joints[i]->SetLength(Length);
-		MaxLength += Length;
-	}
-	HipLocation = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
-	// Pole
-	
-	
-	return true;
 }
 
 ULimbSegment* ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd) {

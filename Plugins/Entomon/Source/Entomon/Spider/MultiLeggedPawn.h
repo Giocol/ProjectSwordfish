@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "MultiLeggedPawn.generated.h"
 
+class UGaitPreset;
 class UFloatingPawnMovement;
 class UMovementComponent;
 class UProceduralLimbManager;
@@ -31,6 +32,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void ApplyGaitPreset(UGaitPreset* InGaitPreset);
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UFloatingPawnMovement* MovementComponent;
@@ -38,7 +41,8 @@ protected:
 		float FacingBias = 0.1f; // Defines the importance of facing the target the pawn wants to approach
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		float RotationSpeed = 360.f;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		UGaitPreset* GaitPreset;
 	FVector TargetLocation;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
@@ -50,4 +54,5 @@ protected:
 		class UBoxComponent* Collision;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		USceneComponent* Root;
+	
 };
