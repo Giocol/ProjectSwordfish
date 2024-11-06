@@ -37,6 +37,8 @@ protected:
 	int Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 	int Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 
+	void InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
+
 	void BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget, TArray<FVector>& JointLocations);
 	void ForwardReach(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 	void EvaluateAngles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);

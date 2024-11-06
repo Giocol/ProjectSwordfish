@@ -56,7 +56,7 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	FVector StartJoint = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
 	FVector StartToTarget = ComponentSpaceTarget - StartJoint;
 	float dist = StartToTarget.Length();
-	if(dist > MaxLength) {
+	if(dist + Threshold > MaxLength) {
 		// TODO: Make each joint stretch towards the target.
 		for(int i = Joints.Num() - 1; i > 0; --i) {
 			FVector Fwd = -Joints[i]->GetState().GetRightVector();
@@ -72,12 +72,7 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 
 	
 	TArray<FVector> JointLocations;
-	JointLocations.Reserve(Joints.Num());
-	for(int i = 0; i < Joints.Num(); ++i) {
-		FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
-		Location += FVector::UpVector * 100;
-		JointLocations.Add(Location);
-	}
+	InitializeIK(Mesh, JointLocations);
 	//CorrectPoles(Mesh);
 	
 	int k;
@@ -88,12 +83,22 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 		float sqrDist = (ComponentSpaceTarget - JointLocations[0]).SquaredLength();
 		if(sqrDist < Threshold * Threshold)
 			break;
-		for(int i = 0; i < Joints.Num(); ++i) {
-			FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
-			JointLocations[i] = Location;
-		}
+		//for(int i = 0; i < Joints.Num(); ++i) {
+		//	FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
+		//	JointLocations[i] = Location;
+		//}
 	}
 	return k;
+}
+
+void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations) {
+	JointLocations.Reserve(Joints.Num());
+	for(int i = 0; i < Joints.Num(); ++i) {
+		FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
+		FVector PoleAxis = GetPoleAxisVector(Mesh);
+		Location += FVector::UpVector * 100;
+		JointLocations.Add(Location);
+	}
 }
 
 void ULimb::BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget, TArray<FVector>& JointLocations) {
