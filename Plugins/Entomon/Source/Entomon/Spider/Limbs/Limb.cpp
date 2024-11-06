@@ -56,14 +56,12 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	FVector StartJoint = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
 	FVector StartToTarget = ComponentSpaceTarget - StartJoint;
 	float dist = StartToTarget.Length();
-	if(dist + Threshold > MaxLength) {
-		// TODO: Make each joint stretch towards the target.
+	if(dist > MaxLength + Threshold) {
 		for(int i = Joints.Num() - 1; i > 0; --i) {
 			FVector Fwd = -Joints[i]->GetState().GetRightVector();
 			FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
 			FVector TgtFwd = (ComponentSpaceTarget - CurrentLocation).GetSafeNormal();
 			FQuat DeltaRotation = FQuat::FindBetween(Fwd, TgtFwd);
-			float angle = FMath::RadiansToDegrees(DeltaRotation.GetAngle());
 			Joints[i]->SetState(DeltaRotation * Joints[i]->GetState());
 			Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
 		}
@@ -80,23 +78,18 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 		BackwardReach(Mesh, ComponentSpaceTarget, JointLocations);
 		ForwardReach(Mesh, JointLocations);
 		EvaluateAngles(Mesh, JointLocations);
-		float sqrDist = (ComponentSpaceTarget - JointLocations[0]).SquaredLength();
-		if(sqrDist < Threshold * Threshold)
-			break;
-		//for(int i = 0; i < Joints.Num(); ++i) {
-		//	FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
-		//	JointLocations[i] = Location;
-		//}
+		float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, EBoneSpaces::ComponentSpace).SquaredLength();
+		if(sqrDist < Threshold * Threshold) 
+			return k;
 	}
 	return k;
 }
 
 void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations) {
 	JointLocations.Reserve(Joints.Num());
-	for(int i = 0; i < Joints.Num(); ++i) {
+	for(int i = Joints.Num() - 1; i >= 0; --i) {
 		FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
-		FVector PoleAxis = GetPoleAxisVector(Mesh);
-		Location += FVector::UpVector * 100;
+		Location += IKTarget.GetRotation().GetForwardVector() * 100;
 		JointLocations.Add(Location);
 	}
 }
@@ -283,7 +276,8 @@ bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FNam
 			break;
 	}
 	if(Joints.Num() > 1) {
-		IKTarget.SetRotation(Joints[1]->GetState());
+		FQuat Rot = Joints[1]->GetState();
+		IKTarget.SetRotation(FQuat::MakeFromRotationVector(Rot.GetUpVector() * PI / 2) * Rot);
 	}
 	for(int i = 1; i < Joints.Num(); i++) {
 		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
