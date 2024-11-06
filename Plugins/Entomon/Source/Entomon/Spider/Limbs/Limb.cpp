@@ -214,15 +214,16 @@ void ULimb::DrawIK(UPoseableMeshComponent* Mesh, float Threshold) {
 	DrawDebugLine(Mesh->GetWorld(), Start, Start + EndOffset, FColor::Blue);
 	// DrawDebugSphere(Mesh->GetWorld(), Start + EndOffset + GetPoleNormal(Mesh, 0) * 100, 10.f, 4, FColor::Orange);
 	DrawDebugBox(Mesh->GetWorld(), IKTarget.GetLocation(), FVector::OneVector * 2 * Threshold, FColor::Green);
-	DrawDebugDirectionalArrow(Mesh->GetWorld(), IKTarget.GetLocation(), IKTarget.GetLocation() + IKTarget.GetRotation().GetForwardVector() * 35.f, 50.f,
+	//DrawDebugBox(Mesh->GetWorld(), Transform.TransformPosition(RestingTargetLocation), FVector::OneVector * 10.f, FColor::Orange);
+	DrawDebugDirectionalArrow(Mesh->GetWorld(), IKTarget.GetLocation(), IKTarget.GetLocation() + Transform.TransformVector(IKTarget.GetRotation().GetForwardVector()) * 35.f, 50.f,
 		FColor::Purple, false, -1, 0, 1.5f);
-	for (int i = 1; i < Joints.Num(); i++) {
-		auto CurrentLocationWorld = GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace);
-		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Joints[i]->GetState().GetRotationAxis()) * 20.f, FColor::Red);
-		DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Joints[i]->GetRestState().GetRotationAxis()) * 20.f, FColor::Green);
-		//DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + GetPoleNormal(Mesh, i) * 20.f, FColor::Turquoise);
-		//DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + (IKTarget.GetRotation().GetUpVector()).GetSafeNormal() * 20.f, FColor::Silver);
-	}
+	// for (int i = 1; i < Joints.Num(); i++) {
+	// 	auto CurrentLocationWorld = GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace);
+	// 	DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Joints[i]->GetState().GetRotationAxis()) * 20.f, FColor::Red);
+	// 	DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + Transform.TransformVector(Joints[i]->GetRestState().GetRotationAxis()) * 20.f, FColor::Green);
+	// 	//DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + GetPoleNormal(Mesh, i) * 20.f, FColor::Turquoise);
+	// 	//DrawDebugLine(Mesh->GetWorld(), CurrentLocationWorld, CurrentLocationWorld + (IKTarget.GetRotation().GetUpVector()).GetSafeNormal() * 20.f, FColor::Silver);
+	// }
 }
 
 FVector ULimb::GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
@@ -262,7 +263,7 @@ void ULimb::ResetStates(UPoseableMeshComponent* Mesh) {
 bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
 	if(!Mesh) return false;
 	
-	Joints.Add(MakeNode(Mesh, EndEffectorName, true));
+	Joints.Add(MakeJoint(Mesh, EndEffectorName, true));
 	FName CurrentBone = EndEffectorName;
 	while(true) {
 		CurrentBone = Mesh->GetParentBone(CurrentBone);
@@ -271,7 +272,7 @@ bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FNam
 		auto boneAsString = CurrentBone.ToString();
 		auto templateName = HipNameToSearchFor.ToString();
 		auto s = boneAsString.Find(*templateName, ESearchCase::CaseSensitive);
-		Joints.Add(MakeNode(Mesh, CurrentBone));
+		Joints.Add(MakeJoint(Mesh, CurrentBone));
 		if(s != INDEX_NONE)
 			break;
 	}
@@ -294,13 +295,13 @@ bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FNam
 	return true;
 }
 
-ULimbSegment* ULimb::MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsRoot) {
+ULimbSegment* ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd) {
 	auto Transform = Mesh->GetBoneTransformByName(BoneName, EBoneSpaces::ComponentSpace);
 	auto LimbSegment = NewObject<ULimbSegment>(this, ULimbSegment::StaticClass(), BoneName);
-	if(bIsRoot) {
+	if(bIsEnd) {
 		FVector Location = Mesh->GetComponentTransform().TransformPosition(Transform.GetLocation());
-		RestingTargetLocation = Location;
-		IKTarget.SetLocation(Mesh->GetComponentTransform().TransformPosition(Transform.GetLocation()));
+		RestingTargetLocation = Transform.GetLocation();
+		IKTarget.SetLocation(Location);
 	}
 	LimbSegment->Initialize(BoneName, Transform.GetRotation());
 	return LimbSegment;

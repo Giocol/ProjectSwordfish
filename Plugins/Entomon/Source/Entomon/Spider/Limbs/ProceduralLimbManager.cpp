@@ -19,14 +19,15 @@ void UProceduralLimbManager::BeginPlay() {
 
 void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	for(int i = 0; i < Limbs.Num(); ++i) {
-		Limbs[i]->UpdateIK(Mesh,IKThreshold, IKIterations, true);
-		// FVector Displacement;
-		// if(Limbs[i]->PrefersTargetRelocation(Mesh, 15.f, Displacement)) {
-		// 	FVector ComponentSpaceLocation = Limbs[i]->RestingTargetLocation - 1 * Displacement;
-		// 	FVector WorldSpaceLocation = Mesh->GetComponentTransform().TransformPosition(ComponentSpaceLocation);
-		// 	Limbs[i]->IKTarget->SetWorldLocation(WorldSpaceLocation);
-		// 	GEngine->AddOnScreenDebugMessage(i, .1f, FColor::Emerald, TEXT("I want to relocate!"));
-		// }
+		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
+		FVector Displacement;
+		if(Limbs[i]->PrefersTargetRelocation(Mesh, 60.f, Displacement)) {
+			// GEngine->AddOnScreenDebugMessage(i, .1f, FColor::Emerald, TEXT("I want to relocate!"));
+			Displacement = Displacement.ProjectOnToNormal(FVector::UpVector);
+			FTransform Transform = Mesh->GetComponentTransform();
+			FVector WorldSpaceLocation = Transform.TransformPosition(Limbs[i]->RestingTargetLocation) - Transform.TransformVector(1 * Displacement);
+			Limbs[i]->IKTarget.SetLocation(WorldSpaceLocation);
+		}
 	}
 }
 

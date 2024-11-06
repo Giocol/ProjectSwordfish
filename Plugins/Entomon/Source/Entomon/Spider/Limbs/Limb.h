@@ -27,7 +27,7 @@ public:
 
 	void ResetStates(UPoseableMeshComponent* Mesh);
 protected:
-	ULimbSegment* MakeNode(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsRoot = false);
+	ULimbSegment* MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);

@@ -6,6 +6,8 @@
 #include "GameFramework/Pawn.h"
 #include "MultiLeggedPawn.generated.h"
 
+class UFloatingPawnMovement;
+class UMovementComponent;
 class UProceduralLimbManager;
 
 UCLASS()
@@ -17,17 +19,29 @@ public:
 	AMultiLeggedPawn();
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
-	
+
+	UFUNCTION(BlueprintCallable)
+	void SetTargetLocation(FVector InLocation) { TargetLocation = InLocation; }
 protected:
 	virtual void BeginPlay() override;
 
+	void Move(FVector Target);
 public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		UFloatingPawnMovement* MovementComponent;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.0001f, UIMax = 1.f))
+		float FacingBias = 0.1f; // Defines the importance of facing the target the pawn wants to approach
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		float RotationSpeed = 360.f;
+	
+	FVector TargetLocation;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
