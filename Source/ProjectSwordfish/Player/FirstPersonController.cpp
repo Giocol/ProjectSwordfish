@@ -50,6 +50,14 @@ void AFirstPersonController::HandleUse(const FInputActionValue& Value) {
 	characterRef->ProcessUse();
 }
 
+void AFirstPersonController::StartPull(const FInputActionValue& Value) {
+	characterRef->SetIsPulling(true);
+}
+
+void AFirstPersonController::EndPull(const FInputActionValue& Value) {
+	characterRef->SetIsPulling(false);
+}
+
 void AFirstPersonController::SetupInputMappingContext() const
 {
 	inputSubsystemRef->ClearAllMappings();
@@ -73,5 +81,6 @@ void AFirstPersonController::SetupInputActions() {
 	inputComponentRef->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleCameraMovement);
 	inputComponentRef->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleInteraction);
 	inputComponentRef->BindAction(UseAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleUse);
-
+	inputComponentRef->BindAction(PullAction, ETriggerEvent::Ongoing, this, &AFirstPersonController::StartPull);
+	inputComponentRef->BindAction(PullAction, ETriggerEvent::Triggered, this, &AFirstPersonController::EndPull);
 }

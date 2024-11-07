@@ -26,6 +26,8 @@ protected:
 	void HandleCameraMovement(const FInputActionValue& Value);
 	void HandleInteraction(const FInputActionValue& Value);
 	void HandleUse(const FInputActionValue& Value);
+	void StartPull(const FInputActionValue& Value);
+	void EndPull(const FInputActionValue& Value);
 
 private:
 	void InitSystems();
@@ -52,6 +54,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
 		TObjectPtr<UInputAction> UseAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
+		TObjectPtr<UInputAction> PullAction = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions | Camera", meta = (AllowPrivateAccess = "true"));
 		TObjectPtr<UInputAction> CameraMovementAction = nullptr;

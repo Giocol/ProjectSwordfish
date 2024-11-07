@@ -12,7 +12,7 @@ AMainCharacter::AMainCharacter() {
 	Camera->bUsePawnControlRotation = true;
 	Camera->SetupAttachment(RootComponent);
 	Spear = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Spear Mesh"));
-	Spear->SetupAttachment(RootComponent);
+	Spear->SetupAttachment(Camera);
 	Spear->OnComponentHit.AddDynamic(this, &AMainCharacter::OnSpearHit);
 }
 
@@ -48,8 +48,17 @@ void AMainCharacter::ProcessUse() {
 	}
 }
 
+void AMainCharacter::Pull(float DeltaTime) {
+	//todo: don't move on z
+	CurrentlySpearedActor->SetActorLocation(
+		FMath::Lerp(
+			CurrentlySpearedActor->GetActorLocation(),
+			GetActorLocation(),
+			DeltaTime *PullSpeed));
+}
+
 void AMainCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse, const FHitResult& Hit) {
+                                FVector NormalImpulse, const FHitResult& Hit) {
 
 	if(OtherActor->Implements<USpearableInterface>()) {
 		//NOTE: this only works for C++, if the interface is implemented directly in blueprint weird shit happens, look into it!
@@ -70,6 +79,9 @@ void AMainCharacter::BeginPlay() {
 
 void AMainCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
+
+	if(IsValid(CurrentlySpearedActor) && bIsPulling)
+		Pull(DeltaTime);
 }
 
 void AMainCharacter::TraceInteract(FHitResult& OutHitResult) const

@@ -21,7 +21,10 @@ public:
 	void ProcessInteract();
 	void ProcessUse();
 
-	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(true); };
+	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(State); };
+	void SetIsPulling(bool State) { if(IsValid(CurrentlySpearedActor)) bIsPulling = State; }
+
+	void Pull(float DeltaTime);
 	
 	UFUNCTION()
 	void OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
@@ -48,9 +51,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		float SpearSpeed = 10.f;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		float PullSpeed = 1.f;
+
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		AActor* CurrentlySpearedActor = nullptr;
 
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		bool bHasSpear = false;
+
+	UPROPERTY(VisibleAnywhere, Category = "Fishing")
+		bool bIsPulling = false;
 };
