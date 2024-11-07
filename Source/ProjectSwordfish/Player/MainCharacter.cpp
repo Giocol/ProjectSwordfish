@@ -56,6 +56,9 @@ void AMainCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(OtherActor);
 		OverlappedSpearable->OnSpeared(this);
 		CurrentlySpearedActor = OtherActor;
+
+		Spear->SetSimulatePhysics(false);
+		Spear->AttachToComponent(CurrentlySpearedActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
 	}
 }
 
