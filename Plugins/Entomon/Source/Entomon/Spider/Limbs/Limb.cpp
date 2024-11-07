@@ -20,10 +20,6 @@ bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FNam
 		if(s != INDEX_NONE)
 			break;
 	}
-	if(Joints.Num() > 1) {
-		FQuat Rot = Joints[1]->GetState();
-		IKTarget.SetRotation(FQuat::MakeFromRotationVector(Rot.GetUpVector() * PI / 2) * Rot);
-	}
 	for(int i = 1; i < Joints.Num(); i++) {
 		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
 		FVector NextLocation = Mesh->GetBoneLocationByName(Joints[i-1]->GetName(), EBoneSpaces::ComponentSpace);
@@ -48,14 +44,14 @@ void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iteratio
 	}
 }
 
-void ULimb::MoveTo(FVector Target, double DeltaTime) {
-	IKTarget.SetLocation(Target);
+void ULimb::MoveTo(FVector Target) {
+	CurrentIK.SetLocation(Target);
 	//bHasRelocated = true;
 }
 
 int ULimb::Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
 	auto Transform = Mesh->GetComponentTransform();
-	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(IKTarget.GetLocation());
+	FVector ComponentSpaceTarget = Transform.InverseTransformPosition(CurrentIK.GetLocation());
 	auto Space = EBoneSpaces::ComponentSpace;
 	
 	
@@ -91,7 +87,7 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	// ResetStates(Mesh);
 
 	FTransform ToComponentSpace = Mesh->GetComponentTransform();
-	FVector ComponentSpaceTarget = ToComponentSpace.InverseTransformPosition(IKTarget.GetLocation());
+	FVector ComponentSpaceTarget = ToComponentSpace.InverseTransformPosition(CurrentIK.GetLocation());
 	FVector StartJoint = Mesh->GetBoneLocationByName(Joints.Last()->GetName(), EBoneSpaces::ComponentSpace);
 	FVector StartToTarget = ComponentSpaceTarget - StartJoint;
 	float dist = StartToTarget.Length();
@@ -110,6 +106,7 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	
 	TArray<FVector> JointLocations;
 	InitializeIK(Mesh, JointLocations);
+	ResetRoll(Mesh);
 	//CorrectPoles(Mesh);
 	
 	int k;
@@ -126,10 +123,26 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 
 void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations) {
 	JointLocations.Reserve(Joints.Num());
+	FVector LeafUp = CurrentIK.UpVector;
 	for(int i = Joints.Num() - 1; i >= 0; --i) {
 		FVector Location = Mesh->GetBoneLocationByName(Joints[i]->GetName(), EBoneSpaces::ComponentSpace);
-		Location += IKTarget.GetRotation().GetForwardVector() * 100;
+		Location += LeafUp * 100;
 		JointLocations.Add(Location);
+	}
+}
+
+void ULimb::ResetRoll(UPoseableMeshComponent* Mesh) {
+
+	for(int i = 1; i < Joints.Num(); i++) {
+		FVector CurrentUp = Joints[i]->GetState().GetForwardVector();
+		FVector CurrentForward = Joints[i]->GetState().GetRightVector();
+		FVector RestUp = Joints[i]->GetRestState().GetForwardVector();
+		FVector NewUp = FVector::VectorPlaneProject(RestUp, CurrentForward);
+		
+		FQuat RollCorrection = FQuat::FindBetween(CurrentUp, NewUp);
+		float angle = FMath::RadiansToDegrees(RollCorrection.GetAngle());
+		Joints[i]->SetState(RollCorrection * Joints[i]->GetState());
+		Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
 	}
 }
 
@@ -204,8 +217,8 @@ FVector ULimb::GetPoleAxisVector_World(UPoseableMeshComponent* Mesh) {
 }
 
 FVector ULimb::GetPoleNormal(UPoseableMeshComponent* Mesh, int Id) {
-	auto Axis = (GetPoleAxisVector_World(Mesh) - IKTarget.GetLocation()).GetSafeNormal();
-	auto PoleDir = IKTarget.GetRotation().GetUpVector();
+	auto Axis = (GetPoleAxisVector_World(Mesh) - CurrentIK.GetLocation()).GetSafeNormal();
+	auto PoleDir = CurrentIK.UpVector;
 	FVector Result = PoleDir.Cross(Axis);
 	// if(Result.Z < 0)
 	// 	Result = -Result;
@@ -252,9 +265,9 @@ void ULimb::DrawIK(UPoseableMeshComponent* Mesh, float Threshold) {
 	FVector Start = GetCurrentLocation(Joints.Num()-1, Mesh, EBoneSpaces::WorldSpace);
 	DrawDebugLine(Mesh->GetWorld(), Start, Start + EndOffset, FColor::Blue);
 	// DrawDebugSphere(Mesh->GetWorld(), Start + EndOffset + GetPoleNormal(Mesh, 0) * 100, 10.f, 4, FColor::Orange);
-	DrawDebugBox(Mesh->GetWorld(), IKTarget.GetLocation(), FVector::OneVector * 2 * Threshold, FColor::Green);
+	DrawDebugBox(Mesh->GetWorld(), CurrentIK.GetLocation(), FVector::OneVector * 2 * Threshold, FColor::Green);
 	//DrawDebugBox(Mesh->GetWorld(), Transform.TransformPosition(RestingTargetLocation), FVector::OneVector * 10.f, FColor::Orange);
-	DrawDebugDirectionalArrow(Mesh->GetWorld(), IKTarget.GetLocation(), IKTarget.GetLocation() + Transform.TransformVector(IKTarget.GetRotation().GetForwardVector()) * 35.f, 50.f,
+	DrawDebugDirectionalArrow(Mesh->GetWorld(), CurrentIK.GetLocation(), CurrentIK.GetLocation() + Transform.TransformVector(CurrentIK.UpVector) * 35.f, 50.f,
 		FColor::Purple, false, -1, 0, 1.5f);
 	// for (int i = 1; i < Joints.Num(); i++) {
 	// 	auto CurrentLocationWorld = GetCurrentLocation(i, Mesh, EBoneSpaces::WorldSpace);
@@ -289,14 +302,15 @@ void ULimb::ResetStates(UPoseableMeshComponent* Mesh) {
 }
 
 ULimbSegment* ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd) {
-	auto Transform = Mesh->GetBoneTransformByName(BoneName, EBoneSpaces::ComponentSpace);
+	auto BoneTransform = Mesh->GetBoneTransformByName(BoneName, EBoneSpaces::ComponentSpace);
 	auto LimbSegment = NewObject<ULimbSegment>(this, ULimbSegment::StaticClass(), BoneName);
 	if(bIsEnd) {
-		FVector Location = Mesh->GetComponentTransform().TransformPosition(Transform.GetLocation());
-		RestingTargetLocation = Transform.GetLocation();
-		IKTarget.SetLocation(Location);
+		auto MeshTransform = Mesh->GetComponentTransform();
+		FVector Location = MeshTransform.TransformPosition(BoneTransform.GetLocation());
+		RestingTargetLocation = BoneTransform.GetLocation();
+		CurrentIK = FIKTarget(Location, MeshTransform.GetRotation());
 	}
-	LimbSegment->Initialize(BoneName, Transform.GetRotation());
+	LimbSegment->Initialize(BoneName, BoneTransform.GetRotation());
 	return LimbSegment;
 }
 

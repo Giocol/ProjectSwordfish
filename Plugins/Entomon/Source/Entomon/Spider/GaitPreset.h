@@ -7,11 +7,23 @@
 #include "GaitPreset.generated.h"
 
 USTRUCT(Blueprintable)
+struct FKeywordOption {
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+		TArray<FName> Names;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(InlineEditConditionToggle))
+		bool bUseLocator = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(EditCondition="bUseLocator"))
+		TArray<FName> Locators;
+};
+
+USTRUCT(Blueprintable)
 struct FGait {
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-		TArray<FName> Keywords;
+		FKeywordOption Keywords;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (UIMin=0.f, UIMax=1.f))
 		float GaitOffset = 0.f;
 };

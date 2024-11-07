@@ -1,5 +1,6 @@
 ﻿#include "ProceduralLimbManager.h"
 
+#include "LimbSegment.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
 #include "Entomon/Spider/GaitPreset.h"
@@ -24,34 +25,41 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
 			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter)) {
 			FVector RestingPositionWorld = Mesh->GetComponentTransform().TransformPosition(Limbs[i]->RestingTargetLocation);
-			FVector ToRest = RestingPositionWorld - Limbs[i]->IKTarget.GetLocation();
-			Limbs[i]->MoveTo(Limbs[i]->IKTarget.GetLocation() + 1.5 * ToRest, DeltaTime);
+			FVector ToRest = RestingPositionWorld - Limbs[i]->CurrentIK.GetLocation();
+			Limbs[i]->MoveTo(Limbs[i]->CurrentIK.GetLocation() + 1.5 * ToRest);
 		}
 		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
 	}
+	FVector AverageUp = GetAverageLimbUpVector();
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + AverageUp * 150,
+		100, FColor::Turquoise, false, -1, 0, 5);
 }
 
 void UProceduralLimbManager::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 	WalkCycleDuration = InGaitPreset->WalkCycleDuration;
 	for(auto Limb : Limbs) {
-		bool bFoundMatch = true;
 		for(auto Gait : InGaitPreset->PerLimbGaitInfo) {
-			bFoundMatch = true;
 			auto name = Limb->GetName();
-			for(auto Keyword : Gait.Keywords) {
-				auto r = Limb->GetName().Find(Keyword.ToString());
-				if(r == INDEX_NONE) {
-					bFoundMatch = false;
-					break;
+			
+			bool foundName = false;
+			bool foundLocator = false;
+
+			for (auto Name : Gait.Keywords.Names) {
+				foundName = Limb->GetName().Find(Name.ToString()) != INDEX_NONE ? true : false;
+				if(foundName) break;
+			}
+			if(Gait.Keywords.bUseLocator) {
+				for (auto Locator : Gait.Keywords.Locators) {
+					foundLocator = Limb->GetName().Find(Locator.ToString()) != INDEX_NONE ? true : false;
+					if(foundLocator) break;
 				}
 			}
-			if(bFoundMatch) {
+			
+			if((foundName && foundLocator) || (foundName && !Gait.Keywords.bUseLocator)) {
 				Limb->GaitOffset = Gait.GaitOffset;
 				break;
 			}
 		}
-		if(!bFoundMatch)
-			UE_LOG(LogTemp, Error, TEXT("Error: Could not find limb with corresponding substrings"));
 	}
 }
 
@@ -89,4 +97,21 @@ void UProceduralLimbManager::AutoDetectLimbs(UPoseableMeshComponent* InMesh) {
 	// 		Leg->Bones[i].Length = Displacement.Length();
 	// 	}
 	// }
+}
+
+FVector UProceduralLimbManager::GetAverageLimbUpVector() const {
+	if(Limbs.IsEmpty())
+		return FVector::ZeroVector;
+	
+	FVector Result = FVector::ZeroVector;
+	for(int i = 0; i < Limbs.Num(); i++) {
+		FVector Current = Limbs[i]->CurrentIK.UpVector;
+		Result += Current;
+	}
+	Result.Normalize();
+	return Result;
+}
+
+void UProceduralLimbManager::ApproachLimbAverageRotation(double DeltaTime) {
+	
 }

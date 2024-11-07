@@ -24,10 +24,14 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	TArray<ULimb*> GetLimbs() { return Limbs; }
+	TArray<ULimb*> GetLimbs() const { return Limbs; }
 	void ApplyGaitPreset(UGaitPreset* GaitPreset);
 	
 	void AutoDetectLimbs(UPoseableMeshComponent* InMesh);
+	
+	FVector GetAverageLimbUpVector() const;
+private:
+	void ApproachLimbAverageRotation(double DeltaTime);
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		TArray<ULimb*> Limbs;
@@ -43,10 +47,8 @@ protected:
 		FName HipJointsName = "Hip";
 	UPROPERTY(EditDefaultsOnly, Category = "Auto Limb Finder")
 		FName EndEffectorsName = "Tip";
-	UPROPERTY(EditDefaultsOnly, Category = "Auto Limb Finder")
-		bool bUsesPoles = true;
-	UPROPERTY(EditDefaultsOnly, meta=(EditCondition="bUsesPoles"))
-		FName PoleName = "Pole";
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+		float ToLimbAverageRotationSlerpSpeed = 0.1f;
 
 	UPROPERTY()
 	class UPoseableMeshComponent* Mesh;

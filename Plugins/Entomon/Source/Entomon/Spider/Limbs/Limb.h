@@ -6,14 +6,29 @@
 class ULimbSegment;
 class UPoseableMeshComponent;
 
+struct FIKTarget {
+	FIKTarget() { }
+	FIKTarget(FVector InLocation, FQuat InRotation)
+		: Location(InLocation) {
+		UpVector = InRotation.GetUpVector();
+	}
+
+	FVector GetLocation() const noexcept { return Location; }
+	void SetLocation(const FVector& InLocation) noexcept { Location = InLocation; }
+	
+	FVector Location = FVector::ZeroVector;
+	FVector UpVector = FVector::UpVector;
+};
+
 UCLASS(Blueprintable)
 class ULimb : public UObject {
 	GENERATED_BODY()
 public:
 	UPROPERTY(VisibleInstanceOnly)
 	TArray<ULimbSegment*> Joints;
-	UPROPERTY(VisibleInstanceOnly)
-	FTransform IKTarget;
+	
+	FIKTarget CurrentIK;
+	FIKTarget TargetIK;
 	
 	FVector RestingTargetLocation;
 	FVector HipLocation;
@@ -21,11 +36,11 @@ public:
 	
 	float GaitOffset = -1;
 	
-	bool bHasRelocated = false;
+	bool bIsGrounded = false;
 
 	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
-	void MoveTo(FVector Target, double DeltaTime);
+	void MoveTo(FVector Target);
 
 	
 	void ResetStates(UPoseableMeshComponent* Mesh);
@@ -35,13 +50,14 @@ protected:
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
-
 	
 	int Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 	int Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 
 	void InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 
+	void ResetRoll(UPoseableMeshComponent* Mesh);
+	
 	void BackwardReach(UPoseableMeshComponent* Mesh, FVector ComponentSpaceTarget, TArray<FVector>& JointLocations);
 	void ForwardReach(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 	void EvaluateAngles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
