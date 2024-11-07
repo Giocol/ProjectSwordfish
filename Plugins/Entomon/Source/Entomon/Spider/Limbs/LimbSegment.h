@@ -6,14 +6,14 @@
 #include "UObject/Object.h"
 #include "LimbSegment.generated.h"
 
-UCLASS(Blueprintable)
-class ULimbSegment : public UObject {
+USTRUCT(Blueprintable)
+struct FLimbSegment {
 	GENERATED_BODY()
-	ULimbSegment() { }
+	FLimbSegment() { }
+	FLimbSegment(FName InName, FQuat InState)
+		: Name(InName), RestState(InState), CurrentState(InState) { }
 
 public:
-	void Initialize(FName InName, FQuat InState);
-	
 	FName GetName() { return Name; }
 	FQuat GetRestState() { return RestState; }
 	FQuat GetState() { return CurrentState; }

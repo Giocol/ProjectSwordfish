@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Limb.generated.h"
 
-class ULimbSegment;
+struct FLimbSegment;
 class UPoseableMeshComponent;
 
 struct FIKTarget {
@@ -46,7 +46,7 @@ class ULimb : public UObject {
 	GENERATED_BODY()
 public:
 	UPROPERTY(VisibleInstanceOnly)
-	TArray<ULimbSegment*> Joints;
+	TArray<FLimbSegment> Joints;
 	
 	FIKTarget CurrentIK;
 	FIKTarget StartIK;
@@ -74,7 +74,7 @@ public:
 protected:
 	bool EvaluateTargetPosition(UPoseableMeshComponent* Mesh, float ZStartOffset, int Iterations,
 								ECollisionChannel TraceChannel);
-	ULimbSegment* MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
+	FLimbSegment MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
