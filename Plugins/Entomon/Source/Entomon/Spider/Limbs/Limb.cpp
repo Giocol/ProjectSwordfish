@@ -63,7 +63,8 @@ bool ULimb::TryMove(UPoseableMeshComponent* Mesh, float ZStartOffset, int Iterat
 		ECollisionChannel TraceChannel) {
 	if (!EvaluateTargetPosition(Mesh, ZStartOffset, Iterations, TraceChannel))
 		return false;
-	if(FVector::Distance(Mesh->GetBoneLocationByName(Joints[0].GetName(), EBoneSpaces::WorldSpace), TargetIK.GetLocation()) < 10.f)
+	if(FVector::Distance(Mesh->GetBoneLocationByName(Joints[0].GetName(), EBoneSpaces::WorldSpace), TargetIK.GetLocation()) < 10.f
+			&& FVector::Distance(CurrentIK.GetLocation(), TargetIK.GetLocation()) < 10.f)
 		return true;
 	StartIK = CurrentIK;
 	bIsGrounded = false;
