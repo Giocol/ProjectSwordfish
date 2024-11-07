@@ -20,18 +20,14 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 		WalkCycleCounter += DeltaTime / WalkCycleDuration;
 	if(WalkCycleCounter > 1.f)
 		WalkCycleCounter -= FMath::Floor(WalkCycleCounter);
-	TArray<ULimb*> UpdatedLimbs;
 	for(int i = 0; i < Limbs.Num(); ++i) {
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
-			|| WalkCycleCounter < LastWalkCycleCounter && (LastWalkCycleCounter > Limbs[i]->GaitOffset)) {
-			FVector Target = Mesh->GetComponentTransform().TransformPosition(Limbs[i]->RestingTargetLocation);
-			Limbs[i]->MoveTo(Target, DeltaTime);
-			UpdatedLimbs.Add(Limbs[i]);
+			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter)) {
+			FVector RestingPositionWorld = Mesh->GetComponentTransform().TransformPosition(Limbs[i]->RestingTargetLocation);
+			FVector ToRest = RestingPositionWorld - Limbs[i]->IKTarget.GetLocation();
+			Limbs[i]->MoveTo(Limbs[i]->IKTarget.GetLocation() + 1.5 * ToRest, DeltaTime);
 		}
 		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
-	}
-	if(UpdatedLimbs.Num() > 0) {
-		int i = 0;
 	}
 }
 
@@ -50,7 +46,8 @@ void UProceduralLimbManager::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 				}
 			}
 			if(bFoundMatch) {
-				Limb->GaitOffset = Gait.GaitOffset; break;
+				Limb->GaitOffset = Gait.GaitOffset;
+				break;
 			}
 		}
 		if(!bFoundMatch)
