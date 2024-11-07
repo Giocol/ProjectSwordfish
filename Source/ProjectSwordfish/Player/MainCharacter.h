@@ -49,7 +49,10 @@ protected:
 		UStaticMeshComponent* Spear = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
-		float SpearSpeed = 10.f;
+		USceneComponent* PullTarget = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		float SpearSpeed = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		float PullSpeed = 1.f;

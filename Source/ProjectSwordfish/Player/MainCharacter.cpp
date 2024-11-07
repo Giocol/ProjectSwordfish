@@ -14,6 +14,8 @@ AMainCharacter::AMainCharacter() {
 	Spear = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Spear Mesh"));
 	Spear->SetupAttachment(Camera);
 	Spear->OnComponentHit.AddDynamic(this, &AMainCharacter::OnSpearHit);
+	PullTarget = CreateDefaultSubobject<USceneComponent>(TEXT("Pull Target"));
+	PullTarget->SetupAttachment(RootComponent);
 }
 
 void AMainCharacter::ProcessCharacterMovementInput(const FVector2D input) {
@@ -53,8 +55,18 @@ void AMainCharacter::Pull(float DeltaTime) {
 	CurrentlySpearedActor->SetActorLocation(
 		FMath::Lerp(
 			CurrentlySpearedActor->GetActorLocation(),
-			GetActorLocation(),
+			PullTarget->GetComponentLocation(),
 			DeltaTime *PullSpeed));
+
+	//todo: maybe detect overlap with a SuccessfulPullBox or smth rather than this hacky math
+	if((CurrentlySpearedActor->GetActorLocation() - PullTarget->GetComponentLocation()).Length() < 10.f) {
+		if(!CurrentlySpearedActor->Implements<USpearableInterface>())
+			return;
+		//NOTE: this only works for C++, if the interface is implemented directly in blueprint weird shit happens, look into it!
+		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(CurrentlySpearedActor);
+		OverlappedSpearable->OnPullCompleted(this);
+		CurrentlySpearedActor = nullptr;
+	}
 }
 
 void AMainCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
