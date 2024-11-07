@@ -22,7 +22,9 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 
 void AMultiLeggedPawn::Move(FVector Target) {
 	FVector ToTarget = TargetLocation - GetActorLocation();
-	if(ToTarget.Length() < 10.f)
+	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
+	float dist = 0.5 * time * MovementComponent->MaxSpeed;
+	if(ToTarget.Length() < dist)
 		return;
 	FVector ToTargetNorm = ToTarget.GetSafeNormal();
 	float Dot = ToTargetNorm.Dot(GetActorForwardVector());

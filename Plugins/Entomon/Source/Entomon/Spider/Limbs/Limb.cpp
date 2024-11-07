@@ -2,7 +2,22 @@
 
 #include "LimbSegment.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Entomon/Spider/GaitPreset.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
+
+void ULimb::Tick(float DeltaTime) {
+	if(bIsGrounded)
+		return;
+
+	CurrentIK = FIKTarget::LerpWithPeak(StartIK, TargetIK, StepHeight, StepTimer);
+	
+	StepTimer += DeltaTime / StepDuration;
+	if(StepTimer > 1.f) {
+		StepTimer = 0;
+		bIsGrounded = true;
+	}
+}
 
 bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
 	if(!Mesh) return false;
@@ -44,9 +59,45 @@ void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iteratio
 	}
 }
 
-void ULimb::MoveTo(FVector Target) {
-	CurrentIK.SetLocation(Target);
+bool ULimb::TryMove(UPoseableMeshComponent* Mesh, float ZStartOffset, int Iterations,
+		ECollisionChannel TraceChannel) {
+	if (!EvaluateTargetPosition(Mesh, ZStartOffset, Iterations, TraceChannel))
+		return false;
+	if(FVector::Distance(Mesh->GetBoneLocationByName(Joints[0]->GetName(), EBoneSpaces::WorldSpace), TargetIK.GetLocation()) < 10.f)
+		return true;
+	StartIK = CurrentIK;
+	bIsGrounded = false;
+	return true;
+	//CurrentIK.SetLocation(Target);
 	//bHasRelocated = true;
+}
+
+void ULimb::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
+
+	StepDuration = InGaitPreset->StepDuration;
+	StepHeight = InGaitPreset->StepHeight;
+	
+	for(auto Gait : InGaitPreset->PerLimbGaitInfo) {
+		auto name = GetName();
+		bool foundName = false;
+		bool foundLocator = false;
+
+		for (auto Name : Gait.Keywords.Names) {
+			foundName = GetName().Find(Name.ToString()) != INDEX_NONE ? true : false;
+			if(foundName) break;
+		}
+		if(Gait.Keywords.bUseLocator) {
+			for (auto Locator : Gait.Keywords.Locators) {
+				foundLocator = GetName().Find(Locator.ToString()) != INDEX_NONE ? true : false;
+				if(foundLocator) break;
+			}
+		}
+			
+		if((foundName && foundLocator) || (foundName && !Gait.Keywords.bUseLocator)) {
+			GaitOffset = Gait.GaitOffset;
+			break;
+		}
+	}
 }
 
 int ULimb::Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
@@ -292,13 +343,34 @@ FVector ULimb::GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh
 	return  Target - GetEndLocation(Mesh, InSpace);
 }
 
-
-
 void ULimb::ResetStates(UPoseableMeshComponent* Mesh) {
 	for(int i = Joints.Num() - 1; i > 0; --i) {
 		Joints[i]->SetState(Joints[i]->GetRestState());
 		Mesh->SetBoneRotationByName(Joints[i]->GetName(), Joints[i]->GetState().Rotator(), EBoneSpaces::ComponentSpace);
 	}
+}
+
+bool ULimb::EvaluateTargetPosition(UPoseableMeshComponent* Mesh, float ZStartOffset, int Iterations,
+									ECollisionChannel TraceChannel) {
+	FHitResult Hit;
+	FTransform Transform = Mesh->GetComponentTransform();
+	FVector Start = Transform.TransformPosition(RestingTargetLocation) + CurrentIK.GetUpVector() * ZStartOffset;
+	FVector End = Start - CurrentIK.GetUpVector() * 2 * ZStartOffset;
+	TArray<AActor*> Ignore;
+	Ignore.Add(Mesh->GetOwner());
+	bool bHit = UKismetSystemLibrary::LineTraceSingle(
+		Mesh->GetWorld(),
+		Start, End,
+		UEngineTypes::ConvertToTraceType(TraceChannel),
+		false,
+		Ignore,
+		EDrawDebugTrace::None,
+		Hit, true);
+	if(bHit) {
+		TargetIK = FIKTarget(Hit.Location, Hit.Normal);
+		return true;
+	}
+	return false;
 }
 
 ULimbSegment* ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd) {
@@ -309,6 +381,7 @@ ULimbSegment* ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, boo
 		FVector Location = MeshTransform.TransformPosition(BoneTransform.GetLocation());
 		RestingTargetLocation = BoneTransform.GetLocation();
 		CurrentIK = FIKTarget(Location, MeshTransform.GetRotation());
+		StartIK = CurrentIK;
 	}
 	LimbSegment->Initialize(BoneName, BoneTransform.GetRotation());
 	return LimbSegment;

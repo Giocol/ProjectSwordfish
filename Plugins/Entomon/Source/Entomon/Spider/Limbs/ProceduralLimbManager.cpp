@@ -4,6 +4,7 @@
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
 #include "Entomon/Spider/GaitPreset.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 UProceduralLimbManager::UProceduralLimbManager() {
 	//AutoDetectLimbs();
@@ -13,53 +14,45 @@ UProceduralLimbManager::UProceduralLimbManager() {
 
 void UProceduralLimbManager::BeginPlay() {
 	Super::BeginPlay();
+
+	OwnerPawn = Cast<AMultiLeggedPawn>(GetOwner());
+	if(OwnerPawn)
+		Movement = OwnerPawn->GetMovementComponent();
 }
 
 void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
-	float LastWalkCycleCounter = WalkCycleCounter;
-	if(WalkCycleDuration != 0)
-		WalkCycleCounter += DeltaTime / WalkCycleDuration;
+	float LastWalkCycleCounter;
+	TickTimers(DeltaTime, LastWalkCycleCounter);
+	TickLimbs(DeltaTime, LastWalkCycleCounter);
+	ApproachLimbAverageRotation(DeltaTime);
+}
+
+void UProceduralLimbManager::TickTimers(float DeltaTime, float& LastWalkCycleCounter) {
+	LastWalkCycleCounter = WalkCycleCounter;
+	float CycleDuration = GetLerpedWalkCycleDuration();
+	WalkCycleCounter += DeltaTime / CycleDuration;
 	if(WalkCycleCounter > 1.f)
 		WalkCycleCounter -= FMath::Floor(WalkCycleCounter);
+}
+
+void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCounter) {
 	for(int i = 0; i < Limbs.Num(); ++i) {
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
 			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter)) {
 			FVector RestingPositionWorld = Mesh->GetComponentTransform().TransformPosition(Limbs[i]->RestingTargetLocation);
 			FVector ToRest = RestingPositionWorld - Limbs[i]->CurrentIK.GetLocation();
-			Limbs[i]->MoveTo(Limbs[i]->CurrentIK.GetLocation() + 1.5 * ToRest);
-		}
+			Limbs[i]->TryMove(Mesh, StepPlanningOriginZOffset, StepPlanningIterations, TraceChannel);
+			}
+		Limbs[i]->Tick(DeltaTime);
 		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
 	}
-	FVector AverageUp = GetAverageLimbUpVector();
-	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(), GetOwner()->GetActorLocation() + AverageUp * 150,
-		100, FColor::Turquoise, false, -1, 0, 5);
 }
 
 void UProceduralLimbManager::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 	WalkCycleDuration = InGaitPreset->WalkCycleDuration;
+	MaxWalkCycleDuration = InGaitPreset->MaxWalkCycleDuration;
 	for(auto Limb : Limbs) {
-		for(auto Gait : InGaitPreset->PerLimbGaitInfo) {
-			auto name = Limb->GetName();
-			
-			bool foundName = false;
-			bool foundLocator = false;
-
-			for (auto Name : Gait.Keywords.Names) {
-				foundName = Limb->GetName().Find(Name.ToString()) != INDEX_NONE ? true : false;
-				if(foundName) break;
-			}
-			if(Gait.Keywords.bUseLocator) {
-				for (auto Locator : Gait.Keywords.Locators) {
-					foundLocator = Limb->GetName().Find(Locator.ToString()) != INDEX_NONE ? true : false;
-					if(foundLocator) break;
-				}
-			}
-			
-			if((foundName && foundLocator) || (foundName && !Gait.Keywords.bUseLocator)) {
-				Limb->GaitOffset = Gait.GaitOffset;
-				break;
-			}
-		}
+		Limb->ApplyGaitPreset(InGaitPreset);
 	}
 }
 
@@ -113,5 +106,20 @@ FVector UProceduralLimbManager::GetAverageLimbUpVector() const {
 }
 
 void UProceduralLimbManager::ApproachLimbAverageRotation(double DeltaTime) {
-	
+	FQuat CurrentRotation = GetOwner()->GetActorRotation().Quaternion();
+	FVector CurrentUp = CurrentRotation.GetUpVector();
+	FVector AverageUp = GetAverageLimbUpVector();
+	FQuat DeltaRotation = FQuat::FindBetweenNormals(CurrentUp, AverageUp);
+	FQuat NewRotation = FQuat::Slerp(CurrentRotation, DeltaRotation * CurrentRotation, DeltaTime * 3);
+	GetOwner()->SetActorRotation(NewRotation);
+	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(),
+		GetOwner()->GetActorLocation() + AverageUp * 150,100,
+		FColor::Turquoise, false, -1, 0, 5);
+}
+
+float UProceduralLimbManager::GetLerpedWalkCycleDuration() {
+	if(!Movement)
+		return -1.f;
+	float t = Movement->Velocity.Length() / Movement->GetMaxSpeed();
+	return FMath::Lerp(MaxWalkCycleDuration, WalkCycleDuration, t);
 }

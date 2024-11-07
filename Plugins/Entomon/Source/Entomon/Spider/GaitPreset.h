@@ -33,8 +33,14 @@ class ENTOMON_API UGaitPreset : public UDataAsset {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly)
-		float WalkCycleDuration = 2.f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0.001))
+		float WalkCycleDuration = 0.5f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0.001))
+		float MaxWalkCycleDuration = 1.f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0))
+		float StepDuration = 0.1f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0))
+		float StepHeight = 10.f;
 	UPROPERTY(EditDefaultsOnly)
 		float MaxSpeed = 500.f;
 	UPROPERTY(EditDefaultsOnly)

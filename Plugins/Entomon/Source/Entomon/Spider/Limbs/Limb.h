@@ -12,9 +12,30 @@ struct FIKTarget {
 		: Location(InLocation) {
 		UpVector = InRotation.GetUpVector();
 	}
+	FIKTarget(FVector InLocation, FVector InUpVector)
+		: Location(InLocation), UpVector(InUpVector) { }
 
 	FVector GetLocation() const noexcept { return Location; }
 	void SetLocation(const FVector& InLocation) noexcept { Location = InLocation; }
+
+	FVector GetUpVector() const noexcept { return UpVector; }
+	void SetUpVector(const FVector& InVector) noexcept { UpVector = InVector; }
+
+	static FIKTarget Lerp(FIKTarget a, FIKTarget b, double alpha) {
+		FIKTarget Result = a;
+		Result.SetLocation(FMath::Lerp(a.GetLocation(), b.GetLocation(), alpha));
+		Result.SetUpVector(FQuat::Slerp(a.GetUpVector().ToOrientationQuat(), b.GetUpVector().ToOrientationQuat(), alpha).GetForwardVector());
+		return Result;
+	}
+	static FIKTarget LerpWithPeak(FIKTarget a, FIKTarget b, float StepHeight, double alpha) {
+		FIKTarget Result = a;
+		FIKTarget MidWay = Lerp(a, b, 0.5);
+		float ParabolicAlpha = 4 * alpha - 4 * alpha * alpha;
+		FVector PeakOffset = ParabolicAlpha * StepHeight * MidWay.GetUpVector();
+		Result.SetLocation(FMath::Lerp(a.GetLocation(), b.GetLocation(), alpha) + PeakOffset);
+		Result.SetUpVector(FQuat::Slerp(a.GetUpVector().ToOrientationQuat(), b.GetUpVector().ToOrientationQuat(), alpha).GetForwardVector());
+		return Result;
+	}
 	
 	FVector Location = FVector::ZeroVector;
 	FVector UpVector = FVector::UpVector;
@@ -28,23 +49,31 @@ public:
 	TArray<ULimbSegment*> Joints;
 	
 	FIKTarget CurrentIK;
+	FIKTarget StartIK;
 	FIKTarget TargetIK;
+	float StepTimer = 0;
+	float StepDuration = -1;
+	float StepHeight = -1;
+	bool bIsGrounded = true;
 	
 	FVector RestingTargetLocation;
 	FVector HipLocation;
 	float MaxLength = 0.f;
 	
 	float GaitOffset = -1;
-	
-	bool bIsGrounded = false;
 
+	void Tick(float DeltaTime);
+	
 	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
-	void MoveTo(FVector Target);
+	bool TryMove(UPoseableMeshComponent* Mesh, float ZStartOffset, int Iterations,
+		ECollisionChannel TraceChannel);
 
-	
+	void ApplyGaitPreset(class UGaitPreset* InGaitPreset);
 	void ResetStates(UPoseableMeshComponent* Mesh);
 protected:
+	bool EvaluateTargetPosition(UPoseableMeshComponent* Mesh, float ZStartOffset, int Iterations,
+								ECollisionChannel TraceChannel);
 	ULimbSegment* MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
 	
 	FVector GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
