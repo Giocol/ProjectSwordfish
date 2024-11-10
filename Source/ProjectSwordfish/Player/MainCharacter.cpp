@@ -19,13 +19,20 @@ AMainCharacter::AMainCharacter() {
 }
 
 void AMainCharacter::ProcessCharacterMovementInput(const FVector2D input) {
-	AddMovementInput(GetActorForwardVector(), input.X);
-	AddMovementInput(GetActorRightVector(), input.Y);
+	if(!bIsFishing) {
+		AddMovementInput(GetActorForwardVector(), input.X);
+		AddMovementInput(GetActorRightVector(), input.Y);
+	}
 }
 
 void AMainCharacter::ProcessCameraMovementInput(const FVector2D Input) {
-	AddControllerPitchInput(Input.X);
-	AddControllerYawInput(Input.Y);
+	if(!bIsFishing) {
+		AddControllerPitchInput(Input.X);
+		AddControllerYawInput(Input.Y);
+	} else {
+		//TODO: THIS IS FRAMERATE DEPENDANT!! FIX!!!!!
+		CurrentAim = FMath::Clamp((CurrentAim + FMath::Sign(Input.Y) * AimStep), 0.f, 1.f);
+	}
 }
 
 void AMainCharacter::ProcessInteract() {
@@ -40,33 +47,40 @@ void AMainCharacter::ProcessInteract() {
 }
 
 void AMainCharacter::ProcessUse() {
-	if(bHasSpear)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("I'm throwing the spear!"));
-
-		//TODO: we're not gonna use physics later, it was just to get it done quick and dirty
-		Spear->SetSimulatePhysics(true);
-		Spear->AddImpulse(Spear->GetForwardVector()*SpearSpeed);
+	if(bHasSpear && bIsFishing) {
+		if(bIsAimInThreshold && bIsPowerInThreshold) // todo: expand this condition, add timer before being able to throw
+			UE_LOG(LogTemp, Warning, TEXT("YOU AIMED RIGHT!!!!"));
 	}
+	//if(bHasSpear)
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("I'm throwing the spear!"));
+	//	//TODO: we're not gonna use physics later, it was just to get it done quick and dirty
+	//	Spear->SetSimulatePhysics(true);
+	//	Spear->AddImpulse(Spear->GetForwardVector()*SpearSpeed);
+	//}
 }
 
 void AMainCharacter::Pull(float DeltaTime) {
-	//todo: don't move on z
-	CurrentlySpearedActor->SetActorLocation(
-		FMath::Lerp(
-			CurrentlySpearedActor->GetActorLocation(),
-			PullTarget->GetComponentLocation(),
-			DeltaTime *PullSpeed));
-
-	//todo: maybe detect overlap with a SuccessfulPullBox or smth rather than this hacky math
-	if((CurrentlySpearedActor->GetActorLocation() - PullTarget->GetComponentLocation()).Length() < 10.f) {
-		if(!CurrentlySpearedActor->Implements<USpearableInterface>())
-			return;
-		//NOTE: this only works for C++, if the interface is implemented directly in blueprint weird shit happens, look into it!
-		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(CurrentlySpearedActor);
-		OverlappedSpearable->OnPullCompleted(this);
-		CurrentlySpearedActor = nullptr;
+	//todo: this is a terrible name for the function
+	if(bIsFishing) {
+		CurrentPower = FMath::Clamp(CurrentPower + PowerStep * DeltaTime, 0.0f, 1.f);
 	}
+	////todo: don't move on z
+	//CurrentlySpearedActor->SetActorLocation(
+	//	FMath::Lerp(
+	//		CurrentlySpearedActor->GetActorLocation(),
+	//		PullTarget->GetComponentLocation(),
+	//		DeltaTime *PullSpeed));
+//
+	////todo: maybe detect overlap with a SuccessfulPullBox or smth rather than this hacky math
+	//if((CurrentlySpearedActor->GetActorLocation() - PullTarget->GetComponentLocation()).Length() < 10.f) {
+	//	if(!CurrentlySpearedActor->Implements<USpearableInterface>())
+	//		return;
+	//	//NOTE: this only works for C++, if the interface is implemented directly in blueprint weird shit happens, look into it!
+	//	ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(CurrentlySpearedActor);
+	//	OverlappedSpearable->OnPullCompleted(this);
+	//	CurrentlySpearedActor = nullptr;
+	//}
 }
 
 void AMainCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -92,8 +106,45 @@ void AMainCharacter::BeginPlay() {
 void AMainCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
-	if(IsValid(CurrentlySpearedActor) && bIsPulling)
+	if(bIsFishing) {
+		FishingTick(DeltaTime);
+	}
+	
+	if(bIsPulling && bIsFishing)
 		Pull(DeltaTime);
+}
+
+void AMainCharacter::FishingTick(float DeltaTime) {
+	if(AimLowerThreshold < CurrentAim && CurrentAim < AimUpperThreshold) {
+		bIsAimInThreshold = true;
+		UE_LOG(LogTemp, Error, TEXT("AIM IN THRESHOLD"));
+	}
+	else {
+		bIsAimInThreshold = false;
+	}
+
+	if(PowerLowerThreshold < CurrentPower && CurrentPower < PowerUpperThreshold) {
+		bIsAimInThreshold = true;
+		UE_LOG(LogTemp, Error, TEXT("POWER IN THRESHOLD"));
+	}
+	else {
+		bIsAimInThreshold = false;
+	}
+
+	ApplyFishingResistance(DeltaTime);
+	CurrentPower = FMath::Clamp(CurrentPower - PowerDecayPerTick * DeltaTime, 0.f, 1.f);
+}
+
+void AMainCharacter::ApplyFishingResistance(float DeltaTime) {
+	if(CurrentAim < AimLowerThreshold)
+		CurrentAim = FMath::Clamp(CurrentAim - AimResistancePerTick * DeltaTime, 0.f, 1.f);
+	else if(CurrentAim > AimUpperThreshold)
+		CurrentAim = FMath::Clamp(CurrentAim + AimResistancePerTick * DeltaTime, 0.f, 1.f);
+	else {
+		//TODO: this sucks because it keeps flip-flopping without really fighting back. Decide once maybe? Maybe make it go towards the closest edge of the good area
+		int Sign = FMath::RandBool() ? 1 : -1;
+		CurrentAim = CurrentAim + (Sign * AimResistancePerTick * DeltaTime);
+	}
 }
 
 void AMainCharacter::TraceInteract(FHitResult& OutHitResult) const
