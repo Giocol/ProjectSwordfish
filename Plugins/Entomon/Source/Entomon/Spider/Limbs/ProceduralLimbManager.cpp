@@ -39,11 +39,9 @@ void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCount
 	for(int i = 0; i < Limbs.Num(); ++i) {
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
 			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter)) {
-			FVector RestingPositionWorld = Mesh->GetComponentTransform().TransformPosition(Limbs[i]->RestingTargetLocation);
-			FVector ToRest = RestingPositionWorld - Limbs[i]->CurrentIK.GetLocation();
-			Limbs[i]->TryMove(Mesh, StepPlanningOriginZOffset, StepPlanningIterations, TraceChannel);
-			}
-		Limbs[i]->Tick(DeltaTime);
+				Limbs[i]->TryMove(Mesh, GetLerpedWalkCycleDuration(), FootPlanningIterations, FootPlanningOriginZOffset, TraceChannel);
+		}
+		Limbs[i]->Tick(Mesh, DeltaTime, TraceChannel);
 		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
 	}
 }
@@ -98,9 +96,13 @@ FVector UProceduralLimbManager::GetAverageLimbUpVector() const {
 	
 	FVector Result = FVector::ZeroVector;
 	for(int i = 0; i < Limbs.Num(); i++) {
-		FVector Current = Limbs[i]->CurrentIK.UpVector;
-		Result += Current;
+		FTransform Transform = Mesh->GetComponentTransform();
+		FQuat Offset = FQuat::FindBetween(Limbs[i]->RestingTargetLocation - Transform.GetLocation(), Limbs[i]->FootPlan.Current.Location - Transform.GetLocation());
+		
+		Result += Offset.GetUpVector();
+		//AvgRotation += RotationalOffset;
 	}
+	//AvgRotation.Normalize();
 	Result.Normalize();
 	return Result;
 }
@@ -110,7 +112,7 @@ void UProceduralLimbManager::ApproachLimbAverageRotation(double DeltaTime) {
 	FVector CurrentUp = CurrentRotation.GetUpVector();
 	FVector AverageUp = GetAverageLimbUpVector();
 	FQuat DeltaRotation = FQuat::FindBetweenNormals(CurrentUp, AverageUp);
-	FQuat NewRotation = FQuat::Slerp(CurrentRotation, DeltaRotation * CurrentRotation, DeltaTime * 3);
+	FQuat NewRotation = FQuat::Slerp(CurrentRotation, DeltaRotation * CurrentRotation, DeltaTime * 5);
 	GetOwner()->SetActorRotation(NewRotation);
 	DrawDebugDirectionalArrow(GetWorld(), GetOwner()->GetActorLocation(),
 		GetOwner()->GetActorLocation() + AverageUp * 150,100,

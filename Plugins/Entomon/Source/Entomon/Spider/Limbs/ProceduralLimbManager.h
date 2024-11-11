@@ -27,8 +27,6 @@ public:
 	void TickTimers(float DeltaTime, float& LastWalkCycleCounter);
 	void TickLimbs(float DeltaTime, float LastWalkCycleCounter);
 	
-
-	
 	TArray<ULimb*> GetLimbs() const { return Limbs; }
 	void ApplyGaitPreset(UGaitPreset* GaitPreset);
 	
@@ -59,9 +57,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 		float ToLimbAverageRotationSlerpSpeed = 0.1f;
 	UPROPERTY(EditDefaultsOnly, Category = "Step Planning")
-		float StepPlanningOriginZOffset = 50.f;
+		float FootPlanningOriginZOffset = 100.f;
 	UPROPERTY(EditDefaultsOnly, Category = "Step Planning")
-		int StepPlanningIterations = 1;
+		int FootPlanningIterations = 1;
 	UPROPERTY(EditDefaultsOnly, Category = "Step Planning")
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
 	

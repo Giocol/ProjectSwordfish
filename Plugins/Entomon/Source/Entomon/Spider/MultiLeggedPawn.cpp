@@ -32,7 +32,7 @@ void AMultiLeggedPawn::Move(FVector Target) {
 	float NormalizedFacingInverse = 1.f - Angle / TWO_PI;
 	
 	float InputModifier = FMath::Pow(NormalizedFacingInverse, (1-FacingBias) / FacingBias);
-	MovementComponent->AddInputVector(InputModifier * ToTargetNorm);
+	MovementComponent->AddInputVector(ToTargetNorm);
 	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorForwardVector(), ToTargetNorm);
 	
 	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, 0.02f));
