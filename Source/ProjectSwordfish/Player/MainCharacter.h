@@ -24,6 +24,9 @@ public:
 	void ProcessInteract();
 	void ProcessUse();
 
+	float GetCurrentAim() const { return  CurrentAim; };
+	float GetCurrentPower() const { return  CurrentPower; };
+
 	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(State); };
 	void SetIsPulling(bool State) { bIsPulling = State; }
 
