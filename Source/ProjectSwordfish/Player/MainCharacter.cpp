@@ -136,15 +136,10 @@ void AMainCharacter::FishingTick(float DeltaTime) {
 }
 
 void AMainCharacter::ApplyFishingResistance(float DeltaTime) {
-	if(CurrentAim < AimLowerThreshold)
+	if(CurrentAim < AimLowerThreshold + (AimUpperThreshold - AimLowerThreshold)/2)
 		CurrentAim = FMath::Clamp(CurrentAim - AimResistancePerTick * DeltaTime, 0.f, 1.f);
-	else if(CurrentAim > AimUpperThreshold)
+	else
 		CurrentAim = FMath::Clamp(CurrentAim + AimResistancePerTick * DeltaTime, 0.f, 1.f);
-	else {
-		//TODO: this sucks because it keeps flip-flopping without really fighting back. Decide once maybe? Maybe make it go towards the closest edge of the good area
-		int Sign = FMath::RandBool() ? 1 : -1;
-		CurrentAim = CurrentAim + (Sign * AimResistancePerTick * DeltaTime);
-	}
 }
 
 void AMainCharacter::TraceInteract(FHitResult& OutHitResult) const
