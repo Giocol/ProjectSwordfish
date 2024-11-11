@@ -3,6 +3,7 @@
 #include "Camera/CameraComponent.h"
 #include "ProjectSwordfish/Environment/InteractableInterface.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
+#include "ProjectSwordfish/UI/USliderWithTargetAreas.h"
 
 
 AMainCharacter::AMainCharacter() {
@@ -58,6 +59,30 @@ void AMainCharacter::ProcessUse() {
 	//	Spear->SetSimulatePhysics(true);
 	//	Spear->AddImpulse(Spear->GetForwardVector()*SpearSpeed);
 	//}
+}
+
+FFishingSliderData AMainCharacter::GetFishingSliderData(EFishingSliderType Type) const {
+	if(Type == EFishingSliderType::Aiming) {
+		return FFishingSliderData(CurrentAim,
+			FVector2d(AimLowerThreshold, AimUpperThreshold));
+	} else if(Type == EFishingSliderType::Power) { //TODO: still missing medium area target bounds 
+		return FFishingSliderData(CurrentPower,
+			FVector2d(PowerLowerThreshold, PowerUpperThreshold));
+	} else { //Default case, should never occur
+		UE_LOG(LogTemp, Error, TEXT("EFishingSliderType passed was None! Something went wrong!"));
+		return FFishingSliderData();
+	}
+}
+
+float AMainCharacter::GetFishingSliderValue(EFishingSliderType Type) const {
+	if(Type == EFishingSliderType::Aiming) {
+		return CurrentAim;
+	} else if(Type == EFishingSliderType::Power) {
+		return CurrentPower;
+	} else { //Default case, should never occur
+		UE_LOG(LogTemp, Error, TEXT("EFishingSliderType passed was None! Something went wrong!"));
+		return -1;
+	}
 }
 
 void AMainCharacter::Pull(float DeltaTime) {
@@ -117,7 +142,6 @@ void AMainCharacter::Tick(float DeltaTime) {
 void AMainCharacter::FishingTick(float DeltaTime) {
 	if(AimLowerThreshold < CurrentAim && CurrentAim < AimUpperThreshold) {
 		bIsAimInThreshold = true;
-		UE_LOG(LogTemp, Error, TEXT("AIM IN THRESHOLD"));
 	}
 	else {
 		bIsAimInThreshold = false;
@@ -125,7 +149,6 @@ void AMainCharacter::FishingTick(float DeltaTime) {
 
 	if(PowerLowerThreshold < CurrentPower && CurrentPower < PowerUpperThreshold) {
 		bIsAimInThreshold = true;
-		UE_LOG(LogTemp, Error, TEXT("POWER IN THRESHOLD"));
 	}
 	else {
 		bIsAimInThreshold = false;

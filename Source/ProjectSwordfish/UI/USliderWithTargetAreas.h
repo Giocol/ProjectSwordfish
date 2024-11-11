@@ -4,8 +4,18 @@
 #include "Blueprint/UserWidget.h"
 #include "USliderWithTargetAreas.generated.h"
 
+class UCanvasPanel;
+class UCanvasPanelSlot;
 class AMainCharacter;
 class UImage;
+
+UENUM()
+enum EFishingSliderType
+{
+	None = 0,
+	Aiming,
+	Power
+};
 
 UCLASS()
 class PROJECTSWORDFISH_API UUSliderWithTargetAreas : public UUserWidget {
@@ -17,18 +27,30 @@ public:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
-	float NormalizeXCoords(float XCoords) const;
+	void UpdateHandlePosition();
+	void SetTargetAreasPosition();
 
 protected:
+	UPROPERTY(EditDefaultsOnly)
+		TEnumAsByte<EFishingSliderType> Type = Aiming; 
+	
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* SliderBar = nullptr;
+		UCanvasPanel* CanvasPanel = nullptr;
+	
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+		UImage* SliderBar = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
-	UImage* GoodTargetArea = nullptr;
+		UImage* GoodTargetArea = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
-	UNamedSlot* Handle = nullptr;
+		UImage* Handle = nullptr;
 
 private:
 	AMainCharacter* playerRef = nullptr;
+	
+	UCanvasPanelSlot* SliderBarPanelSlot = nullptr;
+	UCanvasPanelSlot* GoodAreaPanelSlot = nullptr;
+	UCanvasPanelSlot* HandlePanelSlot = nullptr;
+
 };

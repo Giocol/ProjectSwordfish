@@ -4,10 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "ProjectSwordfish/UI/USliderWithTargetAreas.h"
 #include "MainCharacter.generated.h"
 
 class ISpearableInterface;
 class UCameraComponent;
+
+///<summary>
+/// All values are supposed to be contained between 0 and 1. A value of -1 signifies that that specific property is invalid
+///</summary>
+USTRUCT()
+struct FFishingSliderData
+{
+	GENERATED_BODY()
+	float Value = -1;
+	FVector2d GoodTargetAreaBounds = FVector2d::One() * -1;
+	FVector2d MediumTargetAreaBounds = FVector2d::One() * -1;
+};
 
 UCLASS()
 class PROJECTSWORDFISH_API AMainCharacter : public ACharacter {
@@ -24,10 +37,13 @@ public:
 	void ProcessInteract();
 	void ProcessUse();
 
-	float GetCurrentAim() const { return  CurrentAim; };
-	float GetCurrentPower() const { return  CurrentPower; };
-
-	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(State); };
+	///<summary>
+	/// All values are supposed to be contained between 0 and 1. A value of -1 signifies that that specific property is invalid
+	///</summary>
+	FFishingSliderData GetFishingSliderData(EFishingSliderType Type) const; //todo: kinda sucks? maybe pass a reference to an already built struct and repopulate it?
+	float GetFishingSliderValue(EFishingSliderType Type) const;
+	
+	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(State);};
 	void SetIsPulling(bool State) { bIsPulling = State; }
 
 	void Pull(float DeltaTime);
