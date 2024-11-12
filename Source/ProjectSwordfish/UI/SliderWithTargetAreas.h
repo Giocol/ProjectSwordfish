@@ -18,7 +18,7 @@ enum EFishingSliderType
 };
 
 UCLASS()
-class PROJECTSWORDFISH_API UUSliderWithTargetAreas : public UUserWidget {
+class PROJECTSWORDFISH_API USliderWithTargetAreas : public UUserWidget {
 	GENERATED_BODY()
 
 public:
