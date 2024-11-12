@@ -37,12 +37,12 @@ public:
 	void ApplyGaitPreset(class UGaitPreset* InGaitPreset);
 	void ResetStates(UPoseableMeshComponent* Mesh);
 	
-	static bool TraceFoot(UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance,
+	static bool TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance,
 		ECollisionChannel InTraceChannel, FHitResult& OutHit);
-	static bool TraceAround(UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance,
+	static bool TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance,
 		int Iterations, ECollisionChannel InTraceChannel, FHitResult& OutHit);
 protected:
-	bool EvaluateTargetPosition(UPoseableMeshComponent* InMesh, float GaitCycleDuration, float ZStartOffset, int Iterations,
+	bool EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh, float GaitCycleDuration, float TraceDistance, int Iterations,
 								ECollisionChannel TraceChannel);
 	FLimbSegment MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
 	
