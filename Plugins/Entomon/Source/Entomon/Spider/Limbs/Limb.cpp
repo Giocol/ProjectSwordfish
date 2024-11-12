@@ -60,7 +60,7 @@ void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iteratio
 
 bool ULimb::TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int Iterations,
 		ECollisionChannel InTraceChannel) {
-	if (!EvaluateTargetPosition(InMesh, GaitCycleDuration, Iterations, MaxLength, InTraceChannel))
+	if (!EvaluateTargetPosition(InMesh, GaitCycleDuration, MaxLength, Iterations, InTraceChannel))
 		return false;
 	if(FVector::Distance(InMesh->GetBoneLocationByName(Joints[0].GetName(), EBoneSpaces::WorldSpace), FootPlan.Current.GetLocation()) < 10.f
 			&& FVector::Distance(FootPlan.Current.GetLocation(), FootPlan.Target.GetLocation()) < 10.f)
@@ -271,7 +271,7 @@ bool ULimb::EvaluateTargetPosition(UPoseableMeshComponent* InMesh, float GaitCyc
 	FVector PointVelocity = LinearVelocity + AngularVelocity;
 	FVector Offset = PointVelocity * GaitCycleDuration;
 	FVector Direction = FootPlan.Current.UpVector;
-	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset + Direction * ZStartOffset;
+	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset + Direction * ZStartOffset / 2;
 	bool bHit = TraceAround(InMesh, Start, -Direction, MaxLength, Iterations, TraceChannel, Hit);
 	// bool bHit = TraceFoot(Mesh, Start, -Direction, 2 * ZStartOffset, TraceChannel, Hit);
 	if(bHit) {
