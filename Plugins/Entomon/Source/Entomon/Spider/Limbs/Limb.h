@@ -31,7 +31,7 @@ public:
 	
 	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
-	bool TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int Iterations, float InTraceDistance,
+	bool TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int Iterations,
 		ECollisionChannel InTraceChannel);
 
 	void ApplyGaitPreset(class UGaitPreset* InGaitPreset);

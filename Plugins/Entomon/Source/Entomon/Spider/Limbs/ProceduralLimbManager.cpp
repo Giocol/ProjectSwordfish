@@ -40,8 +40,7 @@ void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCount
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
 			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter)) {
 				Limbs[i]->TryMove(Mesh, GetLerpedWalkCycleDuration(),
-					FootPlanningIterations,
-					FootPlanningOriginZOffset, TraceChannel);
+					FootPlanningIterations, TraceChannel);
 		}
 		Limbs[i]->Tick(Mesh, DeltaTime, TraceChannel);
 		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);

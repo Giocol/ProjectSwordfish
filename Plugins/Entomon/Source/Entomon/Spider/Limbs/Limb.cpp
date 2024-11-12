@@ -58,15 +58,15 @@ void ULimb::UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iteratio
 	}
 }
 
-bool ULimb::TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int Iterations, float InTraceDistance,
+bool ULimb::TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int Iterations,
 		ECollisionChannel InTraceChannel) {
-	if (!EvaluateTargetPosition(InMesh, GaitCycleDuration, InTraceDistance, Iterations, InTraceChannel))
+	if (!EvaluateTargetPosition(InMesh, GaitCycleDuration, Iterations, MaxLength, InTraceChannel))
 		return false;
 	if(FVector::Distance(InMesh->GetBoneLocationByName(Joints[0].GetName(), EBoneSpaces::WorldSpace), FootPlan.Current.GetLocation()) < 10.f
 			&& FVector::Distance(FootPlan.Current.GetLocation(), FootPlan.Target.GetLocation()) < 10.f)
 		return true;
 	FootPlan.Start = FootPlan.Current;
-	FootPlan.EvaluatePath(InMesh, StepHeight, InTraceDistance, InTraceChannel);
+	FootPlan.EvaluatePath(InMesh, StepHeight, MaxLength, InTraceChannel);
 	bIsGrounded = false;
 	return true;
 	//CurrentIK.SetLocation(Target);
@@ -105,7 +105,7 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	if(!Mesh)
 		return false;
 	
-	// ResetStates(Mesh);
+	ResetStates(Mesh);
 
 	FTransform ToComponentSpace = Mesh->GetComponentTransform();
 	FVector ComponentSpaceTarget = ToComponentSpace.InverseTransformPosition(FootPlan.Current.GetLocation());
@@ -272,7 +272,7 @@ bool ULimb::EvaluateTargetPosition(UPoseableMeshComponent* InMesh, float GaitCyc
 	FVector Offset = PointVelocity * GaitCycleDuration;
 	FVector Direction = FootPlan.Current.UpVector;
 	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset + Direction * ZStartOffset;
-	bool bHit = TraceAround(InMesh, Start, -Direction, 2 * ZStartOffset, Iterations, TraceChannel, Hit);
+	bool bHit = TraceAround(InMesh, Start, -Direction, MaxLength, Iterations, TraceChannel, Hit);
 	// bool bHit = TraceFoot(Mesh, Start, -Direction, 2 * ZStartOffset, TraceChannel, Hit);
 	if(bHit) {
 		FootPlan.Target = FIKEffector(Hit.ImpactPoint, Hit.ImpactNormal);

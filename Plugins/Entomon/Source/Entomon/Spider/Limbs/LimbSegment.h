@@ -14,11 +14,11 @@ struct FLimbSegment {
 		: Name(InName), RestState(InState), CurrentState(InState) { }
 
 public:
-	FName GetName() { return Name; }
-	FQuat GetRestState() { return RestState; }
-	FQuat GetState() { return CurrentState; }
+	FName GetName() const { return Name; }
+	FQuat GetRestState() const { return RestState; }
+	FQuat GetState() const { return CurrentState; }
 	void SetState(FQuat State) { CurrentState = State; }
-	float GetLength() { return Length; }
+	float GetLength() const { return Length; }
 	void SetLength(float InLength) { Length = InLength; }
 	
 private:
