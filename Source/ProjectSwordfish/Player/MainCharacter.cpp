@@ -3,7 +3,7 @@
 #include "Camera/CameraComponent.h"
 #include "ProjectSwordfish/Environment/InteractableInterface.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
-#include "ProjectSwordfish/UI/USliderWithTargetAreas.h"
+#include "..\UI\SliderWithTargetAreas.h"
 
 
 AMainCharacter::AMainCharacter() {

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "USliderWithTargetAreas.generated.h"
+#include "SliderWithTargetAreas.generated.h"
 
 class UCanvasPanel;
 class UCanvasPanelSlot;

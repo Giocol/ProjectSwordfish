@@ -1,4 +1,4 @@
-﻿#include "USliderWithTargetAreas.h"
+﻿#include "SliderWithTargetAreas.h"
 
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -6,7 +6,7 @@
 #include "Components/NamedSlot.h"
 #include "ProjectSwordfish/Player/MainCharacter.h"
 
-void UUSliderWithTargetAreas::NativeConstruct() {
+void USliderWithTargetAreas::NativeConstruct() {
 	Super::NativeConstruct();
 	playerRef = Cast<AMainCharacter>(GetOwningPlayerPawn());
 	SliderBarPanelSlot = Cast<UCanvasPanelSlot>(SliderBar->Slot);
@@ -16,7 +16,7 @@ void UUSliderWithTargetAreas::NativeConstruct() {
 	SetTargetAreasPosition();
 }
 
-void UUSliderWithTargetAreas::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) {
+void USliderWithTargetAreas::NativeTick(const FGeometry& MyGeometry, float InDeltaTime) {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	if(!playerRef || !SliderBarPanelSlot || !GoodAreaPanelSlot || !HandlePanelSlot)
 		return;
@@ -24,12 +24,12 @@ void UUSliderWithTargetAreas::NativeTick(const FGeometry& MyGeometry, float InDe
 }
 
 
-void UUSliderWithTargetAreas::UpdateHandlePosition() {
+void USliderWithTargetAreas::UpdateHandlePosition() {
 	float HandlePosition = playerRef->GetFishingSliderValue(Type) * SliderBarPanelSlot->GetSize().X;
 	HandlePanelSlot->SetPosition(FVector2d(HandlePosition, HandlePanelSlot->GetPosition().Y));
 }
 
-void UUSliderWithTargetAreas::SetTargetAreasPosition() {
+void USliderWithTargetAreas::SetTargetAreasPosition() {
 	if(!GoodAreaPanelSlot || !SliderBarPanelSlot)
 		return;
 

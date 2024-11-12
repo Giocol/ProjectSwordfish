@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "ProjectSwordfish/UI/USliderWithTargetAreas.h"
+#include "..\UI\SliderWithTargetAreas.h"
 #include "MainCharacter.generated.h"
 
 class ISpearableInterface;
