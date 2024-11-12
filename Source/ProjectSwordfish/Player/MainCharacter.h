@@ -98,7 +98,10 @@ protected:
 		float CurrentPower = 0.f;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing | Aiming")
-		bool bIsPowerInThreshold = false;
+		bool bIsPowerInGoodThreshold = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing | Aiming")
+		bool bIsPowerInMediumThreshold = false;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing | Aiming")
 		float PowerStep = 0.2f;
@@ -107,10 +110,16 @@ protected:
 		float PowerDecayPerTick = 0.1f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float PowerLowerThreshold = 0.2f;
+		float PowerGoodLowerThreshold = 0.45f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float PowerUpperThreshold = 0.4f;
+		float PowerGoodUpperThreshold = 0.55f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+		float PowerMediumLowerThreshold = 0.35f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+		float PowerMediumUpperThreshold = 0.65f;
 
 	//todo: old stuff
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")

@@ -49,7 +49,7 @@ void AMainCharacter::ProcessInteract() {
 
 void AMainCharacter::ProcessUse() {
 	if(bHasSpear && bIsFishing) {
-		if(bIsAimInThreshold && bIsPowerInThreshold) // todo: expand this condition, add timer before being able to throw
+		if(bIsAimInThreshold && bIsPowerInGoodThreshold) // todo: expand this condition, add timer before being able to throw
 			UE_LOG(LogTemp, Warning, TEXT("YOU AIMED RIGHT!!!!"));
 	}
 	//if(bHasSpear)
@@ -65,9 +65,10 @@ FFishingSliderData AMainCharacter::GetFishingSliderData(EFishingSliderType Type)
 	if(Type == EFishingSliderType::Aiming) {
 		return FFishingSliderData(CurrentAim,
 			FVector2d(AimLowerThreshold, AimUpperThreshold));
-	} else if(Type == EFishingSliderType::Power) { //TODO: still missing medium area target bounds 
+	} else if(Type == EFishingSliderType::Power) {
 		return FFishingSliderData(CurrentPower,
-			FVector2d(PowerLowerThreshold, PowerUpperThreshold));
+			FVector2d(PowerGoodLowerThreshold, PowerGoodUpperThreshold),
+			FVector2d(PowerMediumLowerThreshold, PowerMediumUpperThreshold));
 	} else { //Default case, should never occur
 		UE_LOG(LogTemp, Error, TEXT("EFishingSliderType passed was None! Something went wrong!"));
 		return FFishingSliderData();
@@ -142,16 +143,26 @@ void AMainCharacter::Tick(float DeltaTime) {
 void AMainCharacter::FishingTick(float DeltaTime) {
 	if(AimLowerThreshold < CurrentAim && CurrentAim < AimUpperThreshold) {
 		bIsAimInThreshold = true;
+		UE_LOG(LogTemp, Error, TEXT("AIM"));
 	}
 	else {
 		bIsAimInThreshold = false;
 	}
 
-	if(PowerLowerThreshold < CurrentPower && CurrentPower < PowerUpperThreshold) {
-		bIsAimInThreshold = true;
+	if(PowerGoodLowerThreshold < CurrentPower && CurrentPower < PowerGoodUpperThreshold) {
+		bIsPowerInGoodThreshold = true;
+		UE_LOG(LogTemp, Error, TEXT("Power good"));
 	}
 	else {
-		bIsAimInThreshold = false;
+		bIsPowerInGoodThreshold = false;
+	}
+
+	if(PowerMediumLowerThreshold < CurrentPower && CurrentPower < PowerMediumUpperThreshold) {
+		bIsPowerInMediumThreshold = true;
+		UE_LOG(LogTemp, Error, TEXT("Power medium"));
+	}
+	else {
+		bIsPowerInMediumThreshold = false;
 	}
 
 	ApplyFishingResistance(DeltaTime);

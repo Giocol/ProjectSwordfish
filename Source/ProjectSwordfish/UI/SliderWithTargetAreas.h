@@ -43,6 +43,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 		UImage* GoodTargetArea = nullptr;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional))
+		UImage* MediumTargetArea = nullptr;
+
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 		UImage* Handle = nullptr;
 
@@ -51,6 +54,7 @@ private:
 	
 	UCanvasPanelSlot* SliderBarPanelSlot = nullptr;
 	UCanvasPanelSlot* GoodAreaPanelSlot = nullptr;
+	UCanvasPanelSlot* MediumAreaPanelSlot = nullptr;
 	UCanvasPanelSlot* HandlePanelSlot = nullptr;
 
 };

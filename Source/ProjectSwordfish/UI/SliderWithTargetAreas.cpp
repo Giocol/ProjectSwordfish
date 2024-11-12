@@ -12,6 +12,8 @@ void USliderWithTargetAreas::NativeConstruct() {
 	SliderBarPanelSlot = Cast<UCanvasPanelSlot>(SliderBar->Slot);
 	GoodAreaPanelSlot = Cast<UCanvasPanelSlot>(GoodTargetArea->Slot);
 	HandlePanelSlot = Cast<UCanvasPanelSlot>(Handle->Slot);
+	if(MediumTargetArea)
+		MediumAreaPanelSlot = Cast<UCanvasPanelSlot>(MediumTargetArea->Slot);
 	
 	SetTargetAreasPosition();
 }
@@ -39,4 +41,12 @@ void USliderWithTargetAreas::SetTargetAreasPosition() {
 
 	GoodAreaPanelSlot->SetSize(FVector2d(GoodTargetAreaWidth, SliderBarPanelSlot->GetSize().Y));
 	GoodAreaPanelSlot->SetPosition(FVector2d(GoodTargetAreaPosition, SliderBarPanelSlot->GetPosition().Y));
+
+	if(MediumAreaPanelSlot && SliderData.MediumTargetAreaBounds.X != -1 && SliderData.MediumTargetAreaBounds.Y != -1) {
+		float MediumTargetAreaWidth = (SliderData.MediumTargetAreaBounds.Y - SliderData.MediumTargetAreaBounds.X) * SliderBarPanelSlot->GetSize().X;
+		float MediumTargetAreaPosition = SliderData.MediumTargetAreaBounds.X * SliderBarPanelSlot->GetSize().X;
+
+		MediumAreaPanelSlot->SetSize(FVector2d(MediumTargetAreaWidth, SliderBarPanelSlot->GetSize().Y));
+		MediumAreaPanelSlot->SetPosition(FVector2d(MediumTargetAreaPosition, SliderBarPanelSlot->GetPosition().Y));
+	}
 }
