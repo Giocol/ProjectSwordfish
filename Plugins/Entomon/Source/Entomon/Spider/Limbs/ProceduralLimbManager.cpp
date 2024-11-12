@@ -97,9 +97,9 @@ FVector UProceduralLimbManager::GetAverageLimbUpVector() const {
 	FVector Result = FVector::ZeroVector;
 	for(int i = 0; i < Limbs.Num(); i++) {
 		FTransform Transform = Mesh->GetComponentTransform();
-		FQuat Offset = FQuat::FindBetween(Limbs[i]->RestingTargetLocation - Transform.GetLocation(), Limbs[i]->FootPlan.Current.Location - Transform.GetLocation());
-		
-		Result += Offset.GetUpVector();
+		FVector Current = Limbs[i]->FootPlan.Current.UpVector;
+		DrawDebugDirectionalArrow(Mesh->GetWorld(), Mesh->GetOwner()->GetActorLocation(), Mesh->GetOwner()->GetActorLocation() + Current * 200, 25, FColor::Red);
+		Result += Current;
 		//AvgRotation += RotationalOffset;
 	}
 	//AvgRotation.Normalize();

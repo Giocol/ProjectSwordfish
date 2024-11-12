@@ -1,12 +1,11 @@
 ﻿#include "IKEffector.h"
 #include "Limb.h"
 
-void FFootPlan::Initialize(UPoseableMeshComponent* Mesh, float StepHeight, float InTraceDistance,
+void FFootPlan::EvaluatePath(UPoseableMeshComponent* Mesh, float StepHeight, float InTraceDistance, 
 	ECollisionChannel InTraceChannel) {
 	FIKEffector MidWay = FIKEffector::Lerp(Start, Target, 0.5);
 	FHitResult Hit;
-	bool bHit = ULimb::TraceFoot(Mesh, MidWay.Location + MidWay.UpVector * InTraceDistance,
-		-MidWay.UpVector, InTraceDistance * 2, InTraceChannel, Hit);
+	bool bHit = ULimb::TraceAround(Mesh, MidWay.Location + MidWay.UpVector * InTraceDistance, -MidWay.UpVector, InTraceDistance * 2, 16, InTraceChannel, Hit);
 	
 	if(bHit)
 		MidPointOffset = MidWay.UpVector * StepHeight;

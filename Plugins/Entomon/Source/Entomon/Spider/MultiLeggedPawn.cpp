@@ -35,7 +35,7 @@ void AMultiLeggedPawn::Move(FVector Target) {
 	MovementComponent->AddInputVector(ToTargetNorm);
 	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorForwardVector(), ToTargetNorm);
 	
-	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, 0.02f));
+	// AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, 0.02f));
 }
 
 void AMultiLeggedPawn::BeginPlay() {

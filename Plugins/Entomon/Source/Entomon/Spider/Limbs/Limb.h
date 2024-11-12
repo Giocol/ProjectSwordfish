@@ -37,9 +37,12 @@ public:
 	void ApplyGaitPreset(class UGaitPreset* InGaitPreset);
 	void ResetStates(UPoseableMeshComponent* Mesh);
 	
-	static bool TraceFoot(UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance, ECollisionChannel InTraceChannel, FHitResult& OutHit);
+	static bool TraceFoot(UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance,
+		ECollisionChannel InTraceChannel, FHitResult& OutHit);
+	static bool TraceAround(UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, float InDistance,
+		int Iterations, ECollisionChannel InTraceChannel, FHitResult& OutHit);
 protected:
-	bool EvaluateTargetPosition(UPoseableMeshComponent* Mesh, float GaitCycleDuration, float ZStartOffset, int Iterations,
+	bool EvaluateTargetPosition(UPoseableMeshComponent* InMesh, float GaitCycleDuration, float ZStartOffset, int Iterations,
 								ECollisionChannel TraceChannel);
 	FLimbSegment MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
 	
@@ -47,9 +50,7 @@ protected:
 	FVector GetCurrentLocation(int Id, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	FVector GetEndToTargetOffset(FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
 	
-	int Solve_CCDIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
 	int Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations);
-
 	void InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 
 	void ResetRoll(UPoseableMeshComponent* Mesh);
@@ -59,17 +60,6 @@ protected:
 	void EvaluateAngles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 
 	FVector GetJointLocation(int Id, TArray<FVector> JointLocations);
-
-	//FVector GetPoleLocation(UPoseableMeshComponent* Mesh);
-	FVector GetPoleNormal(UPoseableMeshComponent* Mesh, int Id);
-	FVector GetPoleAxisVector(UPoseableMeshComponent* Mesh);
-	FVector GetPoleAxisVector_World(UPoseableMeshComponent* Mesh);
-	void CorrectPoles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 	
-	void ApplyBoneTransformation(UPoseableMeshComponent* Mesh);
 	void DrawIK(UPoseableMeshComponent* Mesh, float Threshold);
-
-	FQuat GetRotatorBetween(FVector ToEnd, FVector ToTarget);
-	FQuat GetRotatorBetween(int Id, FVector Target, UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace);
-
 };
