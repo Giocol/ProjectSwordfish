@@ -49,16 +49,15 @@ void AMainCharacter::ProcessInteract() {
 
 void AMainCharacter::ProcessUse() {
 	if(bHasSpear && bIsFishing) {
-		if(bIsAimInThreshold && bIsPowerInGoodThreshold) // todo: expand this condition, add timer before being able to throw
+		if(bIsAimInThreshold && bIsPowerInGoodThreshold) {
+			// todo: expand this condition, add timer before being able to throw
 			UE_LOG(LogTemp, Warning, TEXT("YOU AIMED RIGHT!!!!"));
+
+			//TODO: we're not gonna use physics later, it was just to get it done quick and dirty
+			Spear->SetSimulatePhysics(true);
+			Spear->AddImpulse(Spear->GetForwardVector()*SpearSpeed);
+		}
 	}
-	//if(bHasSpear)
-	//{
-	//	UE_LOG(LogTemp, Warning, TEXT("I'm throwing the spear!"));
-	//	//TODO: we're not gonna use physics later, it was just to get it done quick and dirty
-	//	Spear->SetSimulatePhysics(true);
-	//	Spear->AddImpulse(Spear->GetForwardVector()*SpearSpeed);
-	//}
 }
 
 FFishingSliderData AMainCharacter::GetFishingSliderData(EFishingSliderType Type) const {
@@ -91,22 +90,28 @@ void AMainCharacter::Pull(float DeltaTime) {
 	if(bIsFishing) {
 		CurrentPower = FMath::Clamp(CurrentPower + PowerStep * DeltaTime, 0.0f, 1.f);
 	}
-	////todo: don't move on z
-	//CurrentlySpearedActor->SetActorLocation(
-	//	FMath::Lerp(
-	//		CurrentlySpearedActor->GetActorLocation(),
-	//		PullTarget->GetComponentLocation(),
-	//		DeltaTime *PullSpeed));
-//
-	////todo: maybe detect overlap with a SuccessfulPullBox or smth rather than this hacky math
-	//if((CurrentlySpearedActor->GetActorLocation() - PullTarget->GetComponentLocation()).Length() < 10.f) {
-	//	if(!CurrentlySpearedActor->Implements<USpearableInterface>())
-	//		return;
-	//	//NOTE: this only works for C++, if the interface is implemented directly in blueprint weird shit happens, look into it!
-	//	ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(CurrentlySpearedActor);
-	//	OverlappedSpearable->OnPullCompleted(this);
-	//	CurrentlySpearedActor = nullptr;
-	//}
+
+
+	//todo: this is all temp
+	if(!CurrentlySpearedActor)
+		return;
+
+	//todo: don't move on z
+	CurrentlySpearedActor->SetActorLocation(
+		FMath::Lerp(
+			CurrentlySpearedActor->GetActorLocation(),
+			PullTarget->GetComponentLocation(),
+			DeltaTime *PullSpeed));
+
+	//todo: maybe detect overlap with a SuccessfulPullBox or smth rather than this hacky math
+	if((CurrentlySpearedActor->GetActorLocation() - PullTarget->GetComponentLocation()).Length() < 10.f) {
+		if(!CurrentlySpearedActor->Implements<USpearableInterface>())
+			return;
+		//NOTE: this only works for C++, if the interface is implemented directly in blueprint weird shit happens, look into it!
+		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(CurrentlySpearedActor);
+		OverlappedSpearable->OnPullCompleted(this);
+		CurrentlySpearedActor = nullptr;
+	}
 }
 
 void AMainCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -117,6 +122,8 @@ void AMainCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor
 		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(OtherActor);
 		OverlappedSpearable->OnSpeared(this);
 		CurrentlySpearedActor = OtherActor;
+
+		OnSpearingStarted();
 
 		Spear->SetSimulatePhysics(false);
 		Spear->AttachToComponent(CurrentlySpearedActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
@@ -132,9 +139,8 @@ void AMainCharacter::BeginPlay() {
 void AMainCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
-	if(bIsFishing) {
+	if(bIsFishing)
 		FishingTick(DeltaTime);
-	}
 	
 	if(bIsPulling && bIsFishing)
 		Pull(DeltaTime);
@@ -143,7 +149,6 @@ void AMainCharacter::Tick(float DeltaTime) {
 void AMainCharacter::FishingTick(float DeltaTime) {
 	if(AimLowerThreshold < CurrentAim && CurrentAim < AimUpperThreshold) {
 		bIsAimInThreshold = true;
-		UE_LOG(LogTemp, Error, TEXT("AIM"));
 	}
 	else {
 		bIsAimInThreshold = false;
@@ -151,15 +156,14 @@ void AMainCharacter::FishingTick(float DeltaTime) {
 
 	if(PowerGoodLowerThreshold < CurrentPower && CurrentPower < PowerGoodUpperThreshold) {
 		bIsPowerInGoodThreshold = true;
-		UE_LOG(LogTemp, Error, TEXT("Power good"));
 	}
 	else {
 		bIsPowerInGoodThreshold = false;
 	}
 
+	//todo: medium power should allow you to still throw at a consenquence (hurt yourself and have it reflected at night?)
 	if(PowerMediumLowerThreshold < CurrentPower && CurrentPower < PowerMediumUpperThreshold) {
 		bIsPowerInMediumThreshold = true;
-		UE_LOG(LogTemp, Error, TEXT("Power medium"));
 	}
 	else {
 		bIsPowerInMediumThreshold = false;

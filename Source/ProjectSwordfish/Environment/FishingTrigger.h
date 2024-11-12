@@ -25,5 +25,8 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	UBoxComponent* Trigger = nullptr;
+		UBoxComponent* Trigger = nullptr;
+
+private:
+	bool bHasBeenTriggered = false;
 };

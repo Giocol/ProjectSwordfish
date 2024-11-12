@@ -29,8 +29,15 @@ class PROJECTSWORDFISH_API AMainCharacter : public ACharacter {
 public:
 	AMainCharacter();
 
+	//todo: add check for having spear
 	UFUNCTION(BlueprintCallable)
-	void SetIsFishing(bool State) { bIsFishing = State;};
+	void SetIsFishing(bool State) { bIsFishing = State; if(State) OnFishingStarted(); };
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFishingStarted();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnSpearingStarted();
 	
 	void ProcessCharacterMovementInput(FVector2D input);
 	void ProcessCameraMovementInput(FVector2D Input);
