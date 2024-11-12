@@ -4,6 +4,7 @@
 #include "ProjectSwordfish/Environment/InteractableInterface.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
 #include "..\UI\SliderWithTargetAreas.h"
+#include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 
 
 AMainCharacter::AMainCharacter() {
@@ -17,6 +18,13 @@ AMainCharacter::AMainCharacter() {
 	Spear->OnComponentHit.AddDynamic(this, &AMainCharacter::OnSpearHit);
 	PullTarget = CreateDefaultSubobject<USceneComponent>(TEXT("Pull Target"));
 	PullTarget->SetupAttachment(RootComponent);
+}
+
+void AMainCharacter::StartFishingEvent(UFishingEventDataAsset* FishingEventData) {
+	bIsFishing = true;
+	CurrentFishingEvent = FishingEventData;
+
+	OnFishingStarted();
 }
 
 void AMainCharacter::ProcessCharacterMovementInput(const FVector2D input) {
@@ -61,13 +69,16 @@ void AMainCharacter::ProcessUse() {
 }
 
 FFishingSliderData AMainCharacter::GetFishingSliderData(EFishingSliderType Type) const {
+	if(!CurrentFishingEvent)
+		return FFishingSliderData();
+	
 	if(Type == EFishingSliderType::Aiming) {
 		return FFishingSliderData(CurrentAim,
-			FVector2d(AimLowerThreshold, AimUpperThreshold));
+			FVector2d(CurrentFishingEvent->AimLowerThreshold, CurrentFishingEvent->AimUpperThreshold));
 	} else if(Type == EFishingSliderType::Power) {
 		return FFishingSliderData(CurrentPower,
-			FVector2d(PowerGoodLowerThreshold, PowerGoodUpperThreshold),
-			FVector2d(PowerMediumLowerThreshold, PowerMediumUpperThreshold));
+			FVector2d(CurrentFishingEvent->PowerGoodLowerThreshold, CurrentFishingEvent->PowerGoodUpperThreshold),
+			FVector2d(CurrentFishingEvent->PowerMediumLowerThreshold, CurrentFishingEvent->PowerMediumUpperThreshold));
 	} else { //Default case, should never occur
 		UE_LOG(LogTemp, Error, TEXT("EFishingSliderType passed was None! Something went wrong!"));
 		return FFishingSliderData();
@@ -147,14 +158,14 @@ void AMainCharacter::Tick(float DeltaTime) {
 }
 
 void AMainCharacter::FishingTick(float DeltaTime) {
-	if(AimLowerThreshold < CurrentAim && CurrentAim < AimUpperThreshold) {
+	if(CurrentFishingEvent->AimLowerThreshold < CurrentAim && CurrentAim < CurrentFishingEvent->AimUpperThreshold) {
 		bIsAimInThreshold = true;
 	}
 	else {
 		bIsAimInThreshold = false;
 	}
 
-	if(PowerGoodLowerThreshold < CurrentPower && CurrentPower < PowerGoodUpperThreshold) {
+	if(CurrentFishingEvent->PowerGoodLowerThreshold < CurrentPower && CurrentPower < CurrentFishingEvent->PowerGoodUpperThreshold) {
 		bIsPowerInGoodThreshold = true;
 	}
 	else {
@@ -162,7 +173,7 @@ void AMainCharacter::FishingTick(float DeltaTime) {
 	}
 
 	//todo: medium power should allow you to still throw at a consenquence (hurt yourself and have it reflected at night?)
-	if(PowerMediumLowerThreshold < CurrentPower && CurrentPower < PowerMediumUpperThreshold) {
+	if(CurrentFishingEvent->PowerMediumLowerThreshold < CurrentPower && CurrentPower < CurrentFishingEvent->PowerMediumUpperThreshold) {
 		bIsPowerInMediumThreshold = true;
 	}
 	else {
@@ -174,7 +185,7 @@ void AMainCharacter::FishingTick(float DeltaTime) {
 }
 
 void AMainCharacter::ApplyFishingResistance(float DeltaTime) {
-	if(CurrentAim < AimLowerThreshold + (AimUpperThreshold - AimLowerThreshold)/2)
+	if(CurrentAim < CurrentFishingEvent-> AimLowerThreshold + (CurrentFishingEvent->AimUpperThreshold - CurrentFishingEvent->AimLowerThreshold)/2)
 		CurrentAim = FMath::Clamp(CurrentAim - AimResistancePerTick * DeltaTime, 0.f, 1.f);
 	else
 		CurrentAim = FMath::Clamp(CurrentAim + AimResistancePerTick * DeltaTime, 0.f, 1.f);

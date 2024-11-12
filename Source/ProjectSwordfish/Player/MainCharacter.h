@@ -7,6 +7,7 @@
 #include "..\UI\SliderWithTargetAreas.h"
 #include "MainCharacter.generated.h"
 
+class UFishingEventDataAsset;
 class ISpearableInterface;
 class UCameraComponent;
 
@@ -31,7 +32,7 @@ public:
 
 	//todo: add check for having spear
 	UFUNCTION(BlueprintCallable)
-	void SetIsFishing(bool State) { bIsFishing = State; if(State) OnFishingStarted(); };
+	void StartFishingEvent(UFishingEventDataAsset* FishingEventData);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFishingStarted();
@@ -94,12 +95,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing | Aiming")
 		float AimResistancePerTick = 0.01f; //TODO: let fish set this
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float AimLowerThreshold = 0.2f;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float AimUpperThreshold = 0.4f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing | Aiming")
 		float CurrentPower = 0.f;
@@ -116,18 +111,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing | Aiming")
 		float PowerDecayPerTick = 0.1f;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float PowerGoodLowerThreshold = 0.45f;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float PowerGoodUpperThreshold = 0.55f;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float PowerMediumLowerThreshold = 0.35f;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing | Aiming",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
-		float PowerMediumUpperThreshold = 0.65f;
-
 	//todo: old stuff
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		USceneComponent* PullTarget = nullptr;
@@ -148,4 +131,8 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		bool bHasSpear = false;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UFishingEventDataAsset> CurrentFishingEvent = nullptr;
 };

@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "FishingTrigger.generated.h"
 
+class UFishingEventDataAsset;
 class UBoxComponent;
 
 UCLASS(Abstract)
@@ -24,6 +25,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	UPROPERTY(EditAnywhere)
+		UFishingEventDataAsset* FishingEventDataAsset = nullptr;
+	
 	UPROPERTY(EditDefaultsOnly)
 		UBoxComponent* Trigger = nullptr;
 
