@@ -22,20 +22,25 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 
 void AMultiLeggedPawn::Move(FVector Target) {
 	FVector ToTarget = TargetLocation - GetActorLocation();
+	FVector ToTargetNorm = ToTarget.GetSafeNormal();
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float dist = 0.5 * time * MovementComponent->MaxSpeed;
+	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorUpVector(), TargetNormal);
+	FVector PlaneTarget = FVector::VectorPlaneProject(ToTargetNorm, GetActorUpVector()).GetSafeNormal();
+	FQuat DeltaZRotation = FQuat::FindBetweenNormals(
+		GetActorForwardVector(),
+		PlaneTarget);
+	
+	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, 0.01f));
+	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaZRotation, 0.02f));
 	if(ToTarget.Length() < dist)
 		return;
-	FVector ToTargetNorm = ToTarget.GetSafeNormal();
-	float Dot = ToTargetNorm.Dot(GetActorForwardVector());
+	float Dot = PlaneTarget.Dot(GetActorForwardVector());
 	float Angle = FMath::Acos(Dot);
 	float NormalizedFacingInverse = 1.f - Angle / TWO_PI;
 	
 	float InputModifier = FMath::Pow(NormalizedFacingInverse, (1-FacingBias) / FacingBias);
-	MovementComponent->AddInputVector(ToTargetNorm);
-	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorForwardVector(), ToTargetNorm);
-	
-	// AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, 0.02f));
+	MovementComponent->AddInputVector(InputModifier * ToTargetNorm);
 }
 
 void AMultiLeggedPawn::BeginPlay() {

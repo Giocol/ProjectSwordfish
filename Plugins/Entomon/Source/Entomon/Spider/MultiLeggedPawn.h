@@ -23,6 +23,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetTargetLocation(FVector InLocation) { TargetLocation = InLocation; }
+	UFUNCTION(BlueprintCallable)
+	void SetTargetNormal(FVector InNormal) { TargetNormal = InNormal; }
 protected:
 	virtual void BeginPlay() override;
 
@@ -37,13 +39,14 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UFloatingPawnMovement* MovementComponent;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.0001f, UIMax = 1.f))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.0001f, UIMax = 1.f))
 		float FacingBias = 0.1f; // Defines the importance of facing the target the pawn wants to approach
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		float RotationSpeed = 360.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UGaitPreset* GaitPreset;
 	FVector TargetLocation;
+	FVector TargetNormal;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;

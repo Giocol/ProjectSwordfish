@@ -54,12 +54,12 @@ protected:
 		FName HipJointsName = "Hip";
 	UPROPERTY(EditDefaultsOnly, Category = "Auto Limb Finder")
 		FName EndEffectorsName = "Tip";
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	UPROPERTY(EditAnywhere, Category = "Movement")
 		float ToLimbAverageRotationSlerpSpeed = 0.1f;
-	UPROPERTY(EditDefaultsOnly, Category = "Step Planning")
+	UPROPERTY(EditAnywhere, Category = "Step Planning")
 		float FootPlanningOriginZOffset = 100.f;
-	UPROPERTY(EditDefaultsOnly, Category = "Step Planning")
-		int FootPlanningIterations = 32;
+	UPROPERTY(EditAnywhere, Category = "Step Planning")
+		int FootPlanningIterations = 16;
 	UPROPERTY(EditDefaultsOnly, Category = "Step Planning")
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
 	

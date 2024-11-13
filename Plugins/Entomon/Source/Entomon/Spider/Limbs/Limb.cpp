@@ -39,8 +39,8 @@ bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FNam
 			break;
 	}
 	for(int i = 1; i < Joints.Num(); i++) {
-		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i].GetName(), EBoneSpaces::ComponentSpace);
-		FVector NextLocation = Mesh->GetBoneLocationByName(Joints[i-1].GetName(), EBoneSpaces::ComponentSpace);
+		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i].GetName(), EBoneSpaces::WorldSpace);
+		FVector NextLocation = Mesh->GetBoneLocationByName(Joints[i-1].GetName(), EBoneSpaces::WorldSpace);
 		FVector Offset = NextLocation - CurrentLocation;
 		float Length = Offset.Length();
 		Joints[i].SetLength(Length);
@@ -70,7 +70,7 @@ bool ULimb::TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int
 			&& FVector::Distance(FootPlan.Current.GetLocation(), FootPlan.Target.GetLocation()) < 10.f)
 		return true;
 	FootPlan.Start = FootPlan.Current;
-	FootPlan.EvaluatePath(this, InMesh, StepHeight, MaxLength, InTraceChannel);
+	FootPlan.EvaluatePath(this, InMesh, StepHeight, InTraceChannel);
 	bIsGrounded = false;
 	return true;
 	//CurrentIK.SetLocation(Target);
@@ -128,6 +128,7 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	
 	int k;
 	for (k = 0; k < Iterations; k++) {
+		FVector PreviousPosition = JointLocations[0];
 		BackwardReach(Mesh, ComponentSpaceTarget, JointLocations);
 		ForwardReach(Mesh, JointLocations);
 		EvaluateAngles(Mesh, JointLocations);
@@ -142,18 +143,18 @@ void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLoc
 	JointLocations.Reserve(Joints.Num());
 	FTransform Transform = Mesh->GetComponentTransform();
 	FVector OffsetDirection = 
-		Transform.InverseTransformVector(FootPlan.Current.UpVector) + 0.5 * RestingTargetLocation.GetSafeNormal();
+		Transform.InverseTransformVector(FootPlan.Current.UpVector) + (1 * RestingTargetLocation.GetSafeNormal());
 	OffsetDirection.Normalize();
 
-	FVector Leaf = Mesh->GetBoneLocationByName(Joints[0].GetName(), EBoneSpaces::WorldSpace);
+	FVector Leaf = Mesh->GetBoneLocationByName(Joints.Last().GetName(), EBoneSpaces::WorldSpace);
 	DrawDebugDirectionalArrow(GetWorld(), Leaf, Leaf + Transform.TransformVector(OffsetDirection * 100), 25, FColor::White);
 	Reach(Mesh, OffsetDirection);
 	
-	for(int i = Joints.Num() - 1; i >= 0; --i) {
+	for(int i = 0; i < Joints.Num(); ++i) {
 		FVector Location = Mesh->GetBoneLocationByName(Joints[i].GetName(), EBoneSpaces::ComponentSpace);
 		// FVector NewLocation = Location + OffsetDirection * 150;
 		// DrawDebugLine(Mesh->GetWorld(), Transform.TransformPosition(Location), Transform.TransformPosition(NewLocation), FColor::Magenta);
-		JointLocations.Add(Transform.TransformPosition(Location));
+		JointLocations.Add(Location);
 	}
 }
 
@@ -249,6 +250,7 @@ void ULimb::DrawIK(UPoseableMeshComponent* Mesh, float Threshold) {
 		FColor::Purple, false, -1, 0, 1.5f);
 	FVector End = Transform.TransformPosition(RestingTargetLocation);
 	DrawDebugLine(Mesh->GetWorld(), FootPlan.Current.Location, End, FColor::Yellow);
+	// DrawDebugSphere(GetWorld(), Transform.TransformPosition(HipLocation), MaxLength, 16, FColor::Yellow);
 }
 
 FVector ULimb::GetEndLocation(UPoseableMeshComponent* Mesh, EBoneSpaces::Type InSpace) {
@@ -281,11 +283,10 @@ bool ULimb::EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh
 	FVector PointVelocity = LinearVelocity + AngularVelocity;
 	FVector Offset = PointVelocity * GaitCycleDuration;
 	FVector Direction = FootPlan.Current.UpVector;
+	// FVector Start = InMesh->GetBoneLocationByName(InLimb->Joints[0].GetName(), EBoneSpaces::WorldSpace) + Offset;
 	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset;
-	bool bHit = TraceAround(InLimb, InMesh, Start, -Direction, MaxLength, Iterations, TraceChannel, Hit);
-	// bool bHit = TraceFoot(Mesh, Start, -Direction, 2 * ZStartOffset, TraceChannel, Hit);
-	if(bHit) {
-		FootPlan.Target = FIKEffector(Hit.ImpactPoint, Hit.ImpactNormal);
+	if(TraceAround(InLimb, InMesh, Start, -Direction, Iterations, TraceChannel, Hit)) {
+		FootPlan.Target = FIKEffector(Hit.ImpactPoint, Hit.Normal);
 		return true;
 	}
 	return false;
@@ -305,14 +306,14 @@ FLimbSegment ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool
 }
 
 
-bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
-						float InDistance, ECollisionChannel InTraceChannel, FHitResult& OutHit) {
+bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, ECollisionChannel InTraceChannel, FHitResult& OutHit) {
 	FTransform Transform = Mesh->GetComponentTransform();
 	// FVector End = InStart + InDirection * InDistance;
 
 	FVector WorldSpaceHipLoc = Transform.TransformPosition(InLimb->HipLocation);
+	float radius = InLimb->MaxLength * 1.25;
 	float firstFactor = InDirection.Dot(InStart - WorldSpaceHipLoc);
-	float gradient = firstFactor * firstFactor - FVector::DistSquared(InStart, WorldSpaceHipLoc) + InLimb->MaxLength * InLimb->MaxLength;
+	float gradient = firstFactor * firstFactor - FVector::DistSquared(InStart, WorldSpaceHipLoc) + radius * radius;
 	if(gradient <= 0)
 		return false;
 	float sqrtGrad = FMath::Sqrt(gradient);
@@ -331,14 +332,18 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 	Ignore.Add(Mesh->GetOwner());
 	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
 		Mesh->GetWorld(),
-		NewStart, NewEnd, 10.f,
+		NewStart, NewEnd, 5.f,
 		UEngineTypes::ConvertToTraceType(InTraceChannel),
 		false,
 		Ignore,
 		EDrawDebugTrace::None,
 		OutHit, true,
 		FLinearColor::Red, FLinearColor::Green,
-		1.f);
+		0.45);
+	if(bHit && OutHit.Normal.Dot(Mesh->GetUpVector()) < -.5f) {
+		OutHit.Normal = -OutHit.Normal;
+		OutHit.ImpactNormal = -OutHit.ImpactNormal;
+	}
 	// if(bHit) {
 	// 	bHit = UKismetSystemLibrary::SphereTraceSingle(
 	// 		Mesh->GetWorld(),
@@ -353,7 +358,7 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 }
 
 bool ULimb::TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
-						float InDistance, int Iterations, ECollisionChannel InTraceChannel, FHitResult& OutHit) {
+					int Iterations, ECollisionChannel InTraceChannel, FHitResult& OutHit) {
 
 	FQuat DirAsRot = FQuat::FindBetweenNormals(FVector::DownVector, InDirection);
 	for(int i = 0; i < Iterations; i++) {
@@ -365,7 +370,7 @@ bool ULimb::TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InS
 			FMath::Cos(phi)
 			);
 		Direction = DirAsRot * Direction;
-		if(TraceFoot(InLimb, Mesh, InStart, Direction, InDistance, InTraceChannel, OutHit))
+		if(TraceFoot(InLimb, Mesh, InStart, Direction, InTraceChannel, OutHit))
 			return true;
 	}
 	return false;

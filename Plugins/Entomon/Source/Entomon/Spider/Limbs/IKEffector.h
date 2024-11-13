@@ -45,6 +45,6 @@ struct FFootPlan {
 	
 	FVector MidPointOffset = FVector::ZeroVector;
 	
-	void EvaluatePath(class ULimb* InLimb, class UPoseableMeshComponent* Mesh, float StepHeight, float InTraceDistance, ECollisionChannel InTraceChannel);
+	void EvaluatePath(class ULimb* InLimb, class UPoseableMeshComponent* Mesh, float StepHeight, ECollisionChannel InTraceChannel);
 	void LerpWithPeak(double Alpha);
 };

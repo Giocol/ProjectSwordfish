@@ -24,7 +24,7 @@ void UProceduralLimbManager::TickComponent(float DeltaTime, ELevelTick TickType,
 	float LastWalkCycleCounter;
 	TickTimers(DeltaTime, LastWalkCycleCounter);
 	TickLimbs(DeltaTime, LastWalkCycleCounter);
-	ApproachLimbAverageRotation(DeltaTime);
+	// ApproachLimbAverageRotation(DeltaTime);
 }
 
 void UProceduralLimbManager::TickTimers(float DeltaTime, float& LastWalkCycleCounter) {
