@@ -106,6 +106,9 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 		return false;
 	
 	// ResetStates(Mesh);
+	TArray<FVector> JointLocations;
+	InitializeIK(Mesh, JointLocations);
+	ResetRoll(Mesh);
 
 	FTransform ToComponentSpace = Mesh->GetComponentTransform();
 	FVector ComponentSpaceTarget = ToComponentSpace.InverseTransformPosition(FootPlan.Current.GetLocation());
@@ -123,12 +126,6 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 		}
 		return false; 
 	}
-
-	
-	TArray<FVector> JointLocations;
-	InitializeIK(Mesh, JointLocations);
-	ResetRoll(Mesh);
-	//CorrectPoles(Mesh);
 	
 	int k;
 	for (k = 0; k < Iterations; k++) {
@@ -144,15 +141,18 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 
 void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations) {
 	JointLocations.Reserve(Joints.Num());
+	FTransform Transform = Mesh->GetComponentTransform();
+	FVector OffsetDirection =
+		Transform.InverseTransformVector(FootPlan.Current.UpVector) + 0.5 * RestingTargetLocation.GetSafeNormal();
+	OffsetDirection.Normalize();
+	
 	for(int i = Joints.Num() - 1; i >= 0; --i) {
-		FTransform Transform = Mesh->GetComponentTransform();
 		FVector Location = Mesh->GetBoneLocationByName(Joints[i].GetName(), EBoneSpaces::ComponentSpace);
-		FVector OffsetDirection =
-			Transform.InverseTransformVector(FootPlan.Current.UpVector) + 0.5 * RestingTargetLocation.GetSafeNormal();
-		Location += OffsetDirection * 100;
-		JointLocations.Add(Transform.TransformPosition(Location));
+		FVector NewLocation = Location + OffsetDirection * 150;
+		// DrawDebugLine(Mesh->GetWorld(), Transform.TransformPosition(Location), Transform.TransformPosition(NewLocation), FColor::Magenta);
+		JointLocations.Add(Transform.TransformPosition(NewLocation));
 		if(i == 1)
-			DrawDebugBox(GetWorld(), Transform.TransformPosition(Location), FVector::OneVector * 5, FColor::White);
+			DrawDebugBox(GetWorld(), Transform.TransformPosition(NewLocation), FVector::OneVector * 5, FColor::White);
 	}
 }
 
