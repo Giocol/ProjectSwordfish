@@ -59,6 +59,8 @@ protected:
 	void ForwardReach(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 	void EvaluateAngles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations);
 
+	void Reach(UPoseableMeshComponent* InMesh, FVector Direction);
+	
 	FVector GetJointLocation(int Id, TArray<FVector> JointLocations);
 	
 	void DrawIK(UPoseableMeshComponent* Mesh, float Threshold);

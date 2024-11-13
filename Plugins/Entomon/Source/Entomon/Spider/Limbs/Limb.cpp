@@ -15,6 +15,10 @@ void ULimb::Tick(UPoseableMeshComponent* Mesh, float DeltaTime, ECollisionChanne
 	if(StepTimer > 1.f) {
 		StepTimer = 0;
 		bIsGrounded = true;
+
+		// TArray<FVector> JointLocations;
+		// InitializeIK(Mesh, JointLocations);
+		// EvaluateAngles(Mesh, JointLocations);
 	}
 }
 
@@ -102,7 +106,7 @@ void ULimb::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 }
 
 int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations) {
-	if(!Mesh)
+	if(!Mesh || Iterations <= 0)
 		return false;
 	
 	// ResetStates(Mesh);
@@ -116,14 +120,9 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	FVector StartToTarget = ComponentSpaceTarget - StartJoint;
 	float dist = StartToTarget.Length();
 	if(dist > MaxLength + Threshold) {
-		for(int i = Joints.Num() - 1; i > 0; --i) {
-			FVector Fwd = -Joints[i].GetState().GetRightVector();
-			FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints[i].GetName(), EBoneSpaces::ComponentSpace);
-			FVector TgtFwd = (ComponentSpaceTarget - CurrentLocation).GetSafeNormal();
-			FQuat DeltaRotation = FQuat::FindBetween(Fwd, TgtFwd);
-			Joints[i].SetState(DeltaRotation * Joints[i].GetState());
-			Mesh->SetBoneRotationByName(Joints[i].GetName(), Joints[i].GetState().Rotator(), EBoneSpaces::ComponentSpace);
-		}
+		FVector CurrentLocation = Mesh->GetBoneLocationByName(Joints.Last().GetName(), EBoneSpaces::ComponentSpace);
+		FVector TgtFwd = (ComponentSpaceTarget - CurrentLocation).GetSafeNormal();
+		Reach(Mesh, TgtFwd);
 		return false; 
 	}
 	
@@ -142,17 +141,19 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLocations) {
 	JointLocations.Reserve(Joints.Num());
 	FTransform Transform = Mesh->GetComponentTransform();
-	FVector OffsetDirection =
+	FVector OffsetDirection = 
 		Transform.InverseTransformVector(FootPlan.Current.UpVector) + 0.5 * RestingTargetLocation.GetSafeNormal();
 	OffsetDirection.Normalize();
+
+	FVector Leaf = Mesh->GetBoneLocationByName(Joints[0].GetName(), EBoneSpaces::WorldSpace);
+	DrawDebugDirectionalArrow(GetWorld(), Leaf, Leaf + Transform.TransformVector(OffsetDirection * 100), 25, FColor::White);
+	Reach(Mesh, OffsetDirection);
 	
 	for(int i = Joints.Num() - 1; i >= 0; --i) {
 		FVector Location = Mesh->GetBoneLocationByName(Joints[i].GetName(), EBoneSpaces::ComponentSpace);
-		FVector NewLocation = Location + OffsetDirection * 150;
+		// FVector NewLocation = Location + OffsetDirection * 150;
 		// DrawDebugLine(Mesh->GetWorld(), Transform.TransformPosition(Location), Transform.TransformPosition(NewLocation), FColor::Magenta);
-		JointLocations.Add(Transform.TransformPosition(NewLocation));
-		if(i == 1)
-			DrawDebugBox(GetWorld(), Transform.TransformPosition(NewLocation), FVector::OneVector * 5, FColor::White);
+		JointLocations.Add(Transform.TransformPosition(Location));
 	}
 }
 
@@ -217,6 +218,15 @@ void ULimb::EvaluateAngles(UPoseableMeshComponent* Mesh, TArray<FVector>& JointL
 		float angle = FMath::RadiansToDegrees(DeltaRotation.GetAngle());
 		Joints[i].SetState(DeltaRotation * Joints[i].GetState());
 		Mesh->SetBoneRotationByName(Joints[i].GetName(), Joints[i].GetState().Rotator(), EBoneSpaces::ComponentSpace);
+	}
+}
+
+void ULimb::Reach(UPoseableMeshComponent* InMesh, FVector Direction) {
+	for(int i = Joints.Num() - 1; i > 0; --i) {
+		FVector Fwd = -Joints[i].GetState().GetRightVector();
+		FQuat DeltaRotation = FQuat::FindBetween(Fwd, Direction);
+		Joints[i].SetState(DeltaRotation * Joints[i].GetState());
+		InMesh->SetBoneRotationByName(Joints[i].GetName(), Joints[i].GetState().Rotator(), EBoneSpaces::ComponentSpace);
 	}
 }
 
@@ -301,10 +311,13 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 	// FVector End = InStart + InDirection * InDistance;
 
 	FVector WorldSpaceHipLoc = Transform.TransformPosition(InLimb->HipLocation);
-	float firstFactor = -2 * InDirection.Dot(InStart - WorldSpaceHipLoc);
-	float secondFactor = FMath::Sqrt((4 * firstFactor * firstFactor) - 4 * (InStart - WorldSpaceHipLoc).SquaredLength() - InLimb->MaxLength);
-	float distance1 = (firstFactor + secondFactor) / 2;
-	float distance2 = (firstFactor - secondFactor) / 2;
+	float firstFactor = InDirection.Dot(InStart - WorldSpaceHipLoc);
+	float gradient = firstFactor * firstFactor - FVector::DistSquared(InStart, WorldSpaceHipLoc) + InLimb->MaxLength * InLimb->MaxLength;
+	if(gradient <= 0)
+		return false;
+	float sqrtGrad = FMath::Sqrt(gradient);
+	float distance1 = (-firstFactor + sqrtGrad) / 2;
+	float distance2 = (-firstFactor - sqrtGrad) / 2;
 	if(distance1 > distance2) {
 		float temp = distance1;
 		distance1 = distance2;
@@ -313,9 +326,9 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 	
 	FVector NewStart = InStart + InDirection * distance1;
 	FVector NewEnd = InStart + InDirection * distance2;
-
 	
 	TArray<AActor*> Ignore;
+	Ignore.Add(Mesh->GetOwner());
 	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
 		Mesh->GetWorld(),
 		NewStart, NewEnd, 10.f,
