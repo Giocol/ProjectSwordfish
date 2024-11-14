@@ -23,8 +23,9 @@ void AFishingTrigger::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	AMainCharacter* Player = OtherActor ? Cast<AMainCharacter>(OtherActor) : nullptr;
 	if(Player && FishingEventDataAsset  && !bHasBeenTriggered) {
-		Player->StartFishingEvent(FishingEventDataAsset);
-		bHasBeenTriggered = true; //todo: terrible hack, change
+		bool bIsFishingStartSuccessful = Player->StartFishingEvent(FishingEventDataAsset);
+		if(bIsFishingStartSuccessful)
+			bHasBeenTriggered = true; //todo: terrible hack, change
 	}
 }
 

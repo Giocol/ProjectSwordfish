@@ -32,13 +32,16 @@ public:
 
 	//todo: add check for having spear
 	UFUNCTION(BlueprintCallable)
-	void StartFishingEvent(UFishingEventDataAsset* FishingEventData);
+	bool StartFishingEvent(UFishingEventDataAsset* FishingEventData);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnFishingStarted();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnSpearingStarted();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnFishingEnded();
 	
 	void ProcessCharacterMovementInput(FVector2D input);
 	void ProcessCameraMovementInput(FVector2D Input);

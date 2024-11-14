@@ -20,11 +20,15 @@ AMainCharacter::AMainCharacter() {
 	PullTarget->SetupAttachment(RootComponent);
 }
 
-void AMainCharacter::StartFishingEvent(UFishingEventDataAsset* FishingEventData) {
+bool AMainCharacter::StartFishingEvent(UFishingEventDataAsset* FishingEventData) {
+	if(!bHasSpear)
+		return false;
+	
 	bIsFishing = true;
 	CurrentFishingEvent = FishingEventData;
 
 	OnFishingStarted();
+	return true;
 }
 
 void AMainCharacter::ProcessCharacterMovementInput(const FVector2D input) {
@@ -122,6 +126,9 @@ void AMainCharacter::Pull(float DeltaTime) {
 		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(CurrentlySpearedActor);
 		OverlappedSpearable->OnPullCompleted(this);
 		CurrentlySpearedActor = nullptr;
+		bIsFishing = false;
+		OnFishingEnded();
+		//TODO: SAVE THE RESULT OF THE FISHING! In the dialogue state maybe?
 	}
 }
 
