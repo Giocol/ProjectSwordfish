@@ -5,7 +5,6 @@
 #include "Components/BrushComponent.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProceduralMeshComponent.h"
 
 ANavVolume::ANavVolume() {
 	GetBrushComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -111,6 +110,9 @@ int ANavVolume::FindClosestNode(FVector Location) {
 
 	int k = 0;
 	while(true) {
+		if(FVector::DistSquared(Nodes[CurrentId].Origin, Location) < Resolution * Resolution)
+			return CurrentId;
+			
 		int lhs = (2 * CurrentId+1) % Nodes.Num();
 		int rhs = (2 * CurrentId+2) % Nodes.Num();
 
@@ -122,10 +124,9 @@ int ANavVolume::FindClosestNode(FVector Location) {
 			CurrentId = lhs;
 		
 		
-		
 		DrawDebugLine(GetWorld(), Nodes[LastId].Origin, Nodes[CurrentId].Origin, FColor::White);
 		k++;
-		if(k > 32) break;
+		if(k > 100) break;
 	}
 	
 	return INDEX_NONE;
