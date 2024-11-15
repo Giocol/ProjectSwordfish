@@ -21,6 +21,7 @@ struct FBoundingVolume {
 	FORCEINLINE FVector GetOrigin() const { return Origin; }
 	
 	FORCEINLINE bool IsRoot() const { return ParentId == INDEX_NONE; }
+	FORCEINLINE bool IsLeaf() const { return bIsLeaf; }
 	FORCEINLINE double GetSignedDistance(FVector Point) const {
 		FVector ToSurface = (Point - Origin).GetAbs() - Extent;
 		double Result =
@@ -34,4 +35,5 @@ private:
 	TArray<int> Children;
 	FVector Extent = FVector::OneVector;
 	FVector Origin = FVector::ZeroVector;
+	bool bIsLeaf = false;
 };
