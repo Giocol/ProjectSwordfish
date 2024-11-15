@@ -126,7 +126,7 @@ int ANavVolume::FindClosestNode(FVector Location) {
 		
 		DrawDebugLine(GetWorld(), Nodes[LastId].Origin, Nodes[CurrentId].Origin, FColor::White);
 		k++;
-		if(k > 100) break;
+		if(k > Nodes.Num()) break;
 	}
 	
 	return INDEX_NONE;
