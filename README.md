@@ -7,5 +7,5 @@
 ## How to auto-reimport ink stories
  - Go to Editor Preferences->General->Loading and Saving
  - Add a new folder to track with these settings
- ![alt text](Docs\inkAutoImport.png)
+ ![autoimport setup](Docs/inkAutoImport.png)
  - all ink stories will re-import automatically when changed, added and deleted!
