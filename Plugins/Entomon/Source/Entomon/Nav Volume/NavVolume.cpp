@@ -17,9 +17,9 @@ void ANavVolume::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 	
 	for (int i = 0; i < Nodes.Num(); ++i) {
-		FColor FarColor = FColor::Green;
+		FColor FarColor = FColor::Emerald;
 		FColor NearColor = FColor::Black;
-		float alpha = FMath::Clamp(Nodes[i].DistanceFromNearestSurface / TraceDistance, 0.f, 1.f);
+		float alpha = FMath::Clamp(Nodes[i].Distance / TraceDistance, 0.f, 1.f);
 		float invAlpha = 1.f - alpha;
 		FColor Color = FColor(
 			FarColor.R * invAlpha + NearColor.R * alpha,
@@ -91,12 +91,17 @@ void ANavVolume::Populate() {
 			for(CurrentPosition.Z = -RootExtent.Z; CurrentPosition.Z <= RootExtent.Z; CurrentPosition.Z += Resolution) {
 				FVector WorldPos = GetTransform().GetRotation() * CurrentPosition + RootOrigin;
 				FVector Displacement = EvaluateNodeDistance(WorldPos);
-				float Distance = Displacement.Length();
+				float Distance;
+				FVector Normal;
+				Displacement.ToDirectionAndLength(Normal,Distance);
 				if(Distance > 0) {
 					auto Node = FNavNode(WorldPos);
-					Node.DisplacementFromNearestSurface = Displacement;
-					Node.DistanceFromNearestSurface = Distance;
-					Nodes.Add(Node);;
+					Node.SurfaceNormal = Normal;
+					Node.Distance = Distance;
+					Nodes.Add(Node);
+					DrawDebugLine(GetWorld(), Node.Origin,
+						Node.Origin + Node.SurfaceNormal * Node.Distance,
+						FColor::Cyan, false, 15.f);
 				}
 			}
 		}
@@ -324,17 +329,33 @@ bool ANavVolume::Trace(FVector Start, FVector Direction, FHitResult& OutHit) {
 	TArray<AActor*> Ignore;
 	FVector End = Start + Direction * TraceDistance;
 
-	bool bHit = UKismetSystemLibrary::LineTraceSingle(
+	FHitResult SimpleHit;
+	bool bHitSimple = UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(),
 		Start, End,
 		UEngineTypes::ConvertToTraceType(TraceChannel),
-		true,
+		false,
 		Ignore,
 		EDrawDebugTrace::None,
 		OutHit,
 		true);
+	bool bHit = false;
+	// if(bHitSimple) {
+	// 	bHit = UKismetSystemLibrary::LineTraceSingle(
+	// 	GetWorld(),
+	// 	Start, End,
+	// 	UEngineTypes::ConvertToTraceType(TraceChannel),
+	// 	true,
+	// 	Ignore,
+	// 	EDrawDebugTrace::None,
+	// 	OutHit,
+	// 	true);
+	// 	float absDiff = FMath::Abs(OutHit.Normal.Dot(Direction) - SimpleHit.Normal.Dot(Direction));
+	// 	if(bHitSimple && absDiff >= 0.25)
+	// 		return false;
+	// }
 	
-	return bHit;
+	return bHitSimple;
 }
 
 bool ANavVolume::TraceFibonacciSphere(FVector Start, TArray<FHitResult>& OutHit) {

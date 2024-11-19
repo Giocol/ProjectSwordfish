@@ -12,7 +12,7 @@ public:
 	ANavVolume();
 
 	virtual void Tick(float DeltaSeconds) override;
-
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -24,8 +24,8 @@ protected:
 	
 	void Connect();
 
-	TArray<int> ReconstructPath(TMap<int, int> PathMap, int Current);
 	TArray<int> FindPath(int Start, int End);
+	TArray<int> ReconstructPath(TMap<int, int> PathMap, int Current);
 	float Heuristic(int Start, int End);
 
 	int FindClosestNode(FVector Location);

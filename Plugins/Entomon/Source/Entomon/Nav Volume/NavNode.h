@@ -23,8 +23,8 @@ struct FNavNode {
 	}
 	
 	FVector Origin = FVector::ZeroVector;
-	FVector DisplacementFromNearestSurface = FVector::ZeroVector;
-	float DistanceFromNearestSurface = 0;
+	FVector SurfaceNormal = FVector::ZeroVector;
+	float Distance = 0;
 
 	TArray<FNavLink> Connections;
 };
