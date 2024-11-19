@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Volume.h"
+#include "PathPreference.h"
+#include "NavNode.h"
+
 #include "NavVolume.generated.h"
 
 UCLASS()
@@ -12,6 +15,9 @@ public:
 	ANavVolume();
 
 	virtual void Tick(float DeltaSeconds) override;
+
+	UFUNCTION(BlueprintCallable)
+	TArray<FNavNode> FindPath(FVector Start, FVector Target, FPathPreference PathPreference);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -24,8 +30,9 @@ protected:
 	
 	void Connect();
 
-	TArray<int> FindPath(int Start, int End);
+	TArray<int> FindPath(int Start, int End, struct FPathPreference PathPreference);
 	TArray<int> ReconstructPath(TMap<int, int> PathMap, int Current);
+	int FindClosestToTarget(TMap<int, int> PathMap, int End);
 	float Heuristic(int Start, int End);
 
 	int FindClosestNode(FVector Location);
@@ -61,6 +68,9 @@ public:
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
 	UPROPERTY(EditAnywhere)
 		bool bConnectDiagonal = true;
+
+	UPROPERTY(BlueprintReadWrite)
+	FVector TestTarget;
 	
 	TArray<struct FNavNode> Nodes;
 	int NavTreeRoot = 0;

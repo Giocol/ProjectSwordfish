@@ -3,7 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Entomon/Navigation/PathPreference.h"
 #include "GameFramework/Pawn.h"
+#include "Entomon/Navigation/NavNode.h"
+
 #include "MultiLeggedPawn.generated.h"
 
 class UGaitPreset;
@@ -18,17 +21,21 @@ class ENTOMON_API AMultiLeggedPawn : public APawn
 
 public:
 	AMultiLeggedPawn();
+	
+	UFUNCTION(BlueprintCallable)
+		void SetPath(TArray<FNavNode> Nodes) {
+		Path = Nodes;
+		CurrentPathId = 0;
+	}
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
 
-	UFUNCTION(BlueprintCallable)
-	void SetTargetLocation(FVector InLocation) { TargetLocation = InLocation; }
-	UFUNCTION(BlueprintCallable)
-	void SetTargetNormal(FVector InNormal) { TargetNormal = InNormal; }
 protected:
 	virtual void BeginPlay() override;
 
-	void Move(FVector Target);
+	bool Move(double DeltaTime, FNavNode Target);
+	void Rotate(double DeltaTime, FNavNode Target);
+	void FollowPath(double DeltaTime);
 public:
 	virtual void Tick(float DeltaTime) override;
 
@@ -37,7 +44,7 @@ public:
 	void ApplyGaitPreset(UGaitPreset* InGaitPreset);
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UFloatingPawnMovement* MovementComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.0001f, UIMax = 1.f))
 		float FacingBias = 0.1f; // Defines the importance of facing the target the pawn wants to approach
@@ -45,8 +52,11 @@ protected:
 		float RotationSpeed = 360.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UGaitPreset* GaitPreset;
-	FVector TargetLocation;
-	FVector TargetNormal;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		FPathPreference PathPreference;
+
+	TArray<FNavNode> Path;
+	int CurrentPathId;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;

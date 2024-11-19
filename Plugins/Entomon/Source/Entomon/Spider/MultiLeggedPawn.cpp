@@ -20,31 +20,51 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AMultiLeggedPawn::Move(FVector Target) {
-	FVector ToTarget = TargetLocation - GetActorLocation();
+bool AMultiLeggedPawn::Move(double DeltaTime, FNavNode Target) {
+	FVector ToTarget = Target.Origin - GetActorLocation();
 	FVector ToTargetNorm = ToTarget.GetSafeNormal();
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float dist = 0.5 * time * MovementComponent->MaxSpeed;
-	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorUpVector(), TargetNormal);
 	FVector PlaneTarget = FVector::VectorPlaneProject(ToTargetNorm, GetActorUpVector()).GetSafeNormal();
-	FQuat DeltaZRotation = FQuat::FindBetweenNormals(
-		GetActorForwardVector(),
-		PlaneTarget);
-	
-	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, 0.01f));
-	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaZRotation, 0.02f));
+
 	if(ToTarget.Length() < dist)
-		return;
+		return true;
 	float Dot = PlaneTarget.Dot(GetActorForwardVector());
 	float Angle = FMath::Acos(Dot);
 	float NormalizedFacingInverse = 1.f - Angle / TWO_PI;
 	
 	float InputModifier = FMath::Pow(NormalizedFacingInverse, (1-FacingBias) / FacingBias);
 	MovementComponent->AddInputVector(InputModifier * ToTargetNorm);
+	
+	return false;
+}
+
+void AMultiLeggedPawn::Rotate(double DeltaTime, FNavNode Target) {
+	FVector ToTarget = Target.Origin - GetActorLocation();
+	FVector ToTargetNorm = ToTarget.GetSafeNormal();
+
+	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorUpVector(), Target.Normal);
+	FVector PlaneTarget = FVector::VectorPlaneProject(ToTargetNorm, GetActorUpVector()).GetSafeNormal();
+	FQuat DeltaZRotation = FQuat::FindBetweenNormals(
+		GetActorForwardVector(),
+		PlaneTarget);
+	
+	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, DeltaTime * RotationSpeed));
+	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaZRotation, 2 * DeltaTime * RotationSpeed));
+}
+
+void AMultiLeggedPawn::FollowPath(double DeltaTime) {
+	if(CurrentPathId < Path.Num()-1) {
+		Rotate(DeltaTime, Path[CurrentPathId+1]);
+		if(Move(DeltaTime, Path[CurrentPathId+1])) {
+			CurrentPathId++;
+		}
+	}
+	else if(CurrentPathId == Path.Num()-1)
+		Rotate(DeltaTime, Path[CurrentPathId]);
 }
 
 void AMultiLeggedPawn::BeginPlay() {
-	TargetLocation = GetActorLocation();
 	LimbManager->AutoDetectLimbs(Mesh);
 	ApplyGaitPreset(GaitPreset);
 	Super::BeginPlay();
@@ -52,7 +72,10 @@ void AMultiLeggedPawn::BeginPlay() {
 
 void AMultiLeggedPawn::Tick(float DeltaTime) {
 	
-	Move(TargetLocation);
+	FollowPath(DeltaTime);
+
+	for(int i = 0; i < Path.Num() - 1; ++i)
+		DrawDebugLine(GetWorld(), Path[i].Origin, Path[i+1].Origin, FColor::Yellow);
 }
 
 void AMultiLeggedPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+#include "NavNode.generated.h"
+
 struct FNavLink {
 	FNavLink(int Id, float Distance) : Id(Id) {}
 	float Distance = 0;
@@ -13,7 +15,9 @@ struct FNavLink {
 	}
 };
 
+USTRUCT(BlueprintType)
 struct FNavNode {
+	GENERATED_BODY()
 	FNavNode() { }
 	FNavNode(FVector Origin)
 		: Origin(Origin) { }
@@ -23,7 +27,7 @@ struct FNavNode {
 	}
 	
 	FVector Origin = FVector::ZeroVector;
-	FVector SurfaceNormal = FVector::ZeroVector;
+	FVector Normal = FVector::ZeroVector;
 	float Distance = 0;
 
 	TArray<FNavLink> Connections;

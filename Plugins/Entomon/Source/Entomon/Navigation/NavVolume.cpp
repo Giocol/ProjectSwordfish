@@ -2,6 +2,7 @@
 
 #include "BoundingVolume.h"
 #include "NavNode.h"
+#include "PathPreference.h"
 #include "Components/BrushComponent.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
 #include "Kismet/GameplayStatics.h"
@@ -16,37 +17,42 @@ ANavVolume::ANavVolume() {
 void ANavVolume::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 	
-	for (int i = 0; i < Nodes.Num(); ++i) {
-		FColor FarColor = FColor::Emerald;
-		FColor NearColor = FColor::Black;
-		float alpha = FMath::Clamp(Nodes[i].Distance / TraceDistance, 0.f, 1.f);
-		float invAlpha = 1.f - alpha;
-		FColor Color = FColor(
-			FarColor.R * invAlpha + NearColor.R * alpha,
-			FarColor.G * invAlpha + NearColor.G * alpha,
-			FarColor.B * invAlpha + NearColor.B * alpha
-			);
-		
-		// DrawDebugLine(GetWorld(), Nodes[i].Origin, Nodes[i].Origin + Nodes[i].DisplacementFromNearestSurface, Color);
-		// for (auto ToNeighbor : Nodes[i].Connections) {
-		// 	FVector NeighborLocation = Nodes[ToNeighbor.Id].Origin;
-		// 	DrawDebugLine(GetWorld(), Nodes[i].Origin, NeighborLocation, FColor::Yellow);
-		// }
-		DrawDebugPoint(GetWorld(), Nodes[i].Origin, 3.f, Color);
-	}
+	// FColor FarColor = FColor::Emerald;
+	// FColor NearColor = FColor::Black;
+	// for (int i = 0; i < Nodes.Num(); ++i) {
+	// 	float alpha = FMath::Clamp(Nodes[i].Distance / TraceDistance, 0.f, 1.f);
+	// 	float invAlpha = 1.f - alpha;
+	// 	FColor Color = FColor(
+	// 		FarColor.R * invAlpha + NearColor.R * alpha,
+	// 		FarColor.G * invAlpha + NearColor.G * alpha,
+	// 		FarColor.B * invAlpha + NearColor.B * alpha
+	// 		);
+	// 	
+	// 	
+	// 	DrawDebugPoint(GetWorld(), Nodes[i].Origin, 3.f, Color);
+	// }
 
-	AActor* Spider = UGameplayStatics::GetActorOfClass(GetWorld(), AMultiLeggedPawn::StaticClass());
-	int Id = FindClosestNode(Spider->GetActorLocation());
-	if(Id >= 0 && Id < Nodes.Num())
-		DrawDebugBox(GetWorld(), Nodes[Id].Origin, FVector::OneVector * 15, FColor::Yellow);
+	// AActor* Spider = UGameplayStatics::GetActorOfClass(GetWorld(), AMultiLeggedPawn::StaticClass());
+	// int Id = FindClosestNode(Spider->GetActorLocation());
+	// if(Id >= 0 && Id < Nodes.Num())
+	// 	DrawDebugBox(GetWorld(), Nodes[Id].Origin, FVector::OneVector * 15, FColor::Yellow);
+	// FPathPreference testPref = {0, 100, 50, 0.5 };
+	// auto Path = FindPath(Id, FindClosestNode(TestTarget), testPref);
+	//
+	// if(Path.Num() < 2)
+	// 	return;
+	// for(int i = 1; i < Path.Num(); ++i) {
+	// 	DrawDebugLine(GetWorld(), Nodes[Path[i-1]].Origin, Nodes[Path[i]].Origin, FColor::Yellow);
+	// }
+}
 
-	auto Path = FindPath(Nodes.Num() / 2, Id);
-
-	if(Path.Num() < 2)
-		return;
-	for(int i = 1; i < Path.Num(); ++i) {
-		DrawDebugLine(GetWorld(), Nodes[Path[i-1]].Origin, Nodes[Path[i]].Origin, FColor::Yellow);
-	}
+TArray<FNavNode> ANavVolume::FindPath(FVector Start, FVector Target, FPathPreference PathPreference) {
+	auto indices = FindPath(FindClosestNode(Start), FindClosestNode(Target), PathPreference);
+	TArray<FNavNode> Result;
+	Result.Reserve(indices.Num());
+	for(int i = 0; i < indices.Num(); ++i)
+		Result.Add(Nodes[indices[i]]);
+	return Result;
 }
 
 void ANavVolume::BeginPlay() {
@@ -96,12 +102,12 @@ void ANavVolume::Populate() {
 				Displacement.ToDirectionAndLength(Normal,Distance);
 				if(Distance > 0) {
 					auto Node = FNavNode(WorldPos);
-					Node.SurfaceNormal = Normal;
+					Node.Normal = -Normal;
 					Node.Distance = Distance;
 					Nodes.Add(Node);
 					DrawDebugLine(GetWorld(), Node.Origin,
-						Node.Origin + Node.SurfaceNormal * Node.Distance,
-						FColor::Cyan, false, 15.f);
+						Node.Origin + Node.Normal * Node.Distance,
+						FColor::Cyan, false, 5.f);
 				}
 			}
 		}
@@ -210,12 +216,25 @@ TArray<int> ANavVolume::ReconstructPath(TMap<int, int> PathMap, int Current) {
 	TArray<int> Result;
 	while(PathMap.Contains(Current)) {
 		Current = PathMap[Current];
-		Result.Add(Current);
+		Result.Insert(Current, 0);
 	}
 	return Result;
 }
 
-TArray<int> ANavVolume::FindPath(int Start, int End) {
+int ANavVolume::FindClosestToTarget(TMap<int, int> PathMap, int End) {
+	int Closest = 0;
+	float closestDist = INFINITY;
+	for (auto i : PathMap) {
+		float dist = FVector::DistSquared(Nodes[i.Value].Origin, Nodes[End].Origin);
+		if(dist < closestDist) {
+			closestDist = dist;
+			Closest = i.Value;
+		}
+	}
+	return Closest;
+}
+
+TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPreference) {
 	TArray<FNavLink> OpenSet = { FNavLink(Start, 0) };
 	TMap<int, float> gScore = { TTuple<int, float>(Start, 0) };
 	TMap<int, float> fScore = { TTuple<int, float>(Start, Heuristic(Start, End)) };
@@ -230,7 +249,7 @@ TArray<int> ANavVolume::FindPath(int Start, int End) {
 					Current = Entry;
 			}
 		}
-		DrawDebugLine(GetWorld(), Nodes[LastId].Origin, Nodes[Current.Id].Origin, FColor::Silver);
+		// DrawDebugLine(GetWorld(), Nodes[LastId].Origin, Nodes[Current.Id].Origin, FColor::Silver);
 		
 		if(Current.Id == End) {
 			return ReconstructPath(CameFrom, Current.Id);
@@ -245,18 +264,32 @@ TArray<int> ANavVolume::FindPath(int Start, int End) {
 				CameFrom.Add(Link.Id, Current.Id);
 
 				gScore.Add(Link.Id, Tentative_gScore);
-				if(!fScore.Contains(Link.Id))
-					fScore.Add(Link.Id, Tentative_gScore + Heuristic(Link.Id, End));
-				bool bContains = false;
-				for(auto Entry : OpenSet)
-					if(Entry.Id == Link.Id) { bContains = true; break; }
-				if(!bContains)
-					OpenSet.Add(Link);
+				if(!fScore.Contains(Link.Id)) {
+					float newFScore = Tentative_gScore + Heuristic(Link.Id, End);
+					if(PathPreference.MaxDistance < INFINITY) {
+						float absDistFromPreference = FMath::Abs(Nodes[Link.Id].Distance - PathPreference.PreferredDistance);
+						float distNormalized =
+							(absDistFromPreference - PathPreference.MinDistance) / (PathPreference.MaxDistance / PathPreference.MinDistance);
+						float biasedPreference = FMath::Pow(distNormalized, (1-PathPreference.PreferenceWeight)/PathPreference.PreferenceWeight);
+						newFScore = FMath::Lerp(newFScore, biasedPreference, PathPreference.PreferenceWeight);
+					}
+					fScore.Add(Link.Id, newFScore);
+				}
+				bool bIsReachable =
+					Nodes[Link.Id].Distance > PathPreference.MinDistance &&
+					Nodes[Link.Id].Distance < PathPreference.MaxDistance;
+				if(bIsReachable) {
+					bool bContains = false;
+					for(auto Entry : OpenSet)
+						if(Entry.Id == Link.Id) { bContains = true; break; }
+					if(!bContains)
+						OpenSet.Add(Link);
+				}
 			}
 		}
 		LastId = Current.Id;
 	}
-	return TArray<int>();
+	return ReconstructPath(CameFrom, FindClosestToTarget(CameFrom, End));
 }
 
 float ANavVolume::Heuristic(int Start, int End) {
