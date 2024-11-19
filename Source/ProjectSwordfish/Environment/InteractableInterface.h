@@ -14,10 +14,11 @@ class IInteractableInterface
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnInteract();
+	
 	UFUNCTION()
-		virtual void Interact(AMainCharacter* InteractionInstigator);
+		virtual void Interact(AMainCharacter* InteractionInstigator) {
+			Execute_OnInteract(this->_getUObject()); //TODO: THIS IS TERRIFYING WHY DOES IT WORK
+		};
 };
-
-inline void IInteractableInterface::Interact(AMainCharacter* InteractionInstigator)
-{
-}
