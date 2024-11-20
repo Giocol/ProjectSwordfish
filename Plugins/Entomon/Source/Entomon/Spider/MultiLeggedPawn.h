@@ -33,8 +33,8 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	bool Move(double DeltaTime, FNavNode Target);
-	void Rotate(double DeltaTime, FNavNode Target);
+	bool Move(double DeltaTime, int Target);
+	void Rotate(double DeltaTime, int Target);
 	void FollowPath(double DeltaTime);
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -42,6 +42,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void ApplyGaitPreset(UGaitPreset* InGaitPreset);
+
+protected:
+	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
+	TArray<FHitResult> FibonacciTrace(FVector Start);
+	FVector InterpretWhiskers(TArray<FHitResult> Hits, bool bDraw);
+
+	float GetNormalizedOffsetFromPreference(float Distance);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
@@ -54,6 +61,18 @@ protected:
 		UGaitPreset* GaitPreset;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		FPathPreference PathPreference;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		int NumWhiskers = 32;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		float WhiskerRayDistance = 500;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		float PreferredPersonalSpace = 60.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		float MinDistanceFromObstacle = 30.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		float MaxDistanceFromObstacle = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
 
 	TArray<FNavNode> Path;
 	int CurrentPathId;
@@ -64,7 +83,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		class UPoseableMeshComponent* Mesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-		class UBoxComponent* Collision;
+		class USceneComponent* Body;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		USceneComponent* Root;
 	

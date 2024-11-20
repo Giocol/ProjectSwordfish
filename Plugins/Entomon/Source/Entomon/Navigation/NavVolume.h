@@ -43,7 +43,7 @@ protected:
 
 private:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
-	bool TraceFibonacciSphere(FVector Start, TArray<FHitResult>& OutHit);
+	bool FibonacciTrace(FVector Start, TArray<FHitResult>& OutHit);
 
 	void DrawNodes();
 

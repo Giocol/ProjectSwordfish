@@ -285,7 +285,7 @@ bool ULimb::EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh
 	FVector Direction = FootPlan.Current.UpVector;
 	// FVector Start = InMesh->GetBoneLocationByName(InLimb->Joints[0].GetName(), EBoneSpaces::WorldSpace) + Offset;
 	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset;
-	if(TraceAround(InLimb, InMesh, Start, -Direction, Iterations, TraceChannel, Hit)) {
+	if(TraceAround(InLimb, InMesh, Start, -Direction, Iterations, TraceChannel, Start, Hit)) {
 		FootPlan.Target = FIKEffector(Hit.ImpactPoint, Hit.Normal);
 		return true;
 	}
@@ -306,7 +306,8 @@ FLimbSegment ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool
 }
 
 
-bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection, ECollisionChannel InTraceChannel, FHitResult& OutHit) {
+bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
+	ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit) {
 	FTransform Transform = Mesh->GetComponentTransform();
 	// FVector End = InStart + InDirection * InDistance;
 
@@ -330,19 +331,29 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 	
 	TArray<AActor*> Ignore;
 	Ignore.Add(Mesh->GetOwner());
-	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+	TArray<FHitResult> Hits;
+	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
 		Mesh->GetWorld(),
 		NewStart, NewEnd, 5.f,
 		UEngineTypes::ConvertToTraceType(InTraceChannel),
 		false,
 		Ignore,
 		EDrawDebugTrace::None,
-		OutHit, true,
+		Hits, true,
 		FLinearColor::Red, FLinearColor::Green,
 		0.45);
-	if(bHit && OutHit.Normal.Dot(Mesh->GetUpVector()) < -.5f) {
-		OutHit.Normal = -OutHit.Normal;
-		OutHit.ImpactNormal = -OutHit.ImpactNormal;
+	// if(bHit && OutHit.Normal.Dot(Mesh->GetUpVector()) < -.5f) {
+	// 	
+	// 	
+	// 	OutHit.Normal = -OutHit.Normal;
+	// 	OutHit.ImpactNormal = -OutHit.ImpactNormal;
+	// }
+	if(bHit) {
+		OutHit.Distance = INFINITY;
+		for (auto Hit : Hits) {
+			if(Hit.bBlockingHit && FVector::DistSquared(Hit.Location, Rest) < OutHit.Distance)
+				OutHit = Hit;
+		}
 	}
 	// if(bHit) {
 	// 	bHit = UKismetSystemLibrary::SphereTraceSingle(
@@ -358,7 +369,7 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 }
 
 bool ULimb::TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
-					int Iterations, ECollisionChannel InTraceChannel, FHitResult& OutHit) {
+					int Iterations, ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit) {
 
 	FQuat DirAsRot = FQuat::FindBetweenNormals(FVector::DownVector, InDirection);
 	for(int i = 0; i < Iterations; i++) {
@@ -370,7 +381,7 @@ bool ULimb::TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InS
 			FMath::Cos(phi)
 			);
 		Direction = DirAsRot * Direction;
-		if(TraceFoot(InLimb, Mesh, InStart, Direction, InTraceChannel, OutHit))
+		if(TraceFoot(InLimb, Mesh, InStart, Direction, InTraceChannel, Rest, OutHit))
 			return true;
 	}
 	return false;

@@ -82,7 +82,7 @@ void ANavVolume::BeginPlay() {
 
 FVector ANavVolume::EvaluateNodeDistance(FVector At) {
 	TArray<FHitResult> Hits;
-	if(TraceFibonacciSphere(At, Hits)) {
+	if(FibonacciTrace(At, Hits)) {
 		FHitResult Closest = GetClosestHit(Hits);
 		if(!Closest.Location.IsZero())
 			return Closest.Location - At;
@@ -212,11 +212,24 @@ void ANavVolume::Insert(FNavNode Node) {
 }
 
 void ANavVolume::Connect() {
+	TArray<AActor*> Ignore;
 	for(int i = 0; i < Nodes.Num(); ++i) {
 		float Within = bConnectDiagonal ? UE_SQRT_3 * Resolution * 1.01 : Resolution * 1.01;
 		for (auto NodeId : FindNodesWithin(Nodes[i].Origin, Within)) {
-			float Distance = FVector::Distance(Nodes[i].Origin, Nodes[NodeId].Origin);
-			Nodes[i].Connect(FNavLink(NodeId, Distance));
+			FHitResult Hit;
+			bool bHit = UKismetSystemLibrary::LineTraceSingle(
+				GetWorld(),
+				Nodes[i].Origin, Nodes[NodeId].Origin,
+				UEngineTypes::ConvertToTraceType(TraceChannel),
+				false,
+				Ignore,
+				EDrawDebugTrace::None,
+				Hit, true
+				);
+			if(!bHit) {
+				float Distance = FVector::Distance(Nodes[i].Origin, Nodes[NodeId].Origin);
+				Nodes[i].Connect(FNavLink(NodeId, Distance));
+			}
 		}
 	}
 }
@@ -278,13 +291,14 @@ TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPrefere
 					Nodes[Link.Id].Distance < PathPreference.MaxDistance;
 				if(!fScore.Contains(Link.Id) && bIsReachable) {
 					float newFScore = Tentative_gScore + Heuristic(Link.Id, End);
-					if(PathPreference.MaxDistance < INFINITY) {
-						float absDistFromPreference = FMath::Abs(Nodes[Link.Id].Distance - PathPreference.PreferredDistance);
-						float distNormalized =
-							(absDistFromPreference - PathPreference.MinDistance) / (PathPreference.MaxDistance / PathPreference.MinDistance);
-						// float biasedPreference = FMath::Pow(distNormalized, (1-PathPreference.PreferenceWeight)/PathPreference.PreferenceWeight);
-						newFScore += PathPreference.PreferenceWeight * distNormalized;
-					}
+					// if(PathPreference.MaxDistance < INFINITY) {
+					// 	float absDistFromPreference = FMath::Abs(Nodes[Link.Id].Distance - PathPreference.PreferredDistance);
+					// 	float distNormalized =
+					// 		(absDistFromPreference - PathPreference.MinDistance) / (PathPreference.MaxDistance / PathPreference.MinDistance);
+					// 	float TangentialDist = 2 * FMath::Tan(HALF_PI * distNormalized) * INV_PI;
+					// 	// float biasedPreference = FMath::Pow(distNormalized, (1-PathPreference.PreferenceWeight)/PathPreference.PreferenceWeight);
+					// 	newFScore += PathPreference.PreferenceWeight * TangentialDist;
+					// }
 					fScore.Add(Link.Id, newFScore);
 				}
 				if(bIsReachable) {
@@ -399,7 +413,7 @@ bool ANavVolume::Trace(FVector Start, FVector Direction, FHitResult& OutHit) {
 	return bHit;
 }
 
-bool ANavVolume::TraceFibonacciSphere(FVector Start, TArray<FHitResult>& OutHit) {
+bool ANavVolume::FibonacciTrace(FVector Start, TArray<FHitResult>& OutHit) {
 	bool Result = false;
 	for(int i = 0; i < TraceIterations; i++) {
 		float theta = TWO_PI * i / UE_GOLDEN_RATIO;
