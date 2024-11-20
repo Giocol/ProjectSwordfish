@@ -18,7 +18,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	TArray<FNavNode> FindPath(FVector Start, FVector Target, FPathPreference PathPreference);
+
 	
+	void BuildNavigationData();
+	void LoadNavigationData();
 protected:
 	virtual void BeginPlay() override;
 	
@@ -41,6 +44,8 @@ protected:
 private:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
 	bool TraceFibonacciSphere(FVector Start, TArray<FHitResult>& OutHit);
+
+	void DrawNodes();
 
 	FORCEINLINE int GetParentId(int Id) { return Id > 0 ? (Id-1)/2 : INDEX_NONE; }
 	FORCEINLINE int GetAxisParentId(int Id) { return GetParentId(GetParentId(GetParentId(Id))); }
@@ -68,6 +73,16 @@ public:
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
 	UPROPERTY(EditAnywhere)
 		bool bConnectDiagonal = true;
+	UPROPERTY(EditAnywhere)
+		bool bDrawNodes = true;
+	UPROPERTY(EditAnywhere)
+		bool bDrawNormals = false;
+	UPROPERTY(EditAnywhere)
+		bool bRebuildOnEmptyLoad = true;
+	UPROPERTY(EditAnywhere)
+		bool bForceRebuild = false;
+	UPROPERTY(EditAnywhere)
+		TSoftObjectPtr<class UNavData> NavigationData;
 
 	UPROPERTY(BlueprintReadWrite)
 	FVector TestTarget;

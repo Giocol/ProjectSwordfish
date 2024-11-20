@@ -1,6 +1,7 @@
 ﻿#include "NavVolume.h"
 
 #include "BoundingVolume.h"
+#include "NavData.h"
 #include "NavNode.h"
 #include "PathPreference.h"
 #include "Components/BrushComponent.h"
@@ -17,20 +18,7 @@ ANavVolume::ANavVolume() {
 void ANavVolume::Tick(float DeltaSeconds) {
 	Super::Tick(DeltaSeconds);
 	
-	// FColor FarColor = FColor::Emerald;
-	// FColor NearColor = FColor::Black;
-	// for (int i = 0; i < Nodes.Num(); ++i) {
-	// 	float alpha = FMath::Clamp(Nodes[i].Distance / TraceDistance, 0.f, 1.f);
-	// 	float invAlpha = 1.f - alpha;
-	// 	FColor Color = FColor(
-	// 		FarColor.R * invAlpha + NearColor.R * alpha,
-	// 		FarColor.G * invAlpha + NearColor.G * alpha,
-	// 		FarColor.B * invAlpha + NearColor.B * alpha
-	// 		);
-	// 	
-	// 	
-	// 	DrawDebugPoint(GetWorld(), Nodes[i].Origin, 3.f, Color);
-	// }
+	DrawNodes();
 
 	// AActor* Spider = UGameplayStatics::GetActorOfClass(GetWorld(), AMultiLeggedPawn::StaticClass());
 	// int Id = FindClosestNode(Spider->GetActorLocation());
@@ -55,17 +43,41 @@ TArray<FNavNode> ANavVolume::FindPath(FVector Start, FVector Target, FPathPrefer
 	return Result;
 }
 
+void ANavVolume::BuildNavigationData() {
+	auto NavDataPtr = NavigationData.LoadSynchronous();
+	if(NavDataPtr) {
+		FDateTime CurrentDateAndTime = FDateTime::UtcNow();
+		Populate();
+		Connect();
+		FDateTime NewTime = FDateTime::UtcNow();
+		auto diff = NewTime - CurrentDateAndTime;
+		float time = static_cast<float>(diff.GetSeconds()) + static_cast<float>(diff.GetFractionMilli()) / 1000;
+		NavDataPtr->Write(Nodes);
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Navigation Data Reference has not been set. Cancelling build..."));
+	}
+}
+
+void ANavVolume::LoadNavigationData() {
+	auto NavDataPtr = NavigationData.LoadSynchronous();
+	if(NavDataPtr)
+		NavDataPtr->Read(Nodes);
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Navigation Data Reference has not been set. Cancelling load..."));
+	}
+}
+
 void ANavVolume::BeginPlay() {
 	Super::BeginPlay();
-
-	FDateTime CurrentDateAndTime = FDateTime::UtcNow();
-	Populate();
-	// SiftHeap();
-	Connect();
-	// TreeifyNodes();
-	FDateTime NewTime = FDateTime::UtcNow();
-	auto diff = NewTime - CurrentDateAndTime;
-	float time = static_cast<float>(diff.GetSeconds()) + static_cast<float>(diff.GetFractionMilli()) / 1000;
+	if(bForceRebuild)
+		BuildNavigationData();
+	else {
+		LoadNavigationData();
+		if(Nodes.IsEmpty() && bRebuildOnEmptyLoad)
+			BuildNavigationData();
+			
+	}
 }
 
 FVector ANavVolume::EvaluateNodeDistance(FVector At) {
@@ -105,9 +117,6 @@ void ANavVolume::Populate() {
 					Node.Normal = -Normal;
 					Node.Distance = Distance;
 					Nodes.Add(Node);
-					DrawDebugLine(GetWorld(), Node.Origin,
-						Node.Origin + Node.Normal * Node.Distance,
-						FColor::Cyan, false, 5.f);
 				}
 			}
 		}
@@ -264,20 +273,20 @@ TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPrefere
 				CameFrom.Add(Link.Id, Current.Id);
 
 				gScore.Add(Link.Id, Tentative_gScore);
-				if(!fScore.Contains(Link.Id)) {
+				bool bIsReachable =
+					Nodes[Link.Id].Distance > PathPreference.MinDistance &&
+					Nodes[Link.Id].Distance < PathPreference.MaxDistance;
+				if(!fScore.Contains(Link.Id) && bIsReachable) {
 					float newFScore = Tentative_gScore + Heuristic(Link.Id, End);
 					if(PathPreference.MaxDistance < INFINITY) {
 						float absDistFromPreference = FMath::Abs(Nodes[Link.Id].Distance - PathPreference.PreferredDistance);
 						float distNormalized =
 							(absDistFromPreference - PathPreference.MinDistance) / (PathPreference.MaxDistance / PathPreference.MinDistance);
 						float biasedPreference = FMath::Pow(distNormalized, (1-PathPreference.PreferenceWeight)/PathPreference.PreferenceWeight);
-						newFScore = FMath::Lerp(newFScore, biasedPreference, PathPreference.PreferenceWeight);
+						newFScore += PathPreference.PreferenceWeight * distNormalized;
 					}
 					fScore.Add(Link.Id, newFScore);
 				}
-				bool bIsReachable =
-					Nodes[Link.Id].Distance > PathPreference.MinDistance &&
-					Nodes[Link.Id].Distance < PathPreference.MaxDistance;
 				if(bIsReachable) {
 					bool bContains = false;
 					for(auto Entry : OpenSet)
@@ -293,7 +302,9 @@ TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPrefere
 }
 
 float ANavVolume::Heuristic(int Start, int End) {
-	return FVector::Distance(Nodes[Start].Origin, Nodes[End].Origin);
+	if(Start > 0 && End > 0 && !Nodes.IsEmpty())
+		return FVector::Distance(Nodes[Start].Origin, Nodes[End].Origin);
+	else return INFINITY;
 }
 
 int ANavVolume::FindClosestNode(FVector Location) {
@@ -362,8 +373,7 @@ bool ANavVolume::Trace(FVector Start, FVector Direction, FHitResult& OutHit) {
 	TArray<AActor*> Ignore;
 	FVector End = Start + Direction * TraceDistance;
 
-	FHitResult SimpleHit;
-	bool bHitSimple = UKismetSystemLibrary::LineTraceSingle(
+	bool bHit = UKismetSystemLibrary::LineTraceSingle(
 		GetWorld(),
 		Start, End,
 		UEngineTypes::ConvertToTraceType(TraceChannel),
@@ -372,26 +382,25 @@ bool ANavVolume::Trace(FVector Start, FVector Direction, FHitResult& OutHit) {
 		EDrawDebugTrace::None,
 		OutHit,
 		true);
-	bool bHit = false;
-	// if(bHitSimple) {
-	// 	bHit = UKismetSystemLibrary::LineTraceSingle(
-	// 	GetWorld(),
-	// 	Start, End,
-	// 	UEngineTypes::ConvertToTraceType(TraceChannel),
-	// 	true,
-	// 	Ignore,
-	// 	EDrawDebugTrace::None,
-	// 	OutHit,
-	// 	true);
-	// 	float absDiff = FMath::Abs(OutHit.Normal.Dot(Direction) - SimpleHit.Normal.Dot(Direction));
-	// 	if(bHitSimple && absDiff >= 0.25)
-	// 		return false;
-	// }
-	
-	return bHitSimple;
+	FHitResult BackTrace;
+	if(bHit) {
+		bool bBackTraceHit = UKismetSystemLibrary::LineTraceSingle(
+		GetWorld(),
+		OutHit.Location, Start,
+		UEngineTypes::ConvertToTraceType(TraceChannel),
+		true,
+		Ignore,
+		EDrawDebugTrace::None,
+		BackTrace,
+		true);
+		if(bBackTraceHit)
+			return false;
+	}
+	return bHit;
 }
 
 bool ANavVolume::TraceFibonacciSphere(FVector Start, TArray<FHitResult>& OutHit) {
+	bool Result = false;
 	for(int i = 0; i < TraceIterations; i++) {
 		float theta = TWO_PI * i / UE_GOLDEN_RATIO;
 		float phi = FMath::Acos(1 - (2.0 * i) / TraceIterations);
@@ -401,9 +410,34 @@ bool ANavVolume::TraceFibonacciSphere(FVector Start, TArray<FHitResult>& OutHit)
 			FMath::Cos(phi)
 			);
 		OutHit.Add(FHitResult());
-		Trace(Start, Direction, OutHit.Last());
+		bool bHit = Trace(Start, Direction, OutHit.Last());
+		if(bHit && !Result)
+			Result = true;
 	}
-	return true;
+	return Result;
+}
+
+void ANavVolume::DrawNodes() {
+	FColor FarColor = FColor::Emerald;
+	FColor NearColor = FColor::Black;
+	for (int i = 0; i < Nodes.Num(); ++i) {
+		if(bDrawNodes)
+		{
+			float alpha = FMath::Clamp(Nodes[i].Distance / TraceDistance, 0.f, 1.f);
+			float invAlpha = 1.f - alpha;
+			FColor Color = FColor(
+				FarColor.R * invAlpha + NearColor.R * alpha,
+				FarColor.G * invAlpha + NearColor.G * alpha,
+				FarColor.B * invAlpha + NearColor.B * alpha
+				);
+			DrawDebugPoint(GetWorld(), Nodes[i].Origin, 3.f, Color);
+		}
+		if(bDrawNormals) {
+			DrawDebugLine(GetWorld(), Nodes[i].Origin,
+						Nodes[i].Origin - Nodes[i].Normal * Nodes[i].Distance,
+						FColor::Blue);
+		}
+	}
 }
 
 TArray<int> ANavVolume::GetDescendants(int AtId, int Axis) {
