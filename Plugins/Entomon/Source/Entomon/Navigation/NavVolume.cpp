@@ -282,7 +282,7 @@ TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPrefere
 						float absDistFromPreference = FMath::Abs(Nodes[Link.Id].Distance - PathPreference.PreferredDistance);
 						float distNormalized =
 							(absDistFromPreference - PathPreference.MinDistance) / (PathPreference.MaxDistance / PathPreference.MinDistance);
-						float biasedPreference = FMath::Pow(distNormalized, (1-PathPreference.PreferenceWeight)/PathPreference.PreferenceWeight);
+						// float biasedPreference = FMath::Pow(distNormalized, (1-PathPreference.PreferenceWeight)/PathPreference.PreferenceWeight);
 						newFScore += PathPreference.PreferenceWeight * distNormalized;
 					}
 					fScore.Add(Link.Id, newFScore);
