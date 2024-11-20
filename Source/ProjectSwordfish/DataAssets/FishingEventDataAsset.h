@@ -17,6 +17,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "General")
 		ASwordfishBase* Swordfish = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "General")
+		UFishingEventDataAsset* QTEData = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float AimLowerThreshold = 0.2f;
@@ -29,11 +32,25 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float PowerGoodUpperThreshold = 0.55f;
-
+    
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float PowerMediumLowerThreshold = 0.35f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float PowerMediumUpperThreshold = 0.65f;
 
+#if WITH_EDITOR // Just for editor stuff
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };
+
+#if WITH_EDITOR // Just for editor stuff, clamps sanityMin and Max relative to eachtoher 
+inline void UFishingEventDataAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);   
+
+	AimLowerThreshold = FMath::Clamp(AimLowerThreshold, 0, AimUpperThreshold);
+	PowerGoodLowerThreshold = FMath::Clamp(PowerGoodLowerThreshold, 0, PowerGoodUpperThreshold);
+	PowerMediumLowerThreshold = FMath::Clamp(PowerMediumLowerThreshold, 0, PowerMediumUpperThreshold);
+}
+#endif
