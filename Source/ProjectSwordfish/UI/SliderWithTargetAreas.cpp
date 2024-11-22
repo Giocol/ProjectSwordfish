@@ -5,10 +5,11 @@
 #include "Components/Image.h"
 #include "Components/NamedSlot.h"
 #include "ProjectSwordfish/Player/MainCharacter.h"
+#include "ProjectSwordfish/Player/UpstairsCharacter.h"
 
 void USliderWithTargetAreas::NativeConstruct() {
 	Super::NativeConstruct();
-	playerRef = Cast<AMainCharacter>(GetOwningPlayerPawn());
+	playerRef = Cast<AUpstairsCharacter>(GetOwningPlayerPawn());
 	SliderBarPanelSlot = Cast<UCanvasPanelSlot>(SliderBar->Slot);
 	GoodAreaPanelSlot = Cast<UCanvasPanelSlot>(GoodTargetArea->Slot);
 	HandlePanelSlot = Cast<UCanvasPanelSlot>(Handle->Slot);

@@ -2,6 +2,7 @@
 
 #include "Components/BoxComponent.h"
 #include "ProjectSwordfish/Player/MainCharacter.h"
+#include "ProjectSwordfish/Player/UpstairsCharacter.h"
 
 
 AFishingTrigger::AFishingTrigger()
@@ -21,7 +22,7 @@ void AFishingTrigger::BeginPlay()
 
 void AFishingTrigger::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
-	AMainCharacter* Player = OtherActor ? Cast<AMainCharacter>(OtherActor) : nullptr;
+	AUpstairsCharacter* Player = OtherActor ? Cast<AUpstairsCharacter>(OtherActor) : nullptr;
 	if(Player && FishingEventDataAsset  && !bHasBeenTriggered) {
 		bool bIsFishingStartSuccessful = Player->StartFishingEvent(FishingEventDataAsset);
 		if(bIsFishingStartSuccessful)
