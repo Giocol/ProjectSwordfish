@@ -4,6 +4,7 @@
 #include "Engine/DataAsset.h"
 #include "FishingEventDataAsset.generated.h"
 
+class UFishingQuickTimeEventDataAsset;
 class ASwordfishBase;
 
 UCLASS()
@@ -19,7 +20,7 @@ public:
 		ASwordfishBase* Swordfish = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "General")
-		UFishingEventDataAsset* QTEData = nullptr;
+		TArray<UFishingQuickTimeEventDataAsset*> QTEData;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float AimLowerThreshold = 0.2f;
