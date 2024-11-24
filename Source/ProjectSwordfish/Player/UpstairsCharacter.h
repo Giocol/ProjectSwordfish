@@ -108,11 +108,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		AActor* CurrentlySpearedActor = nullptr;
 	
-	
-	
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		bool bHasSpear = false;
 
 	UPROPERTY()
 		UFishingEventDataAsset* CurrentFishingEvent = nullptr;
+
+private:
+	float CurrentAimInput;
 };	

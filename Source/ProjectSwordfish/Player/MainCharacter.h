@@ -21,7 +21,7 @@ public:
 	virtual void ProcessUse();
 
 	virtual void Pull(float DeltaTime);
-	void SetIsPulling(bool State) { bIsPulling = State; }
+	void SetIsDoingSecondaryAction(bool State) { bIsDoingSecondaryAction = State; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -40,5 +40,5 @@ protected:
 		float InteractionRange = 20.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
-		bool bIsPulling = false;
+		bool bIsDoingSecondaryAction = false;
 };

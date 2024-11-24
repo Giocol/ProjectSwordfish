@@ -26,8 +26,8 @@ protected:
 	void HandleCameraMovement(const FInputActionValue& Value);
 	void HandleInteraction(const FInputActionValue& Value);
 	void HandleUse(const FInputActionValue& Value);
-	void StartPull(const FInputActionValue& Value);
-	void EndPull(const FInputActionValue& Value);
+	void StartSecondaryAction(const FInputActionValue& Value);
+	void EndSecondaryAction(const FInputActionValue& Value);
 
 private:
 	void InitSystems();

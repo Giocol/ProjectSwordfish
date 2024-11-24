@@ -1,6 +1,8 @@
 ﻿#include "UpstairsCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Math/UnitConversion.h"
 #include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
 
@@ -67,10 +69,8 @@ void AUpstairsCharacter::ProcessCharacterMovementInput(FVector2D input) {
 void AUpstairsCharacter::ProcessCameraMovementInput(FVector2D Input) {
 	if(!bIsFishing)
 		Super::ProcessCameraMovementInput(Input);
-	else {
-		//TODO: THIS IS FRAMERATE DEPENDANT!! FIX!!!!!
-		CurrentAim = FMath::Clamp((CurrentAim + FMath::Sign(Input.Y) * AimStep), 0.f, 1.f);
-	}
+	else
+		CurrentAim = FMath::Clamp((CurrentAim + FMath::Sign(Input.Y) * AimStep * UGameplayStatics::GetWorldDeltaSeconds(GetWorld())), 0.f, 1.f);
 }
 
 void AUpstairsCharacter::Pull(float DeltaTime) {
@@ -78,6 +78,7 @@ void AUpstairsCharacter::Pull(float DeltaTime) {
 	if(bIsFishing) {
 		CurrentPower = FMath::Clamp(CurrentPower + PowerStep * DeltaTime, 0.0f, 1.f);
 	}
+	
 	//todo: this is all temp
 	if(!CurrentlySpearedActor)
 		return;
@@ -122,7 +123,7 @@ void AUpstairsCharacter::Tick(float DeltaTime) {
 	if(bIsFishing)
 		FishingTick(DeltaTime);
 	
-	if(bIsPulling && bIsFishing)
+	if(bIsDoingSecondaryAction && bIsFishing)
 		Pull(DeltaTime);
 }
 
@@ -150,6 +151,7 @@ void AUpstairsCharacter::FishingTick(float DeltaTime) {
 	}
 
 	ApplyFishingResistance(DeltaTime);
+
 	CurrentPower = FMath::Clamp(CurrentPower - PowerDecayPerTick * DeltaTime, 0.f, 1.f);
 }
 
