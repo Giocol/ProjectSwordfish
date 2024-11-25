@@ -20,17 +20,27 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
+	Path = Nodes;
+	CurrentPathId = 0;
+	CorrectPath();
+}
+
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	FVector ToTarget = Path[Target].Origin - Body->GetComponentLocation();
 	FVector ToTargetNorm = ToTarget.GetSafeNormal();
+
 	
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float brakeDistance = 0.5 * time * MovementComponent->MaxSpeed;
 
 	float TargetDist = ToTarget.Length();
-	if(TargetDist < brakeDistance)
+	float NodeDistance = GetDistanceFromNodePlane(Target);
+	if(NodeDistance >= -brakeDistance)
 		return true;
 
+	// float dist = SurfaceOffset.Length();
+	// float alpha = GetNormalizedOffsetFromPreference(dist);
 	FVector Input = ToTargetNorm;
 	// FVector FromPrevious = Target > 0 && Target < Path.Num() ? Path[Target].Origin - Path[Target-1].Origin : FVector::ZeroVector;
 	// FVector ToNext = Target >= 0 && Target < Path.Num() - 1 ? Path[Target+1].Origin - Path[Target].Origin : FVector::ZeroVector;
@@ -89,7 +99,7 @@ void AMultiLeggedPawn::BeginPlay() {
 void AMultiLeggedPawn::Tick(float DeltaTime) {
 
 	auto Whiskers = FibonacciTrace(Body->GetComponentLocation());
-	FVector WhiskerImpulse = InterpretWhiskers(Whiskers, true);
+	// FVector WhiskerImpulse = GetClosestWhisker(Whiskers, true);
 	FollowPath(DeltaTime);
 
 	for(int i = 0; i < Path.Num() - 1; ++i)
@@ -140,7 +150,7 @@ TArray<FHitResult> AMultiLeggedPawn::FibonacciTrace(FVector Start) {
 		FHitResult NewHit;
 		bool bHit = Trace(Start, Direction, NewHit);
 		if(bHit) {
-			NewHit.ImpactNormal = Direction;
+			NewHit.ImpactNormal = -Direction;
 			NewHit.ImpactPoint = Start;
 			Results.Add(NewHit);
 		}
@@ -148,41 +158,78 @@ TArray<FHitResult> AMultiLeggedPawn::FibonacciTrace(FVector Start) {
 	return Results;
 }
 
-FVector AMultiLeggedPawn::InterpretWhiskers(TArray<FHitResult> Hits, bool bDraw) {
+FHitResult AMultiLeggedPawn::GetClosestWhisker(TArray<FHitResult> Hits, bool bDraw) {
 	FVector Result = FVector::Zero();
+	FHitResult Closest;
+	Closest.Distance = INFINITY;
 	FColor GoodColor = FColor::Green;
 	FColor MediumColor = FColor::Yellow;
 	FColor BadColor = FColor::Red;
 	for (FHitResult Hit : Hits) {
 		float Alpha = GetNormalizedOffsetFromPreference(Hit.Distance);
-		Result += Alpha * Hit.ImpactNormal / NumWhiskers;
-		FColor Color;
-		if(Alpha < 0.5f) {
-			Alpha *= 2;
-			float invA = 1 - Alpha;
-			Color = FColor(
-				MediumColor.R * Alpha + GoodColor.R * invA,
-				MediumColor.G * Alpha + GoodColor.G * invA,
-				MediumColor.B * Alpha + GoodColor.B * invA);
-		}
-		else {
-			Alpha = 2 * Alpha - 1;
-			float invA = 1 - Alpha;
-			Color = FColor(
-				BadColor.R * Alpha + MediumColor.R * invA,
-				BadColor.G * Alpha + MediumColor.G * invA,
-				BadColor.B * Alpha + MediumColor.B * invA);
-		}
+		if(Hit.Distance < Closest.Distance)
+			Closest = Hit;
+		// Result += Alpha * Hit.ImpactNormal / NumWhiskers;
+		if(bDraw) {
+			FColor Color;
+			if(Alpha < 0.5f) {
+				Alpha *= 2;
+				float invA = 1 - Alpha;
+				Color = FColor(
+					MediumColor.R * Alpha + GoodColor.R * invA,
+					MediumColor.G * Alpha + GoodColor.G * invA,
+					MediumColor.B * Alpha + GoodColor.B * invA);
+			}
+			else {
+				Alpha = 2 * Alpha - 1;
+				float invA = 1 - Alpha;
+				Color = FColor(
+					BadColor.R * Alpha + MediumColor.R * invA,
+					BadColor.G * Alpha + MediumColor.G * invA,
+					BadColor.B * Alpha + MediumColor.B * invA);
+			}
 		
-		DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.Location, Color);
-		DrawDebugPoint(GetWorld(), Hit.Location, 5.f, Color);
+			DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.Location, Color);
+			DrawDebugPoint(GetWorld(), Hit.Location, 5.f, Color);
+		}
 	}
-	return Result;
+	
+	return Closest;
 }
 
 float AMultiLeggedPawn::GetNormalizedOffsetFromPreference(float Distance) {
 	float TargetOffset = PreferredPersonalSpace - Distance;
 	float High = Distance < PreferredPersonalSpace ? MinDistanceFromObstacle : MaxDistanceFromObstacle;
 	return FMath::Clamp(TargetOffset / (PreferredPersonalSpace - High), 0, 1);
+}
+
+float AMultiLeggedPawn::GetDistanceFromNodePlane(int Node) {
+	FVector Tangent = GetTangent(Node);
+	FVector Location = Path[Node].Origin;
+	float SignedDistance = (Tangent.X * Location.X + Tangent.Y * Location.Y + Tangent.Z * Location.Z);
+	FPlane Plane = FPlane(Tangent, SignedDistance);
+	
+	float planeEq = Plane.PlaneDot(Body->GetComponentLocation());
+	return planeEq;
+}
+
+FVector AMultiLeggedPawn::GetTangent(int AtId) {
+	FVector Tangent = FVector::ZeroVector;
+	if(AtId < Path.Num()-1)
+		Tangent += (Path[AtId+1].Origin - Path[AtId].Origin).GetSafeNormal();
+	else if(AtId > 0)
+		Tangent += (Path[AtId].Origin - Path[AtId-1].Origin).GetSafeNormal();
+	Tangent.Normalize();
+	return Tangent;
+}
+
+void AMultiLeggedPawn::CorrectPath() {
+	for(int i = 0; i < Path.Num(); i++) {
+		// FHitResult Closest = GetClosestWhisker(FibonacciTrace(Path[i].Origin), false);
+		// FVector SavedLoc = Path[i].Origin; 
+		// Path[i].Origin = Closest.Location + Closest.ImpactNormal * (PreferredPersonalSpace - Closest.Distance);
+		// DrawDebugLine(GetWorld(), SavedLoc, Path[i].Origin, FColor::Purple, false, 15);
+		Path[i].Origin += Path[i].Normal * (PreferredPersonalSpace - Path[i].Distance);
+	}
 }
 

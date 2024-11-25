@@ -23,10 +23,7 @@ public:
 	AMultiLeggedPawn();
 	
 	UFUNCTION(BlueprintCallable)
-		void SetPath(TArray<FNavNode> Nodes) {
-		Path = Nodes;
-		CurrentPathId = 0;
-	}
+	void SetPath(TArray<FNavNode> Nodes);
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
 
@@ -46,9 +43,12 @@ public:
 protected:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
 	TArray<FHitResult> FibonacciTrace(FVector Start);
-	FVector InterpretWhiskers(TArray<FHitResult> Hits, bool bDraw);
+	FHitResult GetClosestWhisker(TArray<FHitResult> Hits, bool bDraw);
 
 	float GetNormalizedOffsetFromPreference(float Distance);
+	float GetDistanceFromNodePlane(int Node);
+	FVector GetTangent(int AtId);
+	void CorrectPath();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))

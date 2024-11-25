@@ -351,7 +351,7 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InSta
 	if(bHit) {
 		OutHit.Distance = INFINITY;
 		for (auto Hit : Hits) {
-			if(Hit.bBlockingHit && FVector::DistSquared(Hit.Location, Rest) < OutHit.Distance)
+			if(Hit.bBlockingHit && FVector::DistSquared(Hit.Location, Rest) < FVector::DistSquared(OutHit.Location, Rest))
 				OutHit = Hit;
 		}
 	}
@@ -381,7 +381,8 @@ bool ULimb::TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InS
 			FMath::Cos(phi)
 			);
 		Direction = DirAsRot * Direction;
-		if(TraceFoot(InLimb, Mesh, InStart, Direction, InTraceChannel, Rest, OutHit))
+		if(TraceFoot(InLimb, Mesh, InStart, Direction, InTraceChannel, Rest, OutHit)
+			|| TraceFoot(InLimb, Mesh, InStart, -Mesh->GetUpVector(), InTraceChannel, Rest, OutHit))
 			return true;
 	}
 	return false;
