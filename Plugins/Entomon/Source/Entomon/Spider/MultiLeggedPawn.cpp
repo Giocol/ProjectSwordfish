@@ -255,9 +255,7 @@ void AMultiLeggedPawn::SmoothPath() {
 		int max = FMath::Min(i+Weights.Num()-1, Path.Num());
 		int kernel = max-min;
 		float invKernelSize = 1.f/kernel;
-		for(int j = min; j < max; ++j) {
-			Path[i].
-		}
+		//Path[i].Distance =
 	}
 }
 
