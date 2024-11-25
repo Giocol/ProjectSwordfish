@@ -14,6 +14,13 @@ class UFloatingPawnMovement;
 class UMovementComponent;
 class UProceduralLimbManager;
 
+UENUM()
+enum class EPathSmoothingType : uint8 {
+	None = 0,
+	Uniform,
+	Normal
+};
+	
 UCLASS()
 class ENTOMON_API AMultiLeggedPawn : public APawn
 {
@@ -49,6 +56,8 @@ protected:
 	float GetDistanceFromNodePlane(int Node);
 	FVector GetTangent(int AtId);
 	void CorrectPath();
+	void SubdividePath();
+	void SmoothPath();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
@@ -73,7 +82,12 @@ protected:
 		float MaxDistanceFromObstacle = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
-
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
+		EPathSmoothingType PathSmoothingType = EPathSmoothingType::Uniform;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
+		int PathSmoothing = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0, UIMax=4))
+		int Subdivisions = 0;
 	TArray<FNavNode> Path;
 	int CurrentPathId;
 	

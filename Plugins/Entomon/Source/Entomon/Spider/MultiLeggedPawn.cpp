@@ -24,6 +24,10 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 	Path = Nodes;
 	CurrentPathId = 0;
 	CorrectPath();
+	for(int i = 0; i < Subdivisions; ++i)
+		SubdividePath();
+	if(PathSmoothingType==EPathSmoothingType::Uniform)
+		SmoothPath();
 }
 
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
@@ -225,11 +229,35 @@ FVector AMultiLeggedPawn::GetTangent(int AtId) {
 
 void AMultiLeggedPawn::CorrectPath() {
 	for(int i = 0; i < Path.Num(); i++) {
-		// FHitResult Closest = GetClosestWhisker(FibonacciTrace(Path[i].Origin), false);
-		// FVector SavedLoc = Path[i].Origin; 
-		// Path[i].Origin = Closest.Location + Closest.ImpactNormal * (PreferredPersonalSpace - Closest.Distance);
-		// DrawDebugLine(GetWorld(), SavedLoc, Path[i].Origin, FColor::Purple, false, 15);
 		Path[i].Origin += Path[i].Normal * (PreferredPersonalSpace - Path[i].Distance);
+	}
+}
+
+void AMultiLeggedPawn::SubdividePath() {
+	if(Path.Num() < 2)
+		return;
+	for(int i = 1; i < Path.Num()-1; ++i) {
+		FNavNode Previous = Path[i];
+		FNavNode Next = Path[i+1];
+		FNavNode Current;
+		Current.Origin = 0.5 * (Previous.Origin + Next.Origin);
+		Current.Distance = 0.5 * (Previous.Distance + Next.Distance);
+		Current.Normal = (Previous.Normal + Next.Normal).GetSafeNormal();
+		Path.Insert(Current, i);
+	}
+}
+
+void AMultiLeggedPawn::SmoothPath() {
+	TArray<float> Weights;
+	Weights.Init(1.f, PathSmoothing);
+	for(int i = 0; i < Path.Num(); ++i) {
+		int min = FMath::Max(i-Weights.Num()+1, 0);
+		int max = FMath::Min(i+Weights.Num()-1, Path.Num());
+		int kernel = max-min;
+		float invKernelSize = 1.f/kernel;
+		for(int j = min; j < max; ++j) {
+			Path[i].
+		}
 	}
 }
 
