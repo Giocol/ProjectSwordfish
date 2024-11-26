@@ -38,9 +38,9 @@ public:
 	void ResetStates(UPoseableMeshComponent* Mesh);
 	
 	static bool TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
-		ECollisionChannel InTraceChannel, FHitResult& OutHit);
+		ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit);
 	static bool TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
-		int Iterations, ECollisionChannel InTraceChannel, FHitResult& OutHit);
+		int Iterations, ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit);
 protected:
 	bool EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh, float GaitCycleDuration, float TraceDistance, int Iterations,
 								ECollisionChannel TraceChannel);
