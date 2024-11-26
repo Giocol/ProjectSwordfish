@@ -21,13 +21,17 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 }
 
 void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
-	Path = Nodes;
+	Path.Empty();
+	for (int i = 0; i < Nodes.Num(); ++i) {
+		FVector Next = i < Nodes.Num()-1 ? Nodes[i+1].Origin : FVector::ZeroVector;
+		FPathNode Node = FPathNode(Nodes[i], Next);
+		Path.Add(Node);
+	}
 	CurrentPathId = 0;
 	CorrectPath();
-	for(int i = 0; i < Subdivisions; ++i)
-		SubdividePath();
 	if(PathSmoothingType==EPathSmoothingType::Uniform)
 		SmoothPath();
+	SimplifyPath();
 }
 
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
@@ -106,8 +110,11 @@ void AMultiLeggedPawn::Tick(float DeltaTime) {
 	// FVector WhiskerImpulse = GetClosestWhisker(Whiskers, true);
 	FollowPath(DeltaTime);
 
-	for(int i = 0; i < Path.Num() - 1; ++i)
-		DrawDebugLine(GetWorld(), Path[i].Origin, Path[i+1].Origin, FColor::Yellow);
+	for(int i = 0; i < Path.Num(); ++i) {
+		if(i < Path.Num()-1)
+			DrawDebugLine(GetWorld(), Path[i].Origin, Path[i+1].Origin, FColor::Emerald);
+		DrawDebugPoint(GetWorld(), Path[i].Origin, 5.f, FColor::Emerald);
+	}
 }
 
 void AMultiLeggedPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -229,7 +236,27 @@ FVector AMultiLeggedPawn::GetTangent(int AtId) {
 
 void AMultiLeggedPawn::CorrectPath() {
 	for(int i = 0; i < Path.Num(); i++) {
-		Path[i].Origin += Path[i].Normal * (PreferredPersonalSpace - Path[i].Distance);
+		Path[i].Origin += Path[i].Normal * (PreferredPersonalSpace - Path[i].SurfaceDistance);
+	}
+}
+
+void AMultiLeggedPawn::SimplifyPath() {
+	int k = 0;
+	bool bSimplified = true;
+	while(k < Path.Num()-2) {
+		k++;
+		FVector CurrentDirection = Path[k].Tangent;
+		FVector NextDirection = Path[k+1].Tangent ;
+
+		if(CurrentDirection.Dot(NextDirection) > SimplificationThreshold) {
+			Path.RemoveAt(k);
+			bSimplified = false;
+			k--;
+		}
+		if(k >= Path.Num()-2 && !bSimplified) {
+			bSimplified = true;
+			k=0;
+		}
 	}
 }
 
@@ -237,25 +264,55 @@ void AMultiLeggedPawn::SubdividePath() {
 	if(Path.Num() < 2)
 		return;
 	for(int i = 1; i < Path.Num()-1; ++i) {
-		FNavNode Previous = Path[i];
-		FNavNode Next = Path[i+1];
-		FNavNode Current;
+		FPathNode Previous = Path[i];
+		FPathNode Next = Path[i+1];
+		FPathNode Current;
 		Current.Origin = 0.5 * (Previous.Origin + Next.Origin);
-		Current.Distance = 0.5 * (Previous.Distance + Next.Distance);
+		Current.SurfaceDistance = 0.5 * (Previous.SurfaceDistance + Next.SurfaceDistance);
 		Current.Normal = (Previous.Normal + Next.Normal).GetSafeNormal();
 		Path.Insert(Current, i);
 	}
 }
 
 void AMultiLeggedPawn::SmoothPath() {
-	TArray<float> Weights;
-	Weights.Init(1.f, PathSmoothing);
-	for(int i = 0; i < Path.Num(); ++i) {
-		int min = FMath::Max(i-Weights.Num()+1, 0);
-		int max = FMath::Min(i+Weights.Num()-1, Path.Num());
+	if(PathSmoothing==0)
+		return;
+	TArray<FPathNode> SmoothPath = SmoothMovingAverage(Path);
+	if(bCurveCorrection) {
+		for(int i = 1; i < SmoothPath.Num()-1; ++i) {
+			FVector Curvature = (SmoothPath[i].Tangent - SmoothPath[i-1].Tangent) / SmoothPath[i].NextNodeDistance;
+			if(Curvature!=FVector::ZeroVector)
+				Curvature = Curvature / Curvature.SquaredLength();
+			FVector OriginalCurvature = (Path[i].Tangent - Path[i-1].Tangent) / Path[i].NextNodeDistance;
+			if(OriginalCurvature!=FVector::ZeroVector)
+				OriginalCurvature = OriginalCurvature / OriginalCurvature.SquaredLength();
+			
+			FVector Shift = OriginalCurvature - Curvature;
+			SmoothPath[i].Origin += Shift * 0.1;
+		}
+	}
+	Path = SmoothPath;
+}
+
+TArray<FPathNode> AMultiLeggedPawn::SmoothMovingAverage(TArray<FPathNode> InPath) const {
+	TArray<FPathNode> Result = InPath;
+	for(int i = 1; i < InPath.Num()-1; ++i) {
+		int min = FMath::Max(i-PathSmoothing, 0);
+		int max = FMath::Min(i+PathSmoothing, InPath.Num());
 		int kernel = max-min;
 		float invKernelSize = 1.f/kernel;
-		//Path[i].Distance =
+		FPathNode Node;
+		for(int j = max-1; j >=min; --j) {
+			Node.SurfaceDistance += InPath[j].SurfaceDistance * invKernelSize;
+			Node.NextNodeDistance += InPath[j].NextNodeDistance * invKernelSize;
+			Node.Origin += InPath[j].Origin * invKernelSize;
+			Node.Normal += InPath[j].Normal * invKernelSize;
+			Node.Tangent += InPath[j].Tangent * invKernelSize;
+		}
+		Node.Normal.Normalize();
+		Node.Tangent.Normalize();
+		Result[i] = Node;
 	}
+	return Result;
 }
 

@@ -290,7 +290,10 @@ TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPrefere
 					Nodes[Link.Id].Distance > PathPreference.MinDistance &&
 					Nodes[Link.Id].Distance < PathPreference.MaxDistance;
 				if(!fScore.Contains(Link.Id) && bIsReachable) {
-					float newFScore = Tentative_gScore + Heuristic(Link.Id, End);
+					float upDot = FVector::UpVector.Dot(Nodes[Link.Id].Normal);
+					float remappedDot = 0.5*(1-upDot);
+					remappedDot *= remappedDot;
+					float newFScore = Tentative_gScore + Heuristic(Link.Id, End) + PathPreference.UpPreference * remappedDot;
 					// if(PathPreference.MaxDistance < INFINITY) {
 					// 	float absDistFromPreference = FMath::Abs(Nodes[Link.Id].Distance - PathPreference.PreferredDistance);
 					// 	float distNormalized =

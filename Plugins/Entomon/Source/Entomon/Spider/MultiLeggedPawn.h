@@ -6,6 +6,7 @@
 #include "Entomon/Navigation/PathPreference.h"
 #include "GameFramework/Pawn.h"
 #include "Entomon/Navigation/NavNode.h"
+#include "Entomon/Navigation/PathNode.h"
 
 #include "MultiLeggedPawn.generated.h"
 
@@ -56,8 +57,10 @@ protected:
 	float GetDistanceFromNodePlane(int Node);
 	FVector GetTangent(int AtId);
 	void CorrectPath();
+	void SimplifyPath();
 	void SubdividePath();
 	void SmoothPath();
+	TArray<FPathNode> SmoothMovingAverage(TArray<FPathNode> InPath) const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
@@ -86,9 +89,11 @@ protected:
 		EPathSmoothingType PathSmoothingType = EPathSmoothingType::Uniform;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
 		int PathSmoothing = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0, UIMax=4))
-		int Subdivisions = 0;
-	TArray<FNavNode> Path;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
+		bool bCurveCorrection = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.f, UIMax=1.f))
+		float SimplificationThreshold = 0.99f;
+	TArray<FPathNode> Path;
 	int CurrentPathId;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
