@@ -85,14 +85,18 @@ protected:
 		float MaxDistanceFromObstacle = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
+		bool bCorrectPath = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		EPathSmoothingType PathSmoothingType = EPathSmoothingType::Uniform;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
 		int PathSmoothing = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
 		bool bCurveCorrection = true;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.f, UIMax=1.f))
-		float SimplificationThreshold = 0.99f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
+		bool bSimplify = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="bSimplify", UIMin = 0.f, UIMax=1.f))
+		float Simplify = 0.1f;
 	TArray<FPathNode> Path;
 	int CurrentPathId;
 	

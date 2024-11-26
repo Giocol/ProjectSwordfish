@@ -28,7 +28,8 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 		Path.Add(Node);
 	}
 	CurrentPathId = 0;
-	CorrectPath();
+	if(bCorrectPath)
+		CorrectPath();
 	if(PathSmoothingType==EPathSmoothingType::Uniform)
 		SmoothPath();
 	SimplifyPath();
@@ -243,19 +244,18 @@ void AMultiLeggedPawn::CorrectPath() {
 void AMultiLeggedPawn::SimplifyPath() {
 	int k = 0;
 	bool bSimplified = true;
-	while(k < Path.Num()-2) {
+	while(k < Path.Num()-1) {
 		k++;
+		FVector PreviousDirection = Path[k-1].Tangent;
 		FVector CurrentDirection = Path[k].Tangent;
-		FVector NextDirection = Path[k+1].Tangent ;
-
-		if(CurrentDirection.Dot(NextDirection) > SimplificationThreshold) {
+		
+		float dot = CurrentDirection.Dot(PreviousDirection);
+		float remappedDot = (1.f-dot);
+		if(remappedDot < Simplify) {
 			Path.RemoveAt(k);
-			bSimplified = false;
-			k--;
-		}
-		if(k >= Path.Num()-2 && !bSimplified) {
-			bSimplified = true;
-			k=0;
+			// if(k < Path.Num())
+			// 	Path[k-1].Tangent = (Path[k].Origin - Path[k-1].Origin).GetSafeNormal();
+			k = 0;
 		}
 	}
 }
