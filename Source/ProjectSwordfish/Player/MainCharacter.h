@@ -22,6 +22,8 @@ public:
 
 	virtual void Pull(float DeltaTime);
 	void SetIsDoingSecondaryAction(bool State) { bIsDoingSecondaryAction = State; }
+	virtual void SetIsLeaningLeft(bool State) { bIsLeaningLeft = State; }
+	virtual void SetIsLeaningRight(bool State) { bIsLeaningRight = State; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -39,6 +41,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Interaction")
 		float InteractionRange = 20.f;
 
-	UPROPERTY(VisibleAnywhere, Category = "Fishing")
+	UPROPERTY(VisibleAnywhere)
 		bool bIsDoingSecondaryAction = false;
+
+	
+	UPROPERTY(VisibleAnywhere)
+		bool bIsLeaningLeft = false;
+
+	UPROPERTY(VisibleAnywhere)
+		bool bIsLeaningRight = false;
 };

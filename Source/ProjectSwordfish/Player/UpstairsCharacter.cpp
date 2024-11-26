@@ -1,6 +1,7 @@
 ﻿#include "UpstairsCharacter.h"
 
 #include "Camera/CameraComponent.h"
+#include "Components/FishingQTEHandler.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnitConversion.h"
 #include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
@@ -15,6 +16,7 @@ AUpstairsCharacter::AUpstairsCharacter() {
 	Spear->OnComponentHit.AddDynamic(this, &AUpstairsCharacter::OnSpearHit);
 	PullTarget = CreateDefaultSubobject<USceneComponent>(TEXT("Pull Target"));
 	PullTarget->SetupAttachment(RootComponent);
+	QTEHandler = CreateDefaultSubobject<UFishingQTEHandler>(TEXT("QTE Handler"));
 }
 
 void AUpstairsCharacter::BeginPlay() {

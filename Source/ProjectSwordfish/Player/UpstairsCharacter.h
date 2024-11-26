@@ -2,9 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "MainCharacter.h"
+#include "Components/FishingQTEHandler.h"
 #include "ProjectSwordfish/UI/SliderWithTargetAreas.h"
 #include "UpstairsCharacter.generated.h"
 
+class UFishingQTEHandler;
 class UFishingEventDataAsset;
 ///<summary>
 /// All values are supposed to be contained between 0 and 1. A value of -1 signifies that that specific property is invalid
@@ -55,6 +57,8 @@ public:
 	virtual void ProcessCameraMovementInput(FVector2D Input) override;
 	virtual void Pull(float DeltaTime) override;
 	virtual void ProcessUse() override;
+	virtual void SetIsLeaningLeft(bool State) override { QTEHandler->SetIsLeaningLeft(State); Super::SetIsLeaningLeft(State); };
+	virtual void SetIsLeaningRight(bool State) override { QTEHandler->SetIsLeaningRight(State); Super::SetIsLeaningLeft(State); };
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -63,9 +67,6 @@ public:
 	void ApplyFishingResistance(float DeltaTime);
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Fishing ")
-		UStaticMeshComponent* Spear = nullptr;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing ")
 		bool bIsFishing = false;
 
@@ -95,9 +96,6 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing | Aiming")
 		float PowerDecayPerTick = 0.1f;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
-		USceneComponent* PullTarget = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		float SpearSpeed = 50.f;
@@ -113,6 +111,16 @@ protected:
 
 	UPROPERTY()
 		UFishingEventDataAsset* CurrentFishingEvent = nullptr;
+
+protected: //Components
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		UStaticMeshComponent* Spear = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		USceneComponent* PullTarget = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+		UFishingQTEHandler* QTEHandler = nullptr;
 
 private:
 	float CurrentAimInput;

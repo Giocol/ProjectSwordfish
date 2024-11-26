@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputActionValue.h"
 #include "GameFramework/PlayerController.h"
 #include "FirstPersonController.generated.h"
 
@@ -28,7 +29,11 @@ protected:
 	void HandleUse(const FInputActionValue& Value);
 	void StartSecondaryAction(const FInputActionValue& Value);
 	void EndSecondaryAction(const FInputActionValue& Value);
-
+	void StartLeanLeft(const FInputActionValue& Value);
+	void EndLeanLeft(const FInputActionValue& Value);
+	void StartLeanRight(const FInputActionValue& Value);
+	void EndLeanRight(const FInputActionValue& Value);
+	
 private:
 	void InitSystems();
 	void SetupInputMappingContext() const;
@@ -56,10 +61,16 @@ private:
 		TObjectPtr<UInputAction> UseAction = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
-		TObjectPtr<UInputAction> PullAction = nullptr;
+		TObjectPtr<UInputAction> SecondaryAction = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions | Camera", meta = (AllowPrivateAccess = "true"));
 		TObjectPtr<UInputAction> CameraMovementAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
+		TObjectPtr<UInputAction> LeanLeftAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
+		TObjectPtr<UInputAction> LeanRightAction = nullptr;
 
 	//refs
 private:
