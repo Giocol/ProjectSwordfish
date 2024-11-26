@@ -164,6 +164,10 @@ void AUpstairsCharacter::ApplyFishingResistance(float DeltaTime) {
 		CurrentAim = FMath::Clamp(CurrentAim + AimResistancePerTick * DeltaTime, 0.f, 1.f);
 }
 
+void AUpstairsCharacter::OnQTEsResolved() {
+	UE_LOG(LogTemp, Error, TEXT("ALL QTEs SOLVED!!!"));
+}
+
 void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                                     FVector NormalImpulse, const FHitResult& Hit) {
 
@@ -174,6 +178,8 @@ void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		CurrentlySpearedActor = OtherActor;
 
 		OnSpearingStarted();
+
+		QTEHandler->StartQTEs(CurrentFishingEvent, [this]() {this->OnQTEsResolved();});
 
 		Spear->SetSimulatePhysics(false);
 		Spear->AttachToComponent(CurrentlySpearedActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);

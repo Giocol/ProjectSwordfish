@@ -1,10 +1,13 @@
 ﻿#pragma once
 
+#include <functional>
+
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "FishingQTEHandler.generated.h"
 
 
+enum EQTEDirection : int;
 class UFishingQuickTimeEventDataAsset;
 class UFishingEventDataAsset;
 
@@ -15,7 +18,7 @@ class PROJECTSWORDFISH_API UFishingQTEHandler : public UActorComponent {
 public:
 	UFishingQTEHandler();
 
-	void StartQTEs(UFishingEventDataAsset* FishingEventIn);
+	void StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void(void)> OnQTEsResolvedCallback);
 	
 	virtual void SetIsLeaningLeft(bool State) { bIsLeaningLeft = State; }
 	virtual void SetIsLeaningRight(bool State) { bIsLeaningRight = State; }
@@ -25,15 +28,24 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
-	void HandleNextQTE();
+	void InitializeCurrentQTE();
+	void InitializeCurrentRepetition();
+	void OnRepetitionCompleted();
+	void OnQTECompleted();
 	void QTETick(float DeltaTime);
 	
 protected:
 	UFishingEventDataAsset* FishingEvent = nullptr;
+	std::function<void(void)> OnQTEsResolved = nullptr;
+	
 	UFishingQuickTimeEventDataAsset* CurrentQTE = nullptr;
 	int CurrentQTEIndex = 0;
 
-	float CurrentQTETime = 0.f;
+	int CurrentQTENumberOfRepetitions = 0;
+	int CurrentRepetitionIndex = 0;
+	EQTEDirection CurrentRepetitionDirection;
+	float CurrentRepetitionTimePressed = 0.f;
+	float CurrentRepetitionTimeToComplete = 0.f;
 	
 	bool bIsLeaningLeft = false;
 	bool bIsLeaningRight = false;

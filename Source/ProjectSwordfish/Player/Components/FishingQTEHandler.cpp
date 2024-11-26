@@ -8,10 +8,15 @@ UFishingQTEHandler::UFishingQTEHandler() {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn) {
+void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void()> OnQTEsResolvedCallback) {
 	FishingEvent = FishingEventIn;
+	OnQTEsResolved = OnQTEsResolvedCallback;
 
-	HandleNextQTE();
+	if(FishingEvent->QTEData.Num() > 0) {
+		CurrentQTE = FishingEvent->QTEData[0];
+		InitializeCurrentQTE();
+	} else
+		OnQTEsResolved();
 }
 
 void UFishingQTEHandler::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -22,19 +27,48 @@ void UFishingQTEHandler::TickComponent(float DeltaTime, ELevelTick TickType,
 		QTETick(DeltaTime);
 }
 
-void UFishingQTEHandler::HandleNextQTE() { 
-	CurrentQTE = FishingEvent->QTEData[0]; // this is ofc just for testing
+void UFishingQTEHandler::InitializeCurrentQTE() {
+	if(CurrentQTE->bDoesRepeat)
+		CurrentQTENumberOfRepetitions = CurrentQTE->GetNumberOfRepetitions();
+	else
+		CurrentQTENumberOfRepetitions = 1;
 
-	
+	CurrentRepetitionIndex = 0;
+	InitializeCurrentRepetition();
+}
+
+void UFishingQTEHandler::InitializeCurrentRepetition() {
+	CurrentRepetitionDirection = CurrentQTE->GetDirection();
+	CurrentRepetitionTimeToComplete = CurrentQTE->GetTimeToComplete();
+}
+
+void UFishingQTEHandler::OnRepetitionCompleted() {
+	if(CurrentRepetitionIndex == CurrentQTENumberOfRepetitions - 1)
+		OnQTECompleted();
+	else {
+		CurrentRepetitionIndex++;
+		InitializeCurrentRepetition();
+	}
+}
+
+void UFishingQTEHandler::OnQTECompleted() {
+	if(CurrentQTEIndex == FishingEvent->QTEData.Num() - 1) {
+		CurrentQTE = nullptr;
+		FishingEvent = nullptr;
+		OnQTEsResolved();
+	}
+	else {
+		CurrentQTEIndex++;
+		InitializeCurrentQTE();
+	}
 }
 
 void UFishingQTEHandler::QTETick(float DeltaTime) {
-	//todo: call getdirection only once per repetetion
-	if((CurrentQTE->GetDirection() == Left && bIsLeaningLeft) || (CurrentQTE->GetDirection() == Right && bIsLeaningRight))
-		CurrentQTETime += DeltaTime;
-
-	if(CurrentQTETime >= CurrentQTE->GetTimeToComplete()) {
-		// on qte resolved TODO: add the repetitions n shit
+	if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight))
+		CurrentRepetitionTimePressed += DeltaTime;
+	
+	if(CurrentRepetitionTimePressed >= CurrentRepetitionTimeToComplete) {
+		OnRepetitionCompleted();
 	}
 }
 
