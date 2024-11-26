@@ -24,6 +24,10 @@ protected:
 
 	void HandleMovement(const FInputActionValue& Value);
 	void HandleCameraMovement(const FInputActionValue& Value);
+	void HandleInteraction(const FInputActionValue& Value);
+	void HandleUse(const FInputActionValue& Value);
+	void StartPull(const FInputActionValue& Value);
+	void EndPull(const FInputActionValue& Value);
 
 private:
 	void InitSystems();
@@ -32,29 +36,39 @@ private:
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInputMappingContext> mappingContext = nullptr;
+		TObjectPtr<UInputMappingContext> mappingContext = nullptr;
 
 	//TODO: make this two things handled by settings menu
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Settings", meta = (AllowPrivateAccess = "true"))
-	float Sensitivity = 1.0f;
+		float Sensitivity = 1.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Settings", meta = (AllowPrivateAccess = "true"))
-	bool bIsYawInputInverted = false;
-	
+		bool bIsYawInputInverted = false;
+
+	//actions
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions | Movement", meta = (AllowPrivateAccess = "true"));
-	TObjectPtr<UInputAction> characterMovementAction = nullptr;
+		TObjectPtr<UInputAction> CharacterMovementAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
+		TObjectPtr<UInputAction> InteractAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
+		TObjectPtr<UInputAction> UseAction = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions ", meta = (AllowPrivateAccess = "true"));
+		TObjectPtr<UInputAction> PullAction = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "EnhancedInput | Actions | Camera", meta = (AllowPrivateAccess = "true"));
-	TObjectPtr<UInputAction> cameraMovementAction = nullptr;
+		TObjectPtr<UInputAction> CameraMovementAction = nullptr;
 
 	//refs
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Character", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AMainCharacter> characterRef;
+		TObjectPtr<AMainCharacter> characterRef;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UEnhancedInputComponent> inputComponentRef = nullptr;
+		TObjectPtr<UEnhancedInputComponent> inputComponentRef = nullptr;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EnhancedInput", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UEnhancedInputLocalPlayerSubsystem> inputSubsystemRef = nullptr;
+		TObjectPtr<UEnhancedInputLocalPlayerSubsystem> inputSubsystemRef = nullptr;
 };
