@@ -48,7 +48,7 @@ public:
 
 	void ApplyGaitPreset(UGaitPreset* InGaitPreset);
 
-protected:
+private:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
 	TArray<FHitResult> FibonacciTrace(FVector Start);
 	FHitResult GetClosestWhisker(TArray<FHitResult> Hits, bool bDraw);
@@ -61,6 +61,8 @@ protected:
 	void SubdividePath();
 	void SmoothPath();
 	TArray<FPathNode> SmoothMovingAverage(TArray<FPathNode> InPath) const;
+
+	float GetNormalizedInterpolatorToNextNode();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
