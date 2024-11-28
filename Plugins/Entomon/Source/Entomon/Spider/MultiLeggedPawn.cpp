@@ -45,7 +45,7 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float brakeDistance = 0.5 * time * MovementComponent->MaxSpeed;
 
 	float NodeDistance = GetDistanceFromNodePlane(Target);
-	if(NodeDistance >= 5.f-brakeDistance)
+	if(NodeDistance >= -brakeDistance)
 		return true;
 
 	// float dist = SurfaceOffset.Length();
