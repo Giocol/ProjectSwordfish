@@ -307,7 +307,7 @@ FLimbSegment ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool
 
 
 bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, USceneComponent* Root, FVector InStart, FVector InDirection,
-	ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit) {
+ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit) {
 	FTransform Transform = Mesh->GetComponentTransform();
 	// FVector End = InStart + InDirection * InDistance;
 
@@ -331,17 +331,24 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, USceneCompone
 	
 	TArray<AActor*> Ignore;
 	Ignore.Add(Mesh->GetOwner());
-	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+	TArray<FHitResult> Hits;
+	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
 		Mesh->GetWorld(),
 		NewStart, NewEnd, 5.f,
 		UEngineTypes::ConvertToTraceType(InTraceChannel),
 		false,
 		Ignore,
 		EDrawDebugTrace::None,
-		OutHit, true,
+		Hits, true,
 		FLinearColor::Red, FLinearColor::Green,
 		0.45);
-	
+	if(bHit) {
+		OutHit.Distance = INFINITY;
+		for (auto Hit : Hits) {
+			if(Hit.bBlockingHit && FVector::DistSquared(Hit.Location, Rest) < FVector::DistSquared(OutHit.Location, Rest))
+				OutHit = Hit;
+		}
+	}
 	return bHit;
 }
 
