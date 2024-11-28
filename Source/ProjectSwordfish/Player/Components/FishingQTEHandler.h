@@ -17,9 +17,21 @@ class PROJECTSWORDFISH_API UFishingQTEHandler : public UActorComponent {
 
 public:
 	UFishingQTEHandler();
-
-	void StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void(void)> OnQTEsResolvedCallback);
 	
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		float GetCurrentQTEProgress() const {
+			return CurrentQTE ? CurrentRepetitionTimePressed / CurrentRepetitionTimeToComplete : 0;
+		}
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		EQTEDirection GetCurrentQTEDirection() const { return CurrentRepetitionDirection; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool IsQTERunning() const { return CurrentQTE != nullptr; };
+	
+	void StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void()> OnQTEsResolvedCallback, std::function<void()>
+	               OnQTEStartedCallback);
+
 	virtual void SetIsLeaningLeft(bool State) { bIsLeaningLeft = State; }
 	virtual void SetIsLeaningRight(bool State) { bIsLeaningRight = State; }
 	
@@ -37,6 +49,7 @@ private:
 protected:
 	UFishingEventDataAsset* FishingEvent = nullptr;
 	std::function<void(void)> OnQTEsResolved = nullptr;
+	std::function<void(void)> OnQTEStart = nullptr;
 	
 	UFishingQuickTimeEventDataAsset* CurrentQTE = nullptr;
 	int CurrentQTEIndex = 0;

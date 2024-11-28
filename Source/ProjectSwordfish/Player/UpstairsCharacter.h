@@ -30,16 +30,19 @@ public:
 
 	//todo: add check for having spear
 	UFUNCTION(BlueprintCallable)
-	bool StartFishingEvent(UFishingEventDataAsset* FishingEventData);
+		bool StartFishingEvent(UFishingEventDataAsset* FishingEventData);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnFishingStarted();
+		void OnFishingStarted();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnSpearingStarted();
+		void OnSpearingStarted();
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void OnFishingEnded();
+		void OnFishingEnded();
+	
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnQTEStart();
 
 	void OnQTEsResolved();
 
@@ -121,7 +124,7 @@ protected: //Components
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		USceneComponent* PullTarget = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Fishing")
 		UFishingQTEHandler* QTEHandler = nullptr;
 
 private:
