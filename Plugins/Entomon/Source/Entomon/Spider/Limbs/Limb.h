@@ -31,18 +31,18 @@ public:
 	
 	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
-	bool TryMove(UPoseableMeshComponent* InMesh, float GaitCycleDuration, int Iterations,
+	bool TryMove(UPoseableMeshComponent* InMesh, USceneComponent* Root, float GaitCycleDuration, int Iterations,
 		ECollisionChannel InTraceChannel);
 
 	void ApplyGaitPreset(class UGaitPreset* InGaitPreset);
 	void ResetStates(UPoseableMeshComponent* Mesh);
 	
-	static bool TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
+	static bool TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, USceneComponent* Root, FVector InStart, FVector InDirection,
 		ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit);
-	static bool TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, FVector InStart, FVector InDirection,
+	static bool TraceAround(ULimb* InLimb, UPoseableMeshComponent* Mesh, USceneComponent* Root, FVector InStart, FVector InDirection,
 		int Iterations, ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit);
 protected:
-	bool EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh, float GaitCycleDuration, float TraceDistance, int Iterations,
+	bool EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh, USceneComponent* InRoot, float GaitCycleDuration, float TraceDistance, int Iterations,
 								ECollisionChannel TraceChannel);
 	FLimbSegment MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool bIsEnd = false);
 	

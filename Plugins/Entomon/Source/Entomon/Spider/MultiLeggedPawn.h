@@ -35,6 +35,8 @@ public:
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
 
+	USceneComponent* GetBody() const { return Body; }
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -48,7 +50,7 @@ public:
 
 	void ApplyGaitPreset(UGaitPreset* InGaitPreset);
 
-protected:
+private:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
 	TArray<FHitResult> FibonacciTrace(FVector Start);
 	FHitResult GetClosestWhisker(TArray<FHitResult> Hits, bool bDraw);
@@ -61,6 +63,8 @@ protected:
 	void SubdividePath();
 	void SmoothPath();
 	TArray<FPathNode> SmoothMovingAverage(TArray<FPathNode> InPath) const;
+
+	float GetNormalizedInterpolatorToNextNode();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
@@ -85,16 +89,22 @@ protected:
 		float MaxDistanceFromObstacle = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
+		bool bCorrectPath = true;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		EPathSmoothingType PathSmoothingType = EPathSmoothingType::Uniform;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
 		int PathSmoothing = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="PathSmoothingType!=EPathSmoothingType::None", EditConditionHides, UIMin=0, ToolTip="How far the smoothing is applied, where 1 just s"))
 		bool bCurveCorrection = true;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.f, UIMax=1.f))
-		float SimplificationThreshold = 0.99f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
+		bool bSimplify = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="bSimplify", UIMin = 0.f, UIMax=1.f))
+		float Simplify = 0.1f;
 	TArray<FPathNode> Path;
 	int CurrentPathId;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gizmos", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
+		bool bDrawPath = true;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;
