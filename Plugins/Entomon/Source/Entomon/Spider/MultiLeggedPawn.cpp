@@ -28,7 +28,8 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 		Path.Add(Node);
 	}
 	CurrentPathId = 0;
-	CorrectPath();
+	if(bCorrectPath)
+		CorrectPath();
 	if(PathSmoothingType==EPathSmoothingType::Uniform)
 		SmoothPath();
 	SimplifyPath();
@@ -36,15 +37,15 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	FVector ToTarget = Path[Target].Origin - Body->GetComponentLocation();
-	FVector ToTargetNorm = ToTarget.GetSafeNormal();
+	float TargetDist = ToTarget.Length();
+	FVector ToTargetNorm = ToTarget / TargetDist;
 
 	
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float brakeDistance = 0.5 * time * MovementComponent->MaxSpeed;
 
-	float TargetDist = ToTarget.Length();
 	float NodeDistance = GetDistanceFromNodePlane(Target);
-	if(NodeDistance >= -brakeDistance)
+	if(NodeDistance >= 5.f-brakeDistance)
 		return true;
 
 	// float dist = SurfaceOffset.Length();
@@ -66,31 +67,44 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	// 	float Alpha = FMath::Clamp(TargetDist / Len, 0, 1);
 	// 	Input = FMath::Lerp(Input, Dir, Alpha);
 	// }
-	
-	// float InputModifier = FMath::Pow(NormalizedFacingInverse, (1-FacingBias) / FacingBias);
-	MovementComponent->AddInputVector(Input);
+	float Dot = Body->GetForwardVector().Dot(ToTargetNorm);
+	float NormalizedFacingInverse = (1+Dot)*0.5;
+	float InputModifier = (NormalizedFacingInverse + FacingBias)/(1.f+FacingBias);
+	MovementComponent->AddInputVector(InputModifier * Input);
 	
 	return false;
 }
 
 void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 	FVector ToTarget = Path[Target].Origin - Body->GetComponentLocation();
-	FVector ToTargetNorm = ToTarget.GetSafeNormal();
+	float Distance = ToTarget.Length();
+	FVector ToTargetNorm = ToTarget / Distance;
+	// float TimeToTarget = Distance / MovementComponent->MaxSpeed;
 
-	FQuat DeltaQuat = FQuat::FindBetweenNormals(GetActorUpVector(), Path[Target].Normal);
+	FQuat RotationToNode = FQuat::FindBetweenNormals(GetActorUpVector(), Path[Target].Normal);
 	FVector PlaneTarget = FVector::VectorPlaneProject(ToTargetNorm, GetActorUpVector()).GetSafeNormal();
-	FQuat DeltaZRotation = FQuat::FindBetweenNormals(
+	FQuat RotationToFaceNode = FQuat::FindBetweenNormals(
 		GetActorForwardVector(),
 		PlaneTarget);
-	
-	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaQuat, DeltaTime * RotationSpeed));
-	AddActorWorldRotation(FQuat::Slerp(FQuat::Identity, DeltaZRotation, DeltaTime * RotationSpeed));
+
+	FQuat CombinedRotation = Target < Path.Num() ? (RotationToNode * RotationToFaceNode) : RotationToNode;
+	FVector RotationVector = CombinedRotation.ToRotationVector();
+	float RotationAngle;
+	RotationVector.ToDirectionAndLength(RotationVector, RotationAngle);
+	float NewRotationAngle = FMath::Min(DeltaTime * RotationSpeed, RotationAngle);
+	RotationVector = RotationVector * NewRotationAngle;
+	FQuat Rotation = FQuat::MakeFromRotationVector(RotationVector);
+
+	FVector RelativeLocation = Body->GetComponentLocation() - GetActorLocation();
+	FVector Offset = RelativeLocation - Rotation * RelativeLocation;
+	AddActorWorldRotation(Rotation);
+	AddActorWorldOffset(Offset);
 }
 
 void AMultiLeggedPawn::FollowPath(double DeltaTime) {
-	if(CurrentPathId < Path.Num()-1) {
-		Rotate(DeltaTime, CurrentPathId+1);
-		if(Move(DeltaTime, CurrentPathId+1)) {
+	if(CurrentPathId < Path.Num()) {
+		Rotate(DeltaTime, CurrentPathId);
+		if(Move(DeltaTime, CurrentPathId)) {
 			CurrentPathId++;
 		}
 	}
@@ -110,10 +124,12 @@ void AMultiLeggedPawn::Tick(float DeltaTime) {
 	// FVector WhiskerImpulse = GetClosestWhisker(Whiskers, true);
 	FollowPath(DeltaTime);
 
-	for(int i = 0; i < Path.Num(); ++i) {
-		if(i < Path.Num()-1)
-			DrawDebugLine(GetWorld(), Path[i].Origin, Path[i+1].Origin, FColor::Emerald);
-		DrawDebugPoint(GetWorld(), Path[i].Origin, 5.f, FColor::Emerald);
+	if(bDrawPath) {
+		for(int i = 0; i < Path.Num(); ++i) {
+			if(i < Path.Num()-1)
+				DrawDebugLine(GetWorld(), Path[i].Origin, Path[i+1].Origin, FColor::Emerald);
+			DrawDebugPoint(GetWorld(), Path[i].Origin, 5.f, FColor::Emerald);
+		}
 	}
 }
 
@@ -243,20 +259,22 @@ void AMultiLeggedPawn::CorrectPath() {
 void AMultiLeggedPawn::SimplifyPath() {
 	int k = 0;
 	bool bSimplified = true;
-	while(k < Path.Num()-2) {
+	while(k < Path.Num()-1) {
 		k++;
+		FVector PreviousDirection = Path[k-1].Tangent;
 		FVector CurrentDirection = Path[k].Tangent;
-		FVector NextDirection = Path[k+1].Tangent ;
-
-		if(CurrentDirection.Dot(NextDirection) > SimplificationThreshold) {
+		
+		float dot = CurrentDirection.Dot(PreviousDirection);
+		float remappedDot = (1.f-dot);
+		if(remappedDot < Simplify) {
 			Path.RemoveAt(k);
-			bSimplified = false;
+			// if(k < Path.Num())
+			// 	Path[k-1].Tangent = (Path[k].Origin - Path[k-1].Origin).GetSafeNormal();
 			k--;
 		}
-		if(k >= Path.Num()-2 && !bSimplified) {
-			bSimplified = true;
-			k=0;
-		}
+	}
+	for(int i = 0; i < Path.Num()-1; i++) {
+		(Path[i+1].Origin - Path[i].Origin).ToDirectionAndLength(Path[i].Tangent, Path[i].NextNodeDistance);
 	}
 }
 
@@ -299,10 +317,10 @@ TArray<FPathNode> AMultiLeggedPawn::SmoothMovingAverage(TArray<FPathNode> InPath
 	for(int i = 1; i < InPath.Num()-1; ++i) {
 		int min = FMath::Max(i-PathSmoothing, 0);
 		int max = FMath::Min(i+PathSmoothing, InPath.Num());
-		int kernel = max-min;
+		int kernel = 1+i-min;
 		float invKernelSize = 1.f/kernel;
 		FPathNode Node;
-		for(int j = max-1; j >=min; --j) {
+		for(int j = i; j >=min; --j) {
 			Node.SurfaceDistance += InPath[j].SurfaceDistance * invKernelSize;
 			Node.NextNodeDistance += InPath[j].NextNodeDistance * invKernelSize;
 			Node.Origin += InPath[j].Origin * invKernelSize;
@@ -314,5 +332,15 @@ TArray<FPathNode> AMultiLeggedPawn::SmoothMovingAverage(TArray<FPathNode> InPath
 		Result[i] = Node;
 	}
 	return Result;
+}
+
+float AMultiLeggedPawn::GetNormalizedInterpolatorToNextNode() {
+	if(CurrentPathId < 1)
+		return 0;
+	FVector ToTarget = Body->GetComponentLocation() - Path[CurrentPathId].Origin;
+	FVector Projected = ToTarget.ProjectOnToNormal(Path[CurrentPathId].Tangent);
+	float Dist = Projected.Length();
+	float Result = 1.f - Dist / Path[CurrentPathId-1].NextNodeDistance;
+	return FMath::Clamp(Result, 0, 1);
 }
 

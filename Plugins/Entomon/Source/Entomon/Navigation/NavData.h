@@ -13,4 +13,5 @@ public:
 	void Read(TArray<FNavNode>& OutNodes) { OutNodes = Nodes; };
 private:
 	TArray<FNavNode> Nodes;
+	
 };
