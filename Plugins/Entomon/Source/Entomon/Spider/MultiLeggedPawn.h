@@ -37,6 +37,8 @@ public:
 
 	USceneComponent* GetBody() const { return Body; }
 
+	FVector GetAngularVelocity() const { return AngularVelocity; }
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -115,5 +117,6 @@ protected:
 		class USceneComponent* Body;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		USceneComponent* Root;
-	
+
+	FVector AngularVelocity = FVector::ZeroVector;
 };

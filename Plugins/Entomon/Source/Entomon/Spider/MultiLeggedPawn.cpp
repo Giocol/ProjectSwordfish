@@ -44,8 +44,8 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float brakeDistance = 0.5 * time * MovementComponent->MaxSpeed;
 
-	float NodeDistance = GetDistanceFromNodePlane(Target);
-	if(NodeDistance >= -brakeDistance)
+	float NodePlaneDistance = GetDistanceFromNodePlane(Target);
+	if(NodePlaneDistance >= -brakeDistance && TargetDist < brakeDistance * 2)
 		return true;
 
 	// float dist = SurfaceOffset.Length();
@@ -97,6 +97,7 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 
 	FVector RelativeLocation = Body->GetComponentLocation() - GetActorLocation();
 	FVector Offset = RelativeLocation - Rotation * RelativeLocation;
+	AngularVelocity = Rotation.ToRotationVector() / DeltaTime;
 	AddActorWorldRotation(Rotation);
 	AddActorWorldOffset(Offset);
 }
@@ -108,8 +109,8 @@ void AMultiLeggedPawn::FollowPath(double DeltaTime) {
 			CurrentPathId++;
 		}
 	}
-	else if(CurrentPathId == Path.Num()-1)
-		Rotate(DeltaTime, CurrentPathId);
+	else if(!Path.IsEmpty() && CurrentPathId >= Path.Num()-1)
+		Rotate(DeltaTime, Path.Num()-1);
 }
 
 void AMultiLeggedPawn::BeginPlay() {
@@ -258,7 +259,6 @@ void AMultiLeggedPawn::CorrectPath() {
 
 void AMultiLeggedPawn::SimplifyPath() {
 	int k = 0;
-	bool bSimplified = true;
 	while(k < Path.Num()-1) {
 		k++;
 		FVector PreviousDirection = Path[k-1].Tangent;

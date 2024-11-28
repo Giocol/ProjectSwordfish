@@ -3,6 +3,8 @@
 #include "LimbSegment.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/GaitPreset.h"
+#include "Entomon/Spider/MultiLeggedPawn.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void ULimb::Tick(UPoseableMeshComponent* Mesh, float DeltaTime, ECollisionChannel InTraceChannel) {
@@ -278,13 +280,19 @@ bool ULimb::EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh
 									ECollisionChannel TraceChannel) {
 	FHitResult Hit;
 	FTransform Transform = InMesh->GetComponentTransform();
-	FVector LinearVelocity = InMesh->GetOwner()->GetVelocity();
+	FVector LinearVelocity = FVector::ZeroVector;
 	FVector AngularVelocity = FVector::ZeroVector;
-	FVector PointVelocity = LinearVelocity + AngularVelocity;
+	if(auto a = Cast<AMultiLeggedPawn>(InMesh->GetOwner())) {
+		AngularVelocity = a->GetAngularVelocity();
+		LinearVelocity = a->GetMovementComponent()->Velocity;
+	}
+	FQuat AngularVelocityToRotator = FQuat::MakeFromRotationVector(0.25 * AngularVelocity * GaitCycleDuration);
+	FVector PointVelocity =
+		LinearVelocity;
 	FVector Offset = PointVelocity * GaitCycleDuration;
 	FVector Direction = FootPlan.Current.UpVector;
 	// FVector Start = InMesh->GetBoneLocationByName(InLimb->Joints[0].GetName(), EBoneSpaces::WorldSpace) + Offset;
-	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset;
+	FVector Start = (Transform.TransformPosition(AngularVelocityToRotator * RestingTargetLocation) + AngularVelocityToRotator * Offset);
 	if(TraceAround(InLimb, InMesh, InRoot, Start, -Direction, Iterations, TraceChannel, Start, Hit)) {
 		FootPlan.Target = FIKEffector(Hit.ImpactPoint, Hit.Normal);
 		return true;

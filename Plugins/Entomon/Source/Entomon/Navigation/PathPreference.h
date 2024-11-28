@@ -16,7 +16,5 @@ struct FPathPreference {
 	UPROPERTY(EditAnywhere)
 	float PreferenceWeight = 0.5;
 	UPROPERTY(EditAnywhere)
-	float BodySize = 50.f;
-	UPROPERTY(EditAnywhere)
 	float UpPreference = 10.f;
 };
