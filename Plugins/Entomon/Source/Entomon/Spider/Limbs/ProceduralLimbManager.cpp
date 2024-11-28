@@ -40,7 +40,7 @@ void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCount
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
 			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter))
 		{
-			Limbs[i]->TryMove(Mesh, GetLerpedWalkCycleDuration(),
+			Limbs[i]->TryMove(Mesh, OwnerPawn->GetBody(), GetLerpedWalkCycleDuration(),
 				FootPlanningIterations, TraceChannel);
 		}
 		Limbs[i]->Tick(Mesh, DeltaTime, TraceChannel);

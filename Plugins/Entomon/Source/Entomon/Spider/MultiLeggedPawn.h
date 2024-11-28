@@ -35,6 +35,8 @@ public:
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
 
+	USceneComponent* GetBody() const { return Body; }
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -101,6 +103,8 @@ protected:
 		float Simplify = 0.1f;
 	TArray<FPathNode> Path;
 	int CurrentPathId;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gizmos", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
+		bool bDrawPath = true;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;
