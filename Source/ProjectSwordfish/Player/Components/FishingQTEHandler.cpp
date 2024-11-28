@@ -33,15 +33,19 @@ void UFishingQTEHandler::InitializeCurrentQTE() {
 		CurrentQTENumberOfRepetitions = CurrentQTE->GetNumberOfRepetitions();
 	else
 		CurrentQTENumberOfRepetitions = 1;
-
+	
 	CurrentRepetitionIndex = 0;
 	InitializeCurrentRepetition();
 }
 
 void UFishingQTEHandler::InitializeCurrentRepetition() {
+	bIsWaitingForNextRepetition = false;
+	NextRepetitionWaitTimeElapsed = 0.f;
+	
 	CurrentRepetitionDirection = CurrentQTE->GetDirection();
 	CurrentRepetitionTimeToComplete = CurrentQTE->GetTimeToComplete();
-
+	NextRepetitionWaitTime = CurrentQTE->GetRepeatCooldown();
+	
 	OnQTEStart();
 }
 
@@ -50,7 +54,7 @@ void UFishingQTEHandler::OnRepetitionCompleted() {
 		OnQTECompleted();
 	else {
 		CurrentRepetitionIndex++;
-		InitializeCurrentRepetition();
+		bIsWaitingForNextRepetition = true;
 	}
 }
 
@@ -67,11 +71,16 @@ void UFishingQTEHandler::OnQTECompleted() {
 }
 
 void UFishingQTEHandler::QTETick(float DeltaTime) {
-	if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight))
-		CurrentRepetitionTimePressed += DeltaTime;
+	if(!bIsWaitingForNextRepetition) {
+		if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight))
+			CurrentRepetitionTimePressed += DeltaTime;
 	
-	if(CurrentRepetitionTimePressed >= CurrentRepetitionTimeToComplete) {
-		OnRepetitionCompleted();
+		if(CurrentRepetitionTimePressed >= CurrentRepetitionTimeToComplete)
+			OnRepetitionCompleted();
+	} else {
+		NextRepetitionWaitTimeElapsed += DeltaTime;
+		if(NextRepetitionWaitTime >= NextRepetitionWaitTimeElapsed)
+			InitializeCurrentRepetition();
 	}
 }
 

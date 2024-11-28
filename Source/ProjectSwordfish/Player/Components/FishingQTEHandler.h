@@ -54,6 +54,9 @@ protected:
 	UFishingQuickTimeEventDataAsset* CurrentQTE = nullptr;
 	int CurrentQTEIndex = 0;
 
+	bool bIsWaitingForNextRepetition = false;
+	float NextRepetitionWaitTimeElapsed = 0.f;
+	float NextRepetitionWaitTime = 0.f;
 	int CurrentQTENumberOfRepetitions = 0;
 	int CurrentRepetitionIndex = 0;
 	EQTEDirection CurrentRepetitionDirection;
