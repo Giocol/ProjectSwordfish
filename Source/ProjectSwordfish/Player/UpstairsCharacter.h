@@ -44,6 +44,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnQTEStart();
 
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnQTEEnd();
+
 	void OnQTEsResolved();
 
 	UFUNCTION()

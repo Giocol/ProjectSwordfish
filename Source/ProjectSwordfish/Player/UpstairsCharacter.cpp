@@ -179,7 +179,7 @@ void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherA
 
 		OnSpearingStarted();
 
-		QTEHandler->StartQTEs(CurrentFishingEvent, [this]() {this->OnQTEsResolved();}, [this]() {this->OnQTEStart();});
+		QTEHandler->StartQTEs(CurrentFishingEvent, [this]() {this->OnQTEsResolved();}, [this]() {this->OnQTEStart();}, [this]() {this->OnQTEEnd();});
 
 		Spear->SetSimulatePhysics(false);
 		Spear->AttachToComponent(CurrentlySpearedActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);

@@ -8,16 +8,17 @@ UFishingQTEHandler::UFishingQTEHandler() {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void()> OnQTEsResolvedCallback, std::function<void()> OnQTEStartedCallback) {
+void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void()> OnAllQTEsResolvedCallback, std::function<void()> OnQTEStartedCallback, std::function<void()> OnQTEEndedCallback) {
 	FishingEvent = FishingEventIn;
-	OnQTEsResolved = OnQTEsResolvedCallback;
+	OnAllQTEsResolved = OnAllQTEsResolvedCallback;
 	OnQTEStart = OnQTEStartedCallback;
+	OnQTEEnd = OnQTEEndedCallback;
 	
 	if(FishingEvent->QTEData.Num() > 0) {
 		CurrentQTE = FishingEvent->QTEData[0];
 		InitializeCurrentQTE();
 	} else
-		OnQTEsResolved();
+		OnAllQTEsResolved();
 }
 
 void UFishingQTEHandler::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -56,13 +57,15 @@ void UFishingQTEHandler::OnRepetitionCompleted() {
 		CurrentRepetitionIndex++;
 		bIsWaitingForNextRepetition = true;
 	}
+
+	OnQTEEnd();
 }
 
 void UFishingQTEHandler::OnQTECompleted() {
 	if(CurrentQTEIndex == FishingEvent->QTEData.Num() - 1) {
 		CurrentQTE = nullptr;
 		FishingEvent = nullptr;
-		OnQTEsResolved();
+		OnAllQTEsResolved();
 	}
 	else {
 		CurrentQTEIndex++;
