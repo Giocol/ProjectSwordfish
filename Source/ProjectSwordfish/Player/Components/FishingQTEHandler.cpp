@@ -79,7 +79,7 @@ void UFishingQTEHandler::QTETick(float DeltaTime) {
 		if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight))
 			CurrentRepetitionTimePressed += DeltaTime;
 		else
-			CurrentRepetitionTimePressed -= DeltaTime;
+			CurrentRepetitionTimePressed = FMath::Clamp(CurrentRepetitionTimePressed - DeltaTime, 0, CurrentRepetitionTimePressed);
 	
 		if(CurrentRepetitionTimePressed >= CurrentRepetitionTimeToComplete)
 			OnRepetitionCompleted();
