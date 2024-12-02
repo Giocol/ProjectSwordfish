@@ -57,9 +57,9 @@ protected:
 		float RepeatCooldown = 0;
 
 public:
-	float GetTimeToComplete() const { return bIsTimeToCompleteRandomized ? TimeToComplete : FMath::RandRange(TimeToCompleteLowerThreshold, TimeToComplete); }
-	float GetNumberOfRepetitions() const { return  bIsNumberOfRepetitionsRandomized ? NumberOfRepetitions : FMath::RandRange(NumberOfRepetitionsLowerThreshold, NumberOfRepetitions); }
-	float GetRepeatCooldown() const { return bIsRepeatCooldownRandomized ? RepeatCooldownLowerThreshold : FMath::RandRange(RepeatCooldownLowerThreshold, RepeatCooldown); }
+	float GetTimeToComplete() const { return bIsTimeToCompleteRandomized ? FMath::RandRange(TimeToCompleteLowerThreshold, TimeToComplete) : TimeToComplete; }
+	float GetNumberOfRepetitions() const { return  bIsNumberOfRepetitionsRandomized ? FMath::RandRange(NumberOfRepetitionsLowerThreshold, NumberOfRepetitions) : NumberOfRepetitions; }
+	float GetRepeatCooldown() const { return bIsRepeatCooldownRandomized ? FMath::RandRange(RepeatCooldownLowerThreshold, RepeatCooldown): RepeatCooldown; }
 	EQTEDirection GetDirection() const { return bIsDirectionRandomized ? StaticCast<EQTEDirection>(FMath::RandRange(Left, Right)) : Direction.GetValue(); };
 	
 #if WITH_EDITOR // Just for editor stuff

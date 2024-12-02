@@ -46,6 +46,7 @@ void UFishingQTEHandler::InitializeCurrentRepetition() {
 	CurrentRepetitionDirection = CurrentQTE->GetDirection();
 	CurrentRepetitionTimeToComplete = CurrentQTE->GetTimeToComplete();
 	NextRepetitionWaitTime = CurrentQTE->GetRepeatCooldown();
+	CurrentRepetitionTimePressed = 0;
 	
 	OnQTEStart();
 }
@@ -82,7 +83,7 @@ void UFishingQTEHandler::QTETick(float DeltaTime) {
 			OnRepetitionCompleted();
 	} else {
 		NextRepetitionWaitTimeElapsed += DeltaTime;
-		if(NextRepetitionWaitTime >= NextRepetitionWaitTimeElapsed)
+		if(NextRepetitionWaitTimeElapsed >= NextRepetitionWaitTime)
 			InitializeCurrentRepetition();
 	}
 }
