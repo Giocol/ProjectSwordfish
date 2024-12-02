@@ -68,6 +68,8 @@ private:
 
 	float GetNormalizedInterpolatorToNextNode();
 
+	FVector GetBobbingImpulse();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UFloatingPawnMovement* MovementComponent;

@@ -82,7 +82,7 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 	if(BobOffset.Dot(GetActorUpVector()) < 0) BobOffset = -BobOffset;
 	BobOffset = GaitPreset->BobbingMultiplier * FVector::VectorPlaneProject(BobOffset, GetActorUpVector()) + GetActorUpVector();
 	BobOffset.Normalize();
-	DrawDebugDirectionalArrow(GetWorld(), Body->GetComponentLocation(), Body->GetComponentLocation() + 100 * BobOffset, 15, FColor::Red);
+	
 	DrawDebugDirectionalArrow(GetWorld(), Body->GetComponentLocation(), Body->GetComponentLocation() + 100 * GetActorUpVector(), 15, FColor::Yellow);
 	FPlane LegPlane = FPlane(BobOffset, 0).TranslateBy(GetActorLocation());
 	// DrawDebugSolidPlane(GetWorld(), LegPlane, Body->GetComponentLocation(), 100, FColor::Silver, false,-1,-1);
@@ -137,8 +137,9 @@ void AMultiLeggedPawn::BeginPlay() {
 
 void AMultiLeggedPawn::Tick(float DeltaTime) {
 
-	auto Whiskers = FibonacciTrace(Body->GetComponentLocation());
+	// auto Whiskers = FibonacciTrace(Body->GetComponentLocation());
 	// FVector WhiskerImpulse = GetClosestWhisker(Whiskers, true);
+	GetBobbingImpulse();
 	FollowPath(DeltaTime);
 
 	if(bDrawPath) {
@@ -358,5 +359,11 @@ float AMultiLeggedPawn::GetNormalizedInterpolatorToNextNode() {
 	float Dist = Projected.Length();
 	float Result = 1.f - Dist / Path[CurrentPathId-1].NextNodeDistance;
 	return FMath::Clamp(Result, 0, 1);
+}
+
+FVector AMultiLeggedPawn::GetBobbingImpulse() {
+	FVector Result = GaitPreset->BobbingMultiplier * LimbManager->GetAverageLimbUpVector().Cross(Body->GetUpVector());
+	DrawDebugDirectionalArrow(GetWorld(), Body->GetComponentLocation(), Body->GetComponentLocation() + Result, 15, FColor::Red);
+	return Result;
 }
 
