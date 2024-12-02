@@ -8,7 +8,7 @@ UFishingQTEHandler::UFishingQTEHandler() {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void()> OnAllQTEsResolvedCallback, std::function<void()> OnQTEStartedCallback, std::function<void()> OnQTEEndedCallback) {
+void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void(bool)> OnAllQTEsResolvedCallback, std::function<void(void)> OnQTEStartedCallback, std::function<void(void)> OnQTEEndedCallback) {
 	FishingEvent = FishingEventIn;
 	OnAllQTEsResolved = OnAllQTEsResolvedCallback;
 	OnQTEStart = OnQTEStartedCallback;
@@ -18,7 +18,7 @@ void UFishingQTEHandler::StartQTEs(UFishingEventDataAsset* FishingEventIn, std::
 		CurrentQTE = FishingEvent->QTEData[0];
 		InitializeCurrentQTE();
 	} else
-		OnAllQTEsResolved();
+		OnAllQTEsResolved(true);
 }
 
 void UFishingQTEHandler::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -42,6 +42,7 @@ void UFishingQTEHandler::InitializeCurrentQTE() {
 void UFishingQTEHandler::InitializeCurrentRepetition() {
 	bIsWaitingForNextRepetition = false;
 	NextRepetitionWaitTimeElapsed = 0.f;
+	bHasQTEInputBeenDetected = false;
 	
 	CurrentRepetitionDirection = CurrentQTE->GetDirection();
 	CurrentRepetitionTimeToComplete = CurrentQTE->GetTimeToComplete();
@@ -66,7 +67,7 @@ void UFishingQTEHandler::OnQTECompleted() {
 	if(CurrentQTEIndex == FishingEvent->QTEData.Num() - 1) {
 		CurrentQTE = nullptr;
 		FishingEvent = nullptr;
-		OnAllQTEsResolved();
+		OnAllQTEsResolved(true);
 	}
 	else {
 		CurrentQTEIndex++;
@@ -75,9 +76,15 @@ void UFishingQTEHandler::OnQTECompleted() {
 }
 
 void UFishingQTEHandler::QTETick(float DeltaTime) {
+	if(CurrentRepetitionTimePressed == 0 && bHasQTEInputBeenDetected) { //ensures that QTE can only be failed after the player pressed the corresponding input to guarantee more fairness
+		OnQTEFailure();
+	}
+	
 	if(!bIsWaitingForNextRepetition) {
-		if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight))
+		if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight)) {
 			CurrentRepetitionTimePressed += DeltaTime;
+			bHasQTEInputBeenDetected = true; //ensures that QTE can only be failed after the player pressed the corresponding input to guarantee more fairness
+		}
 		else
 			CurrentRepetitionTimePressed = FMath::Clamp(CurrentRepetitionTimePressed - DeltaTime, 0, CurrentRepetitionTimePressed);
 	
@@ -88,5 +95,12 @@ void UFishingQTEHandler::QTETick(float DeltaTime) {
 		if(NextRepetitionWaitTimeElapsed >= NextRepetitionWaitTime)
 			InitializeCurrentRepetition();
 	}
+}
+
+void UFishingQTEHandler::OnQTEFailure() {
+	CurrentQTE = nullptr;
+	FishingEvent = nullptr;
+	OnQTEEnd();
+	OnAllQTEsResolved(false);
 }
 

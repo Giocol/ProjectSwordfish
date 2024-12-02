@@ -47,7 +47,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnQTEEnd();
 
-	void OnQTEsResolved();
+	UFUNCTION(BlueprintImplementableEvent)
+		void OnQTEsResolved(bool bIsSuccessful);
 
 	UFUNCTION()
 	void OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);

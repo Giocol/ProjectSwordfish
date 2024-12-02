@@ -27,8 +27,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool IsQTERunning() const { return CurrentQTE != nullptr; };
 	
-	void StartQTEs(UFishingEventDataAsset* FishingEventIn, std::function<void()> OnAllQTEsResolvedCallback, std::function<void()>
-	               OnQTEStartedCallback, std::function<void()> OnQTEEndedCallback);
+	void StartQTEs(UFishingEventDataAsset* FishingEventIn,
+					std::function<void(bool)> OnAllQTEsResolvedCallback,
+					std::function<void(void)> OnQTEStartedCallback,
+					std::function<void(void)> OnQTEEndedCallback);
 
 	virtual void SetIsLeaningLeft(bool State) { bIsLeaningLeft = State; }
 	virtual void SetIsLeaningRight(bool State) { bIsLeaningRight = State; }
@@ -43,10 +45,11 @@ private:
 	void OnRepetitionCompleted();
 	void OnQTECompleted();
 	void QTETick(float DeltaTime);
+	void OnQTEFailure();
 	
 protected:
 	UFishingEventDataAsset* FishingEvent = nullptr;
-	std::function<void(void)> OnAllQTEsResolved = nullptr;
+	std::function<void(bool)> OnAllQTEsResolved = nullptr;
 	std::function<void(void)> OnQTEStart = nullptr;
 	std::function<void(void)> OnQTEEnd = nullptr;
 	
@@ -61,6 +64,7 @@ protected:
 	EQTEDirection CurrentRepetitionDirection;
 	float CurrentRepetitionTimePressed = 0.f;
 	float CurrentRepetitionTimeToComplete = 0.f;
+	bool bHasQTEInputBeenDetected = false;
 	
 	bool bIsLeaningLeft = false;
 	bool bIsLeaningRight = false;
