@@ -11,7 +11,7 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 	Body = CreateDefaultSubobject<USceneComponent>("Root");
 	RootComponent = Body;
 	Mesh = CreateDefaultSubobject<UPoseableMeshComponent>("Mesh");
-	Mesh->SetupAttachment(RootComponent);
+	Mesh->SetupAttachment(Body);
 	LimbManager = CreateDefaultSubobject<UProceduralLimbManager>("Limb Manager");
 	MovementComponent = CreateDefaultSubobject<UMultiLeggedPawnMovement>("Movement");
 	
@@ -355,6 +355,8 @@ float AMultiLeggedPawn::GetNormalizedInterpolatorToNextNode() {
 }
 
 FVector AMultiLeggedPawn::GetBobbingImpulse() {
+	if(!GaitPreset)
+		return FVector::ZeroVector;
 	FVector Result = GaitPreset->BobbingMultiplier * LimbManager->GetAverageLimbUpVector().Cross(GetActorUpVector());
 	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
 	return Result;
