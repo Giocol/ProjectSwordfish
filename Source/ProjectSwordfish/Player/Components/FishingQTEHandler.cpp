@@ -76,18 +76,16 @@ void UFishingQTEHandler::OnQTECompleted() {
 }
 
 void UFishingQTEHandler::QTETick(float DeltaTime) {
-	if(CurrentRepetitionTimePressed == 0 && bHasQTEInputBeenDetected) { //ensures that QTE can only be failed after the player pressed the corresponding input to guarantee more fairness
-		OnQTEFailure();
-	}
-	
 	if(!bIsWaitingForNextRepetition) {
 		if((CurrentRepetitionDirection == Left && bIsLeaningLeft)|| (CurrentRepetitionDirection == Right && bIsLeaningRight)) {
 			CurrentRepetitionTimePressed += DeltaTime;
-			bHasQTEInputBeenDetected = true; //ensures that QTE can only be failed after the player pressed the corresponding input to guarantee more fairness
 		}
 		else
 			CurrentRepetitionTimePressed = FMath::Clamp(CurrentRepetitionTimePressed - DeltaTime, 0, CurrentRepetitionTimePressed);
-	
+
+		if(bIsLeaningLeft || bIsLeaningRight)
+			bHasQTEInputBeenDetected = true;
+			
 		if(CurrentRepetitionTimePressed >= CurrentRepetitionTimeToComplete)
 			OnRepetitionCompleted();
 	} else {
@@ -95,6 +93,9 @@ void UFishingQTEHandler::QTETick(float DeltaTime) {
 		if(NextRepetitionWaitTimeElapsed >= NextRepetitionWaitTime)
 			InitializeCurrentRepetition();
 	}
+
+	if(CurrentRepetitionTimePressed == 0 && bHasQTEInputBeenDetected) //ensures that QTE can only be failed after the player pressed the corresponding input to guarantee more fairness
+		OnQTEFailure();
 }
 
 void UFishingQTEHandler::OnQTEFailure() {
