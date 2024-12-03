@@ -1,20 +1,19 @@
 ﻿#include "MultiLeggedPawn.h"
 
 #include "GaitPreset.h"
+#include "MultiLeggedPawnMovement.h"
 #include "Components/PoseableMeshComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Limbs/ProceduralLimbManager.h"
 
 AMultiLeggedPawn::AMultiLeggedPawn() {
-	Root = CreateDefaultSubobject<USceneComponent>("Root");
-	RootComponent = Root;
-	Body = CreateDefaultSubobject<USceneComponent>("Body");
-	Body->SetupAttachment(Root);
+	Body = CreateDefaultSubobject<USceneComponent>("Root");
+	RootComponent = Body;
 	Mesh = CreateDefaultSubobject<UPoseableMeshComponent>("Mesh");
-	Mesh->SetupAttachment(Root);
+	Mesh->SetupAttachment(RootComponent);
 	LimbManager = CreateDefaultSubobject<UProceduralLimbManager>("Limb Manager");
-	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>("Movement");
+	MovementComponent = CreateDefaultSubobject<UMultiLeggedPawnMovement>("Movement");
 	
 	//LimbManager->AutoDetectLimbs(Mesh);
 	PrimaryActorTick.bCanEverTick = true;
@@ -36,7 +35,7 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 }
 
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
-	FVector ToTarget = Path[Target].Origin - Body->GetComponentLocation();
+	FVector ToTarget = Path[Target].Origin - GetActorLocation();
 	float TargetDist = ToTarget.Length();
 	FVector ToTargetNorm = ToTarget / TargetDist;
 
@@ -67,7 +66,7 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	// 	float Alpha = FMath::Clamp(TargetDist / Len, 0, 1);
 	// 	Input = FMath::Lerp(Input, Dir, Alpha);
 	// }
-	float Dot = Body->GetForwardVector().Dot(ToTargetNorm);
+	float Dot = GetActorForwardVector().Dot(ToTargetNorm);
 	float NormalizedFacingInverse = (1+Dot)*0.5;
 	float InputModifier = (NormalizedFacingInverse + FacingBias)/(1.f+FacingBias);
 	MovementComponent->AddInputVector(InputModifier * Input);
@@ -78,13 +77,13 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 	// float TimeToTarget = Distance / MovementComponent->MaxSpeed;
 
-	FVector BobOffset = LimbManager->GetAverageLimbUpVector();
-	if(BobOffset.Dot(GetActorUpVector()) < 0) BobOffset = -BobOffset;
-	BobOffset = GaitPreset->BobbingMultiplier * FVector::VectorPlaneProject(BobOffset, GetActorUpVector()) + GetActorUpVector();
-	BobOffset.Normalize();
+	// FVector BobOffset = LimbManager->GetAverageLimbUpVector();
+	// if(BobOffset.Dot(GetActorUpVector()) < 0) BobOffset = -BobOffset;
+	// BobOffset = GaitPreset->BobbingMultiplier * FVector::VectorPlaneProject(BobOffset, GetActorUpVector()) + GetActorUpVector();
+	// BobOffset.Normalize();
 	
-	DrawDebugDirectionalArrow(GetWorld(), Body->GetComponentLocation(), Body->GetComponentLocation() + 100 * GetActorUpVector(), 15, FColor::Yellow);
-	FPlane LegPlane = FPlane(BobOffset, 0).TranslateBy(GetActorLocation());
+	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + 100 * GetActorUpVector(), 15, FColor::Yellow);
+	// FPlane LegPlane = FPlane(BobOffset, 0).TranslateBy(GetActorLocation());
 	// DrawDebugSolidPlane(GetWorld(), LegPlane, Body->GetComponentLocation(), 100, FColor::Silver, false,-1,-1);
 	FVector UpVector = GetActorUpVector();
 	
@@ -92,7 +91,7 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 		FQuat::FindBetweenNormals(UpVector, Path[Target].Normal) : FQuat::FindBetweenNormals(UpVector, Path.Last().Normal);
 	FQuat CombinedRotation = RotationToNode;
 	if(Target<Path.Num()) {
-		FVector ToTarget = Path[Target].Origin - Body->GetComponentLocation();
+		FVector ToTarget = Path[Target].Origin - GetActorLocation();
 		float Distance = ToTarget.Length();
 		FVector ToTargetNorm = ToTarget / Distance;
 		FVector PlaneTarget = FVector::VectorPlaneProject(ToTargetNorm, UpVector).GetSafeNormal();
@@ -101,21 +100,11 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 			PlaneTarget);
 		CombinedRotation = RotationToFaceNode * CombinedRotation;
 	}
-	FQuat ToLegPlaneNormal = FQuat::FindBetweenNormals(UpVector, BobOffset);
-	float Angle = FMath::RadiansToDegrees(ToLegPlaneNormal.GetAngle());
+	// FQuat ToLegPlaneNormal = FQuat::FindBetweenNormals(UpVector, BobOffset);
+	// float Angle = FMath::RadiansToDegrees(ToLegPlaneNormal.GetAngle());
 	
-	FVector RotationVector = CombinedRotation.ToRotationVector();
-	float RotationAngle;
-	RotationVector.ToDirectionAndLength(RotationVector, RotationAngle);
-	float NewRotationAngle = FMath::Min(DeltaTime * RotationSpeed, RotationAngle);
-	RotationVector = RotationVector * NewRotationAngle;
-	FQuat Rotation = FQuat::MakeFromRotationVector(RotationVector);
-
-	FVector RelativeLocation = Body->GetComponentLocation() - GetActorLocation();
-	FVector Offset = RelativeLocation - Rotation * RelativeLocation;
-	AddActorWorldRotation(Rotation);
-	AddActorWorldOffset(Offset);
-	AngularVelocity = Rotation.ToRotationVector() / DeltaTime;
+	MovementComponent->AddInputRotation(CombinedRotation.GetRotationAxis());
+	// MovementComponent->AngularVelocity = Rotation.ToRotationVector() / DeltaTime;
 }
 
 void AMultiLeggedPawn::FollowPath(double DeltaTime) {
@@ -127,6 +116,10 @@ void AMultiLeggedPawn::FollowPath(double DeltaTime) {
 	}
 	else if(!Path.IsEmpty() && CurrentPathId >= Path.Num()-1)
 		Rotate(DeltaTime, CurrentPathId);
+}
+
+FVector AMultiLeggedPawn::GetAngularVelocity() const {
+	return MovementComponent->AngularVelocity;
 }
 
 void AMultiLeggedPawn::BeginPlay() {
@@ -254,7 +247,7 @@ float AMultiLeggedPawn::GetDistanceFromNodePlane(int Node) {
 	float SignedDistance = (Tangent.X * Location.X + Tangent.Y * Location.Y + Tangent.Z * Location.Z);
 	FPlane Plane = FPlane(Tangent, SignedDistance);
 	
-	float planeEq = Plane.PlaneDot(Body->GetComponentLocation());
+	float planeEq = Plane.PlaneDot(GetActorLocation());
 	return planeEq;
 }
 
@@ -354,7 +347,7 @@ TArray<FPathNode> AMultiLeggedPawn::SmoothMovingAverage(TArray<FPathNode> InPath
 float AMultiLeggedPawn::GetNormalizedInterpolatorToNextNode() {
 	if(CurrentPathId < 1)
 		return 0;
-	FVector ToTarget = Body->GetComponentLocation() - Path[CurrentPathId].Origin;
+	FVector ToTarget = GetActorLocation() - Path[CurrentPathId].Origin;
 	FVector Projected = ToTarget.ProjectOnToNormal(Path[CurrentPathId].Tangent);
 	float Dist = Projected.Length();
 	float Result = 1.f - Dist / Path[CurrentPathId-1].NextNodeDistance;
@@ -362,8 +355,8 @@ float AMultiLeggedPawn::GetNormalizedInterpolatorToNextNode() {
 }
 
 FVector AMultiLeggedPawn::GetBobbingImpulse() {
-	FVector Result = GaitPreset->BobbingMultiplier * LimbManager->GetAverageLimbUpVector().Cross(Body->GetUpVector());
-	DrawDebugDirectionalArrow(GetWorld(), Body->GetComponentLocation(), Body->GetComponentLocation() + Result, 15, FColor::Red);
+	FVector Result = GaitPreset->BobbingMultiplier * LimbManager->GetAverageLimbUpVector().Cross(GetActorUpVector());
+	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
 	return Result;
 }
 
