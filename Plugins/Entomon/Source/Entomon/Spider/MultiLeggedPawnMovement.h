@@ -15,11 +15,14 @@ class ENTOMON_API UMultiLeggedPawnMovement : public UFloatingPawnMovement
 public:
 	UMultiLeggedPawnMovement();
 
-	void AddAngularImpulse(FVector Impulse);
+	void AddAngularImpulse(FVector Impulse, bool bClamp = true);
 	void AddInputRotation(FVector Input);
+	void ApproachOrientation(FQuat DeltaRotation);
 
 protected:
 	virtual void BeginPlay() override;
+
+	void ApplyControlRotationInputToAngularVelocity(float DeltaTime);
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
@@ -28,7 +31,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(Units="rad"))
 		float MaxAngularSpeed = PI;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
-		float AngularAcceleration = 100;
+		float AngularAcceleration = 10;
 
 	FVector AngularVelocity = FVector::ZeroVector;
+
+	FVector CurrentAngularInput = FVector::ZeroVector;
+	FVector LastAngularInput = FVector::ZeroVector;
 };

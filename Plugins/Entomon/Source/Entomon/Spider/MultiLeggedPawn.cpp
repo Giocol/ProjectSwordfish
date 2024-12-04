@@ -103,7 +103,7 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 	// FQuat ToLegPlaneNormal = FQuat::FindBetweenNormals(UpVector, BobOffset);
 	// float Angle = FMath::RadiansToDegrees(ToLegPlaneNormal.GetAngle());
 	
-	MovementComponent->AddInputRotation(CombinedRotation.GetRotationAxis());
+	MovementComponent->ApproachOrientation(CombinedRotation);
 	// MovementComponent->AngularVelocity = Rotation.ToRotationVector() / DeltaTime;
 }
 
@@ -132,7 +132,6 @@ void AMultiLeggedPawn::Tick(float DeltaTime) {
 
 	// auto Whiskers = FibonacciTrace(Body->GetComponentLocation());
 	// FVector WhiskerImpulse = GetClosestWhisker(Whiskers, true);
-	GetBobbingImpulse();
 	FollowPath(DeltaTime);
 
 	if(bDrawPath) {
