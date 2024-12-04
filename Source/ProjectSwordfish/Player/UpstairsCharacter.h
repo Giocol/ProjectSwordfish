@@ -75,7 +75,6 @@ public:
 private:
 	void FishingTick(float DeltaTime);
 	void ApplyFishingResistance(float DeltaTime);
-	void ComputeTotalTimeToPull();
 	float GetPullProgress() const;
 	
 protected:
@@ -111,9 +110,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		float SpearSpeed = 50.f;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
-		float BaseTimeToPull = 10.f;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		AActor* CurrentlySpearedActor = nullptr;
@@ -136,7 +132,7 @@ protected: //Components
 
 private:
 	float CurrentAimInput = 0.f;
-	float TotalTimeToPull = 0.f;
+	float TimeToPull = 0.f;
 	float PulledTime = 0.f;
 	FVector SpearedActorOriginalLocation = FVector::Zero();
 };	

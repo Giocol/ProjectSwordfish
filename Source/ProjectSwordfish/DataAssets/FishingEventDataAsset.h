@@ -22,6 +22,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category = "General")
 		TArray<UFishingQuickTimeEventDataAsset*> QTEData;
+
+	UPROPERTY(EditDefaultsOnly, Category = "General")
+		float BaseTimeToPull = 5.f;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float AimLowerThreshold = 0.2f;
@@ -42,12 +45,12 @@ public:
 		float PowerMediumUpperThreshold = 0.65f;
 
 public:
-	float GetTotalQTETime() const {
+	float GetTotalTimeToPull() const {
 		float QTEsTime = 0.f;
 		for (UFishingQuickTimeEventDataAsset* QTE : QTEData) {
-			QTEsTime += QTE->GetTimeToComplete() * QTE->GetNumberOfRepetitions();
+			QTEsTime += (QTE->GetTimeToComplete() + QTE->GetRepeatCooldown()) * QTE->GetNumberOfRepetitions();
 		}
-		return  QTEsTime;
+		return QTEsTime + BaseTimeToPull;
 	}
 	
 #if WITH_EDITOR // Just for editor stuff

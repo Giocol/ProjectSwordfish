@@ -167,12 +167,8 @@ void AUpstairsCharacter::ApplyFishingResistance(float DeltaTime) {
 		CurrentAim = FMath::Clamp(CurrentAim + AimResistancePerTick * DeltaTime, 0.f, 1.f);
 }
 
-void AUpstairsCharacter::ComputeTotalTimeToPull() {
-	TotalTimeToPull = BaseTimeToPull + CurrentFishingEvent->GetTotalQTETime();
-}
-
 float AUpstairsCharacter::GetPullProgress() const {
-	return PulledTime / TotalTimeToPull;
+	return PulledTime / TimeToPull;
 }
 
 void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -184,7 +180,7 @@ void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		OverlappedSpearable->OnSpeared(this);
 		CurrentlySpearedActor = OtherActor;
 
-		ComputeTotalTimeToPull();
+		TimeToPull = CurrentFishingEvent->GetTotalTimeToPull();
 		QTEHandler->StartQTEs(CurrentFishingEvent, [this](bool bIsSuccessful) {this->OnQTEsResolved(bIsSuccessful);}, [this]() {this->OnQTEStart();}, [this]() {this->OnQTEEnd();});
 		SpearedActorOriginalLocation = CurrentlySpearedActor->GetActorLocation();
 		OnSpearingStarted();
