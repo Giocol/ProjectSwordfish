@@ -48,6 +48,9 @@ private:
 	void OnQTEFailure();
 	
 protected:
+	UPROPERTY(EditDefaultsOnly)
+		float QTEGracePeriod = 1.f; 
+	
 	UFishingEventDataAsset* FishingEvent = nullptr;
 	std::function<void(bool)> OnAllQTEsResolved = nullptr;
 	std::function<void(void)> OnQTEStart = nullptr;
@@ -64,7 +67,7 @@ protected:
 	EQTEDirection CurrentRepetitionDirection;
 	float CurrentRepetitionTimePressed = 0.f;
 	float CurrentRepetitionTimeToComplete = 0.f;
-	bool bHasQTEInputBeenDetected = false;
+	float GracePeriodElapsed = 0.f;
 	
 	bool bIsLeaningLeft = false;
 	bool bIsLeaningRight = false;
