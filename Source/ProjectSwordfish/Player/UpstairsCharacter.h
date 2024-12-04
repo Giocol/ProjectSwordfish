@@ -71,9 +71,12 @@ public:
 
 public:
 	virtual void Tick(float DeltaTime) override;
-	
+
+private:
 	void FishingTick(float DeltaTime);
 	void ApplyFishingResistance(float DeltaTime);
+	void ComputeTotalTimeToPull();
+	float GetPullProgress() const;
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing ")
@@ -110,8 +113,8 @@ protected:
 		float SpearSpeed = 50.f;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
-		float PullSpeed = 1.f;
-
+		float BaseTimeToPull = 10.f;
+	
 	UPROPERTY(VisibleAnywhere, Category = "Fishing")
 		AActor* CurrentlySpearedActor = nullptr;
 	
@@ -132,5 +135,8 @@ protected: //Components
 		UFishingQTEHandler* QTEHandler = nullptr;
 
 private:
-	float CurrentAimInput;
+	float CurrentAimInput = 0.f;
+	float TotalTimeToPull = 0.f;
+	float PulledTime = 0.f;
+	FVector SpearedActorOriginalLocation = FVector::Zero();
 };	

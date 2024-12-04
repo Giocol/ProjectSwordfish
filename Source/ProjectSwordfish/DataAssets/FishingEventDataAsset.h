@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "FishingQuickTimeEventDataAsset.h"
 #include "Engine/DataAsset.h"
 #include "FishingEventDataAsset.generated.h"
 
@@ -40,6 +41,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Target areas",  meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
 		float PowerMediumUpperThreshold = 0.65f;
 
+public:
+	float GetTotalQTETime() const {
+		float QTEsTime = 0.f;
+		for (UFishingQuickTimeEventDataAsset* QTE : QTEData) {
+			QTEsTime += QTE->GetTimeToComplete() * QTE->GetNumberOfRepetitions();
+		}
+		return  QTEsTime;
+	}
+	
 #if WITH_EDITOR // Just for editor stuff
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
