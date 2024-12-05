@@ -33,6 +33,8 @@ public:
 	void AutoDetectLimbs(UPoseableMeshComponent* InMesh);
 	
 	FVector GetAverageLimbUpVector() const;
+	void RegisterLimbLanding(ULimb* Limb);
+	void RegisterLimbTakeoff(ULimb* Limb);
 private:
 	void ApproachLimbAverageRotation(double DeltaTime);
 
@@ -45,6 +47,8 @@ protected:
 	
 	float WalkCycleDuration = -1;
 	float MaxWalkCycleDuration = -1;
+
+	float BobbingOffset = 0;
 	
 	UPROPERTY(EditAnywhere, Category = "IK Solver")
 		int IKIterations = 10;
@@ -69,6 +73,7 @@ protected:
 
 	class AMultiLeggedPawn* OwnerPawn;
 	class UPawnMovementComponent* Movement;
+	class UGaitPreset* GaitData;
 };
 
 

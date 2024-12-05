@@ -1,29 +1,34 @@
 ﻿#include "Limb.h"
 
 #include "LimbSegment.h"
+#include "ProceduralLimbManager.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/GaitPreset.h"
+#include "Entomon/Spider/MultiLeggedPawn.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 void ULimb::Tick(UPoseableMeshComponent* Mesh, float DeltaTime, ECollisionChannel InTraceChannel) {
 	if(bIsGrounded)
 		return;
-
+	if(StepTimer == 0)
+		LimbManager->RegisterLimbTakeoff(this);
+	
 	FootPlan.LerpWithPeak(Mesh, StepTimer, InTraceChannel);
 	
 	StepTimer += DeltaTime / StepDuration;
 	if(StepTimer > 1.f) {
 		StepTimer = 0;
 		bIsGrounded = true;
-
-		// TArray<FVector> JointLocations;
-		// InitializeIK(Mesh, JointLocations);
-		// EvaluateAngles(Mesh, JointLocations);
+		if(LimbManager)
+			LimbManager->RegisterLimbLanding(this);
 	}
 }
 
-bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
+bool ULimb::Initialize(UProceduralLimbManager* Manager, UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
 	if(!Mesh) return false;
+	
+	LimbManager = Manager;
 	
 	Joints.Add(MakeJoint(Mesh, EndEffectorName, true));
 	FName CurrentBone = EndEffectorName;
@@ -81,6 +86,7 @@ void ULimb::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 
 	StepDuration = InGaitPreset->StepDuration;
 	StepHeight = InGaitPreset->StepHeight;
+	GaitData = InGaitPreset;
 	
 	for(auto Gait : InGaitPreset->PerLimbGaitInfo) {
 		auto name = GetName();
@@ -278,13 +284,19 @@ bool ULimb::EvaluateTargetPosition(ULimb* InLimb, UPoseableMeshComponent* InMesh
 									ECollisionChannel TraceChannel) {
 	FHitResult Hit;
 	FTransform Transform = InMesh->GetComponentTransform();
-	FVector LinearVelocity = InMesh->GetOwner()->GetVelocity();
+	FVector LinearVelocity = FVector::ZeroVector;
 	FVector AngularVelocity = FVector::ZeroVector;
-	FVector PointVelocity = LinearVelocity + AngularVelocity;
+	if(auto a = Cast<AMultiLeggedPawn>(InMesh->GetOwner())) {
+		AngularVelocity = a->GetAngularVelocity();
+		LinearVelocity = a->GetMovementComponent()->Velocity;
+	}
+	FQuat AngularVelocityToRotator = FQuat::MakeFromRotationVector(0.25 * AngularVelocity * GaitCycleDuration);
+	FVector PointVelocity =
+		LinearVelocity;
 	FVector Offset = PointVelocity * GaitCycleDuration;
 	FVector Direction = FootPlan.Current.UpVector;
 	// FVector Start = InMesh->GetBoneLocationByName(InLimb->Joints[0].GetName(), EBoneSpaces::WorldSpace) + Offset;
-	FVector Start = Transform.TransformPosition(RestingTargetLocation) + Offset;
+	FVector Start = (Transform.TransformPosition(AngularVelocityToRotator * RestingTargetLocation) + AngularVelocityToRotator * Offset);
 	if(TraceAround(InLimb, InMesh, InRoot, Start, -Direction, Iterations, TraceChannel, Start, Hit)) {
 		FootPlan.Target = FIKEffector(Hit.ImpactPoint, Hit.Normal);
 		return true;
@@ -307,7 +319,7 @@ FLimbSegment ULimb::MakeJoint(UPoseableMeshComponent* Mesh, FName BoneName, bool
 
 
 bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, USceneComponent* Root, FVector InStart, FVector InDirection,
-	ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit) {
+ECollisionChannel InTraceChannel, FVector Rest, FHitResult& OutHit) {
 	FTransform Transform = Mesh->GetComponentTransform();
 	// FVector End = InStart + InDirection * InDistance;
 
@@ -331,17 +343,24 @@ bool ULimb::TraceFoot(ULimb* InLimb, UPoseableMeshComponent* Mesh, USceneCompone
 	
 	TArray<AActor*> Ignore;
 	Ignore.Add(Mesh->GetOwner());
-	bool bHit = UKismetSystemLibrary::SphereTraceSingle(
+	TArray<FHitResult> Hits;
+	bool bHit = UKismetSystemLibrary::SphereTraceMulti(
 		Mesh->GetWorld(),
 		NewStart, NewEnd, 5.f,
 		UEngineTypes::ConvertToTraceType(InTraceChannel),
 		false,
 		Ignore,
 		EDrawDebugTrace::None,
-		OutHit, true,
+		Hits, true,
 		FLinearColor::Red, FLinearColor::Green,
 		0.45);
-	
+	if(bHit) {
+		OutHit.Distance = INFINITY;
+		for (auto Hit : Hits) {
+			if(Hit.bBlockingHit && FVector::DistSquared(Hit.Location, Rest) < FVector::DistSquared(OutHit.Location, Rest))
+				OutHit = Hit;
+		}
+	}
 	return bHit;
 }
 

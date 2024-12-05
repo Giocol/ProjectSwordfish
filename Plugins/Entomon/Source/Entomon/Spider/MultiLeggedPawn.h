@@ -10,6 +10,7 @@
 
 #include "MultiLeggedPawn.generated.h"
 
+class UMultiLeggedPawnMovement;
 class UGaitPreset;
 class UFloatingPawnMovement;
 class UMovementComponent;
@@ -37,6 +38,8 @@ public:
 
 	USceneComponent* GetBody() const { return Body; }
 
+	FVector GetAngularVelocity() const;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -52,6 +55,7 @@ public:
 
 private:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
+	FVector GetAlteredInput(FVector Input);
 	TArray<FHitResult> FibonacciTrace(FVector Start);
 	FHitResult GetClosestWhisker(TArray<FHitResult> Hits, bool bDraw);
 
@@ -66,13 +70,14 @@ private:
 
 	float GetNormalizedInterpolatorToNextNode();
 
+	FVector GetBobbingImpulse();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
-		UFloatingPawnMovement* MovementComponent;
+		UMultiLeggedPawnMovement* MovementComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", UIMin = 0.0001f, UIMax = 1.f))
 		float FacingBias = 0.1f; // Defines the importance of facing the target the pawn wants to approach
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
-		float RotationSpeed = 2.f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
 		UGaitPreset* GaitPreset;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true"))
@@ -113,7 +118,6 @@ protected:
 		class UPoseableMeshComponent* Mesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		class USceneComponent* Body;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
-		USceneComponent* Root;
+
 	
 };

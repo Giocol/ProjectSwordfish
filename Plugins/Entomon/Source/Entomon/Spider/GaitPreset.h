@@ -47,6 +47,12 @@ public:
 		float Acceleration = 2000.f;
 	UPROPERTY(EditDefaultsOnly)
 		float Deceleration = 2000.f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0.f))
+		float BobbingImpulse = 1.f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0.f))
+		float TakeoffAngularImpulse = 1.f;
+	UPROPERTY(EditDefaultsOnly, meta=(UIMin=0.f))
+		float LandingAngularImpulse = 1.f;
 	UPROPERTY(EditDefaultsOnly)
 		TArray<FGait> PerLimbGaitInfo;
 };

@@ -83,7 +83,7 @@ void ANavVolume::BeginPlay() {
 FVector ANavVolume::EvaluateNodeDistance(FVector At) {
 	TArray<FHitResult> Hits;
 	if(FibonacciTrace(At, Hits)) {
-		FHitResult Closest = GetClosestHit(Hits);
+		FHitResult Closest = InterpretTraces(Hits);
 		if(!Closest.Location.IsZero())
 			return Closest.Location - At;
 	}
@@ -290,7 +290,7 @@ TArray<int> ANavVolume::FindPath(int Start, int End, FPathPreference PathPrefere
 					Nodes[Link.Id].Distance > PathPreference.MinDistance &&
 					Nodes[Link.Id].Distance < PathPreference.MaxDistance;
 				if(!fScore.Contains(Link.Id) && bIsReachable) {
-					float upDot = Nodes[Current.Id].Normal.Dot(Nodes[Link.Id].Normal);
+					float upDot = FVector::UpVector.Dot(Nodes[Link.Id].Normal);
 					float remappedDot = 0.5*(1-upDot);
 					remappedDot *= remappedDot;
 					float newFScore = Tentative_gScore + Heuristic(Link.Id, End) + PathPreference.UpPreference * remappedDot;
@@ -482,8 +482,9 @@ TArray<int> ANavVolume::GetDescendants(int AtId, int Axis) {
 	return Descendants;
 }
 
-FHitResult ANavVolume::GetClosestHit(TArray<FHitResult> InHits) {
+FHitResult ANavVolume::InterpretTraces(TArray<FHitResult> InHits) {
 	FHitResult Closest;
+	int Num=0;
 	Closest.Distance = INFINITY;
 	for (auto Hit : InHits) {
 		if(Hit.Distance != 0 && Hit.Distance < Closest.Distance)
