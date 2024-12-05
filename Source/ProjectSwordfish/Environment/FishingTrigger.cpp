@@ -1,6 +1,7 @@
 ﻿#include "FishingTrigger.h"
 
 #include "Components/BoxComponent.h"
+#include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 #include "ProjectSwordfish/Player/MainCharacter.h"
 #include "ProjectSwordfish/Player/UpstairsCharacter.h"
 
@@ -17,7 +18,13 @@ AFishingTrigger::AFishingTrigger()
 void AFishingTrigger::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	if(!Swordfish) {
+		UE_LOG(LogTemp, Error, TEXT("MISSING SWORDFISH REFERENCE, please plug it into the inspector"))
+		return;
+	}
+
+	FishingEventDataAsset->Swordfish = Swordfish;
 }
 
 void AFishingTrigger::OnTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,

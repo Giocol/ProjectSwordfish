@@ -22,10 +22,13 @@ public:
 	
 	UFUNCTION()
 		virtual void OnUnSpeared(AMainCharacter* SpearingInstigator);
+
+protected:
+	bool bIsSpeared = false;
 };
 
 inline void ISpearableInterface::OnSpeared(AMainCharacter* SpearingInstigator) {
-	UE_LOG(LogTemp, Warning, TEXT("OH NO I'VE BEEN SPEARED!"));
+	bIsSpeared = true;
 }
 
 inline void ISpearableInterface::OnPullCompleted(AMainCharacter* SpearingInstigator) {
@@ -33,4 +36,5 @@ inline void ISpearableInterface::OnPullCompleted(AMainCharacter* SpearingInstiga
 }
 
 inline void ISpearableInterface::OnUnSpeared(AMainCharacter* SpearingInstigator) {
+	bIsSpeared = false;
 }

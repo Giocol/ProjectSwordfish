@@ -17,7 +17,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "General")
 		FName EventName = "Fishing Event";
 
-	UPROPERTY(EditDefaultsOnly, Category = "General")
+	UPROPERTY()
 		ASwordfishBase* Swordfish = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, Category = "General")
