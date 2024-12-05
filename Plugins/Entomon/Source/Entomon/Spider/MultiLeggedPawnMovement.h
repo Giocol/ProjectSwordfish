@@ -19,6 +19,8 @@ public:
 	void AddInputRotation(FVector Input);
 	void ApproachOrientation(FQuat DeltaRotation);
 
+	virtual void AddRadialImpulse(const FVector& Origin, float Radius, float Strength, ERadialImpulseFalloff Falloff, bool bVelChange) override;
+
 protected:
 	virtual void BeginPlay() override;
 

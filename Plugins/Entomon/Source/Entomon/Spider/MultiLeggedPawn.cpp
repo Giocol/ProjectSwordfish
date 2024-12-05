@@ -46,30 +46,13 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float NodePlaneDistance = GetDistanceFromNodePlane(Target);
 	if(NodePlaneDistance >= -brakeDistance && TargetDist < brakeDistance * 2)
 		return true;
-
-	// float dist = SurfaceOffset.Length();
-	// float alpha = GetNormalizedOffsetFromPreference(dist);
-	FVector Input = ToTargetNorm;
-	// FVector FromPrevious = Target > 0 && Target < Path.Num() ? Path[Target].Origin - Path[Target-1].Origin : FVector::ZeroVector;
-	// FVector ToNext = Target >= 0 && Target < Path.Num() - 1 ? Path[Target+1].Origin - Path[Target].Origin : FVector::ZeroVector;
-	// if(FromPrevious != FVector::ZeroVector) {
-	// 	float Len;
-	// 	FVector Dir;
-	// 	FromPrevious.ToDirectionAndLength(Dir, Len);
-	// 	float Alpha = FMath::Clamp(TargetDist / Len, 0, 1);
-	// 	Input = FMath::Lerp(Input, Dir, Alpha);
-	// }
-	// if(ToNext != FVector::ZeroVector) {
-	// 	float Len;
-	// 	FVector Dir;
-	// 	ToNext.ToDirectionAndLength(Dir, Len);
-	// 	float Alpha = FMath::Clamp(TargetDist / Len, 0, 1);
-	// 	Input = FMath::Lerp(Input, Dir, Alpha);
-	// }
+	
 	float Dot = GetActorForwardVector().Dot(ToTargetNorm);
 	float NormalizedFacingInverse = (1+Dot)*0.5;
 	float InputModifier = (NormalizedFacingInverse + FacingBias)/(1.f+FacingBias);
-	MovementComponent->AddInputVector(InputModifier * Input);
+	FVector Input = GetAlteredInput(InputModifier * ToTargetNorm);
+	
+	MovementComponent->AddInputVector(Input);
 	
 	return false;
 }
@@ -172,6 +155,20 @@ bool AMultiLeggedPawn::Trace(FVector Start, FVector Direction, FHitResult& OutHi
 		true);
 
 	return bHit;
+}
+
+FVector AMultiLeggedPawn::GetAlteredInput(FVector Input) {
+	auto h = GetClosestWhisker(FibonacciTrace(GetActorLocation()), true);
+	if(h.bBlockingHit) {
+		FVector ToHit = h.Location - GetActorLocation();
+		FVector ToHitDirection = ToHit.GetSafeNormal();
+		float Dot = ToHitDirection.Dot(Input);
+		if(Dot > 0) {
+			FVector Offset = ToHitDirection * PreferredPersonalSpace - ToHit;
+			return (Input + Dot * Offset / PreferredPersonalSpace).GetSafeNormal() * Input.Length();
+		}
+	}
+	return Input;
 }
 
 TArray<FHitResult> AMultiLeggedPawn::FibonacciTrace(FVector Start) {
@@ -356,7 +353,7 @@ float AMultiLeggedPawn::GetNormalizedInterpolatorToNextNode() {
 FVector AMultiLeggedPawn::GetBobbingImpulse() {
 	if(!GaitPreset)
 		return FVector::ZeroVector;
-	FVector Result = GaitPreset->BobbingMultiplier * LimbManager->GetAverageLimbUpVector().Cross(GetActorUpVector());
+	FVector Result = GaitPreset->BobbingImpulse * LimbManager->GetAverageLimbUpVector().Cross(GetActorUpVector());
 	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
 	return Result;
 }

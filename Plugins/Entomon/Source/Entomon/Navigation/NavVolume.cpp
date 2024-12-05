@@ -83,7 +83,7 @@ void ANavVolume::BeginPlay() {
 FVector ANavVolume::EvaluateNodeDistance(FVector At) {
 	TArray<FHitResult> Hits;
 	if(FibonacciTrace(At, Hits)) {
-		FHitResult Closest = GetClosestHit(Hits);
+		FHitResult Closest = InterpretTraces(Hits);
 		if(!Closest.Location.IsZero())
 			return Closest.Location - At;
 	}
@@ -482,8 +482,9 @@ TArray<int> ANavVolume::GetDescendants(int AtId, int Axis) {
 	return Descendants;
 }
 
-FHitResult ANavVolume::GetClosestHit(TArray<FHitResult> InHits) {
+FHitResult ANavVolume::InterpretTraces(TArray<FHitResult> InHits) {
 	FHitResult Closest;
+	int Num=0;
 	Closest.Distance = INFINITY;
 	for (auto Hit : InHits) {
 		if(Hit.Distance != 0 && Hit.Distance < Closest.Distance)

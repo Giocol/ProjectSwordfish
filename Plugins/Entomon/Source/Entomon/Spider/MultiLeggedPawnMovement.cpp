@@ -46,6 +46,12 @@ void UMultiLeggedPawnMovement::ApproachOrientation(FQuat DeltaRotation) {
 	AddInputRotation(Input.GetClampedToMaxSize(1.f));
 }
 
+void UMultiLeggedPawnMovement::AddRadialImpulse(const FVector& Origin, float Radius, float Strength,
+	ERadialImpulseFalloff Falloff, bool bVelChange) {
+
+	
+}
+
 
 void UMultiLeggedPawnMovement::BeginPlay() {
 	Super::BeginPlay();

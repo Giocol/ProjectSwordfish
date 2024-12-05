@@ -61,7 +61,7 @@ private:
 	TArray<int> GetDescendants(int AtId, int Axis = INDEX_NONE);
 	
 
-	FHitResult GetClosestHit(TArray<FHitResult> InHits);
+	FHitResult InterpretTraces(TArray<FHitResult> InHits);
 public:
 	UPROPERTY(EditAnywhere)
 		float Resolution = 50.f;

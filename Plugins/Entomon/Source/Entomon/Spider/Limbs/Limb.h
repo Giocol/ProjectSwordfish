@@ -15,6 +15,9 @@ public:
 	TArray<FLimbSegment> Joints;
 	
 	FFootPlan FootPlan;
+
+	class UGaitPreset* GaitData;
+	class UProceduralLimbManager* LimbManager;
 	
 	float StepTimer = 0;
 	float StepDuration = -1;
@@ -29,7 +32,7 @@ public:
 
 	void Tick(UPoseableMeshComponent* Mesh, float DeltaTime, ECollisionChannel InTraceChannel);
 	
-	bool Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
+	bool Initialize(UProceduralLimbManager* Manager, UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor);
 	void UpdateIK(UPoseableMeshComponent* Mesh, float Threshold, int Iterations, bool bDraw = false);
 	bool TryMove(UPoseableMeshComponent* InMesh, USceneComponent* Root, float GaitCycleDuration, int Iterations,
 		ECollisionChannel InTraceChannel);

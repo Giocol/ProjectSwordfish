@@ -1,6 +1,7 @@
 ﻿#include "Limb.h"
 
 #include "LimbSegment.h"
+#include "ProceduralLimbManager.h"
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/GaitPreset.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
@@ -10,22 +11,24 @@
 void ULimb::Tick(UPoseableMeshComponent* Mesh, float DeltaTime, ECollisionChannel InTraceChannel) {
 	if(bIsGrounded)
 		return;
-
+	if(StepTimer == 0)
+		LimbManager->RegisterLimbTakeoff(this);
+	
 	FootPlan.LerpWithPeak(Mesh, StepTimer, InTraceChannel);
 	
 	StepTimer += DeltaTime / StepDuration;
 	if(StepTimer > 1.f) {
 		StepTimer = 0;
 		bIsGrounded = true;
-
-		// TArray<FVector> JointLocations;
-		// InitializeIK(Mesh, JointLocations);
-		// EvaluateAngles(Mesh, JointLocations);
+		if(LimbManager)
+			LimbManager->RegisterLimbLanding(this);
 	}
 }
 
-bool ULimb::Initialize(UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
+bool ULimb::Initialize(UProceduralLimbManager* Manager, UPoseableMeshComponent* Mesh, FName EndEffectorName, FName HipNameToSearchFor) {
 	if(!Mesh) return false;
+	
+	LimbManager = Manager;
 	
 	Joints.Add(MakeJoint(Mesh, EndEffectorName, true));
 	FName CurrentBone = EndEffectorName;
@@ -83,6 +86,7 @@ void ULimb::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 
 	StepDuration = InGaitPreset->StepDuration;
 	StepHeight = InGaitPreset->StepHeight;
+	GaitData = InGaitPreset;
 	
 	for(auto Gait : InGaitPreset->PerLimbGaitInfo) {
 		auto name = GetName();

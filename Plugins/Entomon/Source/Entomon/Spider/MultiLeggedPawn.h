@@ -55,6 +55,7 @@ public:
 
 private:
 	bool Trace(FVector Start, FVector Direction, FHitResult& OutHit);
+	FVector GetAlteredInput(FVector Input);
 	TArray<FHitResult> FibonacciTrace(FVector Start);
 	FHitResult GetClosestWhisker(TArray<FHitResult> Hits, bool bDraw);
 

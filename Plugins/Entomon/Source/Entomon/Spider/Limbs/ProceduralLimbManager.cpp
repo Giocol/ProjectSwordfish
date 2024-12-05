@@ -4,6 +4,7 @@
 #include "Components/PoseableMeshComponent.h"
 #include "Entomon/Spider/MultiLeggedPawn.h"
 #include "Entomon/Spider/GaitPreset.h"
+#include "Entomon/Spider/MultiLeggedPawnMovement.h"
 #include "GameFramework/PawnMovementComponent.h"
 
 UProceduralLimbManager::UProceduralLimbManager() {
@@ -36,6 +37,7 @@ void UProceduralLimbManager::TickTimers(float DeltaTime, float& LastWalkCycleCou
 }
 
 void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCounter) {
+	BobbingOffset = 0;
 	for(int i = 0; i < Limbs.Num(); ++i) {
 		if((WalkCycleCounter > Limbs[i]->GaitOffset && LastWalkCycleCounter <= Limbs[i]->GaitOffset)
 			|| (WalkCycleCounter >= Limbs[i]->GaitOffset && LastWalkCycleCounter > WalkCycleCounter))
@@ -45,12 +47,14 @@ void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCount
 		}
 		Limbs[i]->Tick(Mesh, DeltaTime, TraceChannel);
 		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
+		BobbingOffset+=FMath::Sin(PI * Limbs[i]->StepTimer)/Limbs.Num();
 	}
 }
 
 void UProceduralLimbManager::ApplyGaitPreset(UGaitPreset* InGaitPreset) {
 	WalkCycleDuration = InGaitPreset->WalkCycleDuration;
 	MaxWalkCycleDuration = InGaitPreset->MaxWalkCycleDuration;
+	GaitData = InGaitPreset;
 	for(auto Limb : Limbs) {
 		Limb->ApplyGaitPreset(InGaitPreset);
 	}
@@ -79,7 +83,7 @@ void UProceduralLimbManager::AutoDetectLimbs(UPoseableMeshComponent* InMesh) {
 			LimbName.RemoveFromEnd("_end");
 
 			auto Limb = NewObject<ULimb>(this, ULimb::StaticClass(), *LimbName);
-			Limb->Initialize(Mesh, Bone, HipJointsName);
+			Limb->Initialize(this, Mesh, Bone, HipJointsName);
 			Limbs.Add(Limb);
 		}
 	}
@@ -141,6 +145,34 @@ FVector UProceduralLimbManager::GetAverageLimbUpVector() const {
 	// //AvgRotation.Normalize();
 	// Result.Normalize();
 	// return Result;
+}
+
+void UProceduralLimbManager::RegisterLimbLanding(ULimb* Limb) {
+	// FVector FootLocation = Limb->FootPlan.Current.GetLocation();
+	// FVector OwnerLocation = GetOwner()->GetActorLocation();
+	// FVector Offset = FootLocation - OwnerLocation;
+	// FVector UpVector = GetOwner()->GetActorUpVector();
+	// FVector ImpulseAxis = UpVector.Cross(Offset).GetSafeNormal();
+	// if(auto m = Cast<UMultiLeggedPawnMovement>(OwnerPawn->GetMovementComponent())) {
+	// 	// m->AddAngularImpulse(ImpulseAxis * GaitData->BobbingImpulse, false);
+	// 	m->Velocity += UpVector * GaitData->BobbingImpulse;
+	// 	m->AngularVelocity += ImpulseAxis * GaitData->LandingAngularImpulse;
+	// }
+	
+	// FVector FootDirection = Limb->FootPlan.Current.GetUpVector();
+}
+
+void UProceduralLimbManager::RegisterLimbTakeoff(ULimb* Limb) {
+	// FVector FootLocation = Limb->FootPlan.Current.GetLocation();
+	// FVector OwnerLocation = GetOwner()->GetActorLocation();
+	// FVector Offset = FootLocation - OwnerLocation;
+	// FVector UpVector = GetOwner()->GetActorUpVector();
+	// FVector ImpulseAxis = UpVector.Cross(Offset).GetSafeNormal();
+	// if(auto m = Cast<UMultiLeggedPawnMovement>(OwnerPawn->GetMovementComponent())) {
+	// 	// m->AddAngularImpulse(ImpulseAxis * GaitData->BobbingImpulse, false);
+	// 	m->Velocity += -UpVector * GaitData->BobbingImpulse;
+	// 	m->AngularVelocity += -ImpulseAxis * GaitData->TakeoffAngularImpulse;
+	// }
 }
 
 void UProceduralLimbManager::ApproachLimbAverageRotation(double DeltaTime) {
