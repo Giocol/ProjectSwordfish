@@ -157,7 +157,7 @@ void AUpstairsCharacter::FishingTick(float DeltaTime) {
 	else {
 		bIsPowerInMediumThreshold = false;
 	}
-	
+
 	AdjustAimVisuals(DeltaTime);
 
 	ApplyFishingResistance(DeltaTime);
@@ -166,6 +166,9 @@ void AUpstairsCharacter::FishingTick(float DeltaTime) {
 }
 
 void AUpstairsCharacter::AdjustAimVisuals(float DeltaTime) {
+	if(CurrentlySpearedActor)
+		return;
+	
 	FRotator CorrectLookAtRot = (-Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
 	float CurrentLookAtPitch = FMath::Lerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
 	float CurrentLookAtYaw = FMath::Lerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());

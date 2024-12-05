@@ -17,4 +17,10 @@ protected:
 
 public:
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void OnSpeared(AMainCharacter* SpearingInstigator) override;
+
+protected:
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsSpeared = false;
 };

@@ -22,19 +22,13 @@ public:
 	
 	UFUNCTION()
 		virtual void OnUnSpeared(AMainCharacter* SpearingInstigator);
-
-protected:
-	bool bIsSpeared = false;
 };
 
 inline void ISpearableInterface::OnSpeared(AMainCharacter* SpearingInstigator) {
-	bIsSpeared = true;
 }
 
 inline void ISpearableInterface::OnPullCompleted(AMainCharacter* SpearingInstigator) {
-	UE_LOG(LogTemp, Warning, TEXT("I've been successfully pulled!"));
 }
 
 inline void ISpearableInterface::OnUnSpeared(AMainCharacter* SpearingInstigator) {
-	bIsSpeared = false;
 }

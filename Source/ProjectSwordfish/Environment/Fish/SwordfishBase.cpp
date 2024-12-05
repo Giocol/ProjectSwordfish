@@ -14,3 +14,9 @@ void ASwordfishBase::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 }
 
+void ASwordfishBase::OnSpeared(AMainCharacter* SpearingInstigator) {
+	ISpearableInterface::OnSpeared(SpearingInstigator);
+
+	bIsSpeared = true;
+}
+
