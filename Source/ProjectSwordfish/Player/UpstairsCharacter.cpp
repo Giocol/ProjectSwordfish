@@ -3,9 +3,11 @@
 #include "Camera/CameraComponent.h"
 #include "Components/FishingQTEHandler.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Math/UnitConversion.h"
 #include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
+#include "ProjectSwordfish/Environment/Fish/SwordfishBase.h"
 
 
 AUpstairsCharacter::AUpstairsCharacter() {
@@ -21,6 +23,7 @@ AUpstairsCharacter::AUpstairsCharacter() {
 
 void AUpstairsCharacter::BeginPlay() {
 	Super::BeginPlay();
+	SpearOriginalRotation = Spear->GetComponentRotation();
 	Spear->SetVisibility(false);
 }
 
@@ -154,10 +157,20 @@ void AUpstairsCharacter::FishingTick(float DeltaTime) {
 	else {
 		bIsPowerInMediumThreshold = false;
 	}
+	
+	AdjustAimVisuals(DeltaTime);
 
 	ApplyFishingResistance(DeltaTime);
 
 	CurrentPower = FMath::Clamp(CurrentPower - PowerDecayPerTick * DeltaTime, 0.f, 1.f);
+}
+
+void AUpstairsCharacter::AdjustAimVisuals(float DeltaTime) {
+	FRotator CorrectLookAtRot = (-Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
+	float CurrentLookAtPitch = FMath::Lerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
+	float CurrentLookAtYaw = FMath::Lerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
+	UE_LOG(LogTemp, Error, TEXT("%f"), CurrentLookAtYaw);
+	Spear->SetWorldRotation(FRotator(CurrentLookAtPitch, CurrentLookAtYaw, CorrectLookAtRot.Roll));
 }
 
 void AUpstairsCharacter::ApplyFishingResistance(float DeltaTime) {
@@ -171,6 +184,27 @@ float AUpstairsCharacter::GetPullProgress() const {
 	return PulledTime / TimeToPull;
 }
 
+float AUpstairsCharacter::GetAimingProgress() const {
+	if(bIsAimInThreshold)
+		return 1;
+	if(CurrentAim < CurrentFishingEvent->AimLowerThreshold)
+		return CurrentAim / CurrentFishingEvent->AimLowerThreshold;
+	else {
+		return  1 - ((CurrentAim - CurrentFishingEvent->AimUpperThreshold) / (1 - CurrentFishingEvent->AimUpperThreshold));
+	}
+}
+
+
+float AUpstairsCharacter::GetPowerProgress() const {
+	if(bIsPowerInGoodThreshold || bIsPowerInMediumThreshold)
+		return 1;
+	if(CurrentPower < CurrentFishingEvent->PowerMediumLowerThreshold)
+		return CurrentPower / CurrentFishingEvent->PowerMediumLowerThreshold;
+	else {
+		return  1 - ((CurrentPower - CurrentFishingEvent->PowerMediumUpperThreshold) / (1 - CurrentFishingEvent->PowerMediumUpperThreshold));
+	}
+}
+
 void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                                     FVector NormalImpulse, const FHitResult& Hit) {
 
@@ -179,7 +213,7 @@ void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		ISpearableInterface* OverlappedSpearable = Cast<ISpearableInterface>(OtherActor);
 		OverlappedSpearable->OnSpeared(this);
 		CurrentlySpearedActor = OtherActor;
-
+		
 		TimeToPull = CurrentFishingEvent->GetTotalTimeToPull();
 		QTEHandler->StartQTEs(CurrentFishingEvent, [this](bool bIsSuccessful) {this->OnQTEsResolved(bIsSuccessful);}, [this]() {this->OnQTEStart();}, [this]() {this->OnQTEEnd();});
 		SpearedActorOriginalLocation = CurrentlySpearedActor->GetActorLocation();

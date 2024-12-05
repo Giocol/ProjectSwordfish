@@ -59,7 +59,7 @@ public:
 	FFishingSliderData GetFishingSliderData(EFishingSliderType Type) const; //todo: kinda sucks? maybe pass a reference to an already built struct and repopulate it?
 	float GetFishingSliderValue(EFishingSliderType Type) const;
 	
-	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(State);};
+	void SetHasSpear(bool State) { bHasSpear = State; Spear->SetVisibility(State); };
 
 	//input handling
 	virtual void ProcessCharacterMovementInput(FVector2D input) override;
@@ -74,8 +74,11 @@ public:
 
 private:
 	void FishingTick(float DeltaTime);
+	void AdjustAimVisuals(float DeltaTime);
 	void ApplyFishingResistance(float DeltaTime);
 	float GetPullProgress() const;
+	float GetAimingProgress() const; //returns in [0,1], 1 if aim is fully green
+	float GetPowerProgress() const; //returns in [0,1], 1 if power is at least in medium area
 	
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Fishing ")
@@ -135,4 +138,5 @@ private:
 	float TimeToPull = 0.f;
 	float PulledTime = 0.f;
 	FVector SpearedActorOriginalLocation = FVector::Zero();
+	FRotator SpearOriginalRotation = FRotator::ZeroRotator;
 };	
