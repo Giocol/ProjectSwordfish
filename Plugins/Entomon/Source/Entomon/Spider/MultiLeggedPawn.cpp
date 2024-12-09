@@ -31,7 +31,8 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 		CorrectPath();
 	if(PathSmoothingType==EPathSmoothingType::Uniform)
 		SmoothPath();
-	SimplifyPath();
+	if (bSimplify)
+		SimplifyPath();
 }
 
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
