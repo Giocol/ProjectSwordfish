@@ -40,7 +40,6 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float TargetDist = ToTarget.Length();
 	FVector ToTargetNorm = ToTarget / TargetDist;
 
-	
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float brakeDistance = 0.5 * time * MovementComponent->MaxSpeed;
 
@@ -51,7 +50,7 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float Dot = GetActorForwardVector().Dot(ToTargetNorm);
 	float NormalizedFacingInverse = (1+Dot)*0.5;
 	float InputModifier = (NormalizedFacingInverse + FacingBias)/(1.f+FacingBias);
-	FVector Input = GetAlteredInput(InputModifier * ToTargetNorm);
+	FVector Input = InputModifier * ToTargetNorm;
 	
 	MovementComponent->AddInputVector(Input);
 	
