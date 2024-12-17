@@ -7,7 +7,6 @@ ASwordfishBase::ASwordfishBase() {
 
 void ASwordfishBase::BeginPlay() {
 	Super::BeginPlay();
-	
 }
 
 void ASwordfishBase::Tick(float DeltaTime) {

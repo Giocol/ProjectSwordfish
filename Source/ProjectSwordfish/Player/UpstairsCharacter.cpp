@@ -8,6 +8,7 @@
 #include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
 #include "ProjectSwordfish/Environment/Fish/SwordfishBase.h"
+#include "ProjectSwordfish/Utils/MathUtils.h"
 
 
 AUpstairsCharacter::AUpstairsCharacter() {
@@ -170,8 +171,8 @@ void AUpstairsCharacter::AdjustAimVisuals(float DeltaTime) {
 		return;
 	
 	FRotator CorrectLookAtRot = (-Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
-	float CurrentLookAtPitch = FMath::Lerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
-	float CurrentLookAtYaw = FMath::Lerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
+	float CurrentLookAtPitch = MathUtils::DegAngleLerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
+	float CurrentLookAtYaw = MathUtils::DegAngleLerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
 	UE_LOG(LogTemp, Error, TEXT("%f"), CurrentLookAtYaw);
 	Spear->SetWorldRotation(FRotator(CurrentLookAtPitch, CurrentLookAtYaw, CorrectLookAtRot.Roll));
 }
