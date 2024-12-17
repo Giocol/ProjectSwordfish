@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-struct MathUtils {
+struct FMathUtils {
 private:
 	static float AngleLerp_Internal(float Current, float Target, float Alpha, float HalfCircleAngle) {
 		float Delta = Target - Current;

@@ -171,8 +171,8 @@ void AUpstairsCharacter::AdjustAimVisuals(float DeltaTime) {
 		return;
 	
 	FRotator CorrectLookAtRot = (-Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
-	float CurrentLookAtPitch = MathUtils::DegAngleLerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
-	float CurrentLookAtYaw = MathUtils::DegAngleLerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
+	float CurrentLookAtPitch = FMathUtils::DegAngleLerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
+	float CurrentLookAtYaw = FMathUtils::DegAngleLerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
 	UE_LOG(LogTemp, Error, TEXT("%f"), CurrentLookAtYaw);
 	Spear->SetWorldRotation(FRotator(CurrentLookAtPitch, CurrentLookAtYaw, CorrectLookAtRot.Roll));
 }
