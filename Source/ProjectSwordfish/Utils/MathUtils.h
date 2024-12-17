@@ -1,7 +1,8 @@
 ﻿#pragma once
 
-namespace MathUtils {
-	static float AngleLerp(float Current, float Target, float Alpha, float HalfCircleAngle) {
+struct MathUtils {
+private:
+	static float AngleLerp_Internal(float Current, float Target, float Alpha, float HalfCircleAngle) {
 		float Delta = Target - Current;
 
 		if(Delta > HalfCircleAngle) {
@@ -12,13 +13,14 @@ namespace MathUtils {
 
 		return Current + Delta * Alpha;
 	}
-	
+
+public:
 	static float DegAngleLerp(float Current, float Target, float Alpha) {
-		return AngleLerp(Current, Target, Alpha, 180);
+		return AngleLerp_Internal(Current, Target, Alpha, 180);
 	}
 	
 	static float RadAngleLerp(float Current, float Target, float Alpha) {
-		return AngleLerp(Current, Target, Alpha, PI);
+		return AngleLerp_Internal(Current, Target, Alpha, PI);
 	}
 	
 	static FVector2d PolarLerp(FVector2d Current, FVector2d Target, float Alpha) {
