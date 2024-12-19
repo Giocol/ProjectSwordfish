@@ -170,7 +170,7 @@ void AUpstairsCharacter::AdjustAimVisuals(float DeltaTime) {
 	if(CurrentlySpearedActor)
 		return;
 	
-	FRotator CorrectLookAtRot = (-Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
+	FRotator CorrectLookAtRot = (Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
 	float CurrentLookAtPitch = FMathUtils::DegAngleLerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
 	float CurrentLookAtYaw = FMathUtils::DegAngleLerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
 	UE_LOG(LogTemp, Error, TEXT("%f"), CurrentLookAtYaw);
@@ -222,7 +222,6 @@ void AUpstairsCharacter::OnSpearHit(UPrimitiveComponent* HitComp, AActor* OtherA
 		QTEHandler->StartQTEs(CurrentFishingEvent, [this](bool bIsSuccessful) {this->OnQTEsResolved(bIsSuccessful);}, [this]() {this->OnQTEStart();}, [this]() {this->OnQTEEnd();});
 		SpearedActorOriginalLocation = CurrentlySpearedActor->GetActorLocation();
 		OnSpearingStarted();
-		
 		Spear->SetSimulatePhysics(false);
 		Spear->AttachToComponent(CurrentlySpearedActor->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
 	}
