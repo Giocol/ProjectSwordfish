@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "SliderWithTargetAreas.generated.h"
 
+class AUpstairsCharacter;
 class UCanvasPanel;
 class UCanvasPanelSlot;
 class AMainCharacter;
@@ -50,7 +51,7 @@ protected:
 		UImage* Handle = nullptr;
 
 private:
-	AMainCharacter* playerRef = nullptr;
+	AUpstairsCharacter* playerRef = nullptr;
 	
 	UCanvasPanelSlot* SliderBarPanelSlot = nullptr;
 	UCanvasPanelSlot* GoodAreaPanelSlot = nullptr;

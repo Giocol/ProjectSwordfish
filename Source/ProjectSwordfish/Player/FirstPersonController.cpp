@@ -50,12 +50,28 @@ void AFirstPersonController::HandleUse(const FInputActionValue& Value) {
 	characterRef->ProcessUse();
 }
 
-void AFirstPersonController::StartPull(const FInputActionValue& Value) {
-	characterRef->SetIsPulling(true);
+void AFirstPersonController::StartSecondaryAction(const FInputActionValue& Value) {
+	characterRef->SetIsDoingSecondaryAction(true);
 }
 
-void AFirstPersonController::EndPull(const FInputActionValue& Value) {
-	characterRef->SetIsPulling(false);
+void AFirstPersonController::EndSecondaryAction(const FInputActionValue& Value) {
+	characterRef->SetIsDoingSecondaryAction(false);
+}
+
+void AFirstPersonController::StartLeanLeft(const FInputActionValue& Value) {
+	characterRef->SetIsLeaningLeft(true);
+}
+
+void AFirstPersonController::EndLeanLeft(const FInputActionValue& Value) {
+	characterRef->SetIsLeaningLeft(false);
+}
+
+void AFirstPersonController::StartLeanRight(const FInputActionValue& Value) {
+	characterRef->SetIsLeaningRight(true);
+}
+
+void AFirstPersonController::EndLeanRight(const FInputActionValue& Value) {
+	characterRef->SetIsLeaningRight(false);
 }
 
 void AFirstPersonController::SetupInputMappingContext() const
@@ -76,11 +92,24 @@ void AFirstPersonController::SetupInputActions() {
 
 	if(!UseAction)
 		UE_LOG(LogTemp, Error, TEXT("Missing use action ref! Please plug it in the FirstPersonController BP!"));
+
+	if(!SecondaryAction)
+		UE_LOG(LogTemp, Error, TEXT("Missing secondary action ref! Please plug it in the FirstPersonController BP!"));
+
+	if(!LeanLeftAction)
+		UE_LOG(LogTemp, Error, TEXT("Missing lean left action ref! Please plug it in the FirstPersonController BP!"));
+
+	if(!LeanRightAction)
+		UE_LOG(LogTemp, Error, TEXT("Missing lean right action ref! Please plug it in the FirstPersonController BP!"));
 	
 	inputComponentRef->BindAction(CharacterMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleMovement);
 	inputComponentRef->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleCameraMovement);
 	inputComponentRef->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleInteraction);
 	inputComponentRef->BindAction(UseAction, ETriggerEvent::Triggered, this, &AFirstPersonController::HandleUse);
-	inputComponentRef->BindAction(PullAction, ETriggerEvent::Ongoing, this, &AFirstPersonController::StartPull);
-	inputComponentRef->BindAction(PullAction, ETriggerEvent::Triggered, this, &AFirstPersonController::EndPull);
+	inputComponentRef->BindAction(SecondaryAction, ETriggerEvent::Ongoing, this, &AFirstPersonController::StartSecondaryAction);
+	inputComponentRef->BindAction(SecondaryAction, ETriggerEvent::Triggered, this, &AFirstPersonController::EndSecondaryAction);
+	inputComponentRef->BindAction(LeanLeftAction, ETriggerEvent::Ongoing, this, &AFirstPersonController::StartLeanLeft);
+	inputComponentRef->BindAction(LeanLeftAction, ETriggerEvent::Triggered, this, &AFirstPersonController::EndLeanLeft);
+	inputComponentRef->BindAction(LeanRightAction, ETriggerEvent::Ongoing, this, &AFirstPersonController::StartLeanRight);
+	inputComponentRef->BindAction(LeanRightAction, ETriggerEvent::Triggered, this, &AFirstPersonController::EndLeanRight);
 }

@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "FishingTrigger.generated.h"
 
+class ASwordfishBase;
 class UFishingEventDataAsset;
 class UBoxComponent;
 
@@ -27,6 +28,9 @@ public:
 protected:
 	UPROPERTY(EditAnywhere)
 		UFishingEventDataAsset* FishingEventDataAsset = nullptr;
+
+	UPROPERTY(EditAnywhere)
+		ASwordfishBase* Swordfish = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly)
 		UBoxComponent* Trigger = nullptr;
