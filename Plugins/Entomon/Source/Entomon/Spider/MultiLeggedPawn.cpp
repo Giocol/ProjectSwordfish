@@ -50,7 +50,7 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float Dot = GetActorForwardVector().Dot(ToTargetNorm);
 	float NormalizedFacingInverse = (1+Dot)*0.5;
 	float InputModifier = (NormalizedFacingInverse + FacingBias)/(1.f+FacingBias);
-	FVector Input = InputModifier * ToTargetNorm;
+	FVector Input = MovementComponent->bFaceTarget ? InputModifier * ToTargetNorm : ToTargetNorm;
 	
 	MovementComponent->AddInputVector(Input);
 	
@@ -81,7 +81,7 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 		FQuat RotationToFaceNode = FQuat::FindBetweenNormals(
 			GetActorForwardVector(),
 			PlaneTarget);
-		CombinedRotation = RotationToFaceNode * CombinedRotation;
+		CombinedRotation = MovementComponent->bFaceTarget ? RotationToFaceNode * CombinedRotation : CombinedRotation;
 	}
 	// FQuat ToLegPlaneNormal = FQuat::FindBetweenNormals(UpVector, BobOffset);
 	// float Angle = FMath::RadiansToDegrees(ToLegPlaneNormal.GetAngle());
