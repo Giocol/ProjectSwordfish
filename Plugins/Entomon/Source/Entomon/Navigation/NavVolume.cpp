@@ -95,8 +95,7 @@ void ANavVolume::Populate() {
 	FVector RootExtent = GetActorScale().GetAbs() * 100;
 	FVector RootOrigin = GetActorLocation();
 
-	float len = RootExtent.Length();
-	Nodes.Reserve(len * len * len / (Resolution * Resolution * Resolution));
+	Nodes.Reserve(8 * RootExtent.X * RootExtent.Y * RootExtent.Z / (Resolution * Resolution * Resolution));
 	FVector CurrentPosition;
 	FIntVector Num = FIntVector(
 		FMath::Floor(RootExtent.X / Resolution),
