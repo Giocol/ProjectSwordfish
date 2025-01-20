@@ -37,7 +37,7 @@ public class Entomon : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"Slate",
-				"SlateCore",
+				"SlateCore", "ProjectSwordfish",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

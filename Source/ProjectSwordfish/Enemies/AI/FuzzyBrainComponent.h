@@ -90,17 +90,17 @@ protected:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Brain")
-	TArray<FWeightedClass> ClassPrejudice;
+		TArray<FWeightedClass> ClassPrejudice;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Brain")
-	float DefaultPrejudice = 0.1f;
+		float DefaultPrejudice = 0.1f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Brain")
-	float PrejudiceDecay = 1.f;
+		float PrejudiceDecay = 1.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Brain")
-	float ForgetThreshold = 0.01f;
+		float ForgetThreshold = 0.01f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Brain", meta = (UIMin = 0))
-	float MaxInterest = 1.f;
+		float MaxInterest = 1.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Brain")
-	FSignalWeightThresholds SignalWeightThresholds;
+		FSignalWeightThresholds SignalWeightThresholds;
 
 protected:
 	uint32 HighestWeightId = INDEX_NONE;

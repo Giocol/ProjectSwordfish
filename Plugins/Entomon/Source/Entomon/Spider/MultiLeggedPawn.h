@@ -7,6 +7,9 @@
 #include "GameFramework/Pawn.h"
 #include "Entomon/Navigation/NavNode.h"
 #include "Entomon/Navigation/PathNode.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
 
 #include "MultiLeggedPawn.generated.h"
 
@@ -24,7 +27,7 @@ enum class EPathSmoothingType : uint8 {
 };
 	
 UCLASS()
-class ENTOMON_API AMultiLeggedPawn : public APawn
+class ENTOMON_API AMultiLeggedPawn : public AEnemyBase
 {
 	GENERATED_BODY()
 
