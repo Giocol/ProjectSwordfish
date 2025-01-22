@@ -34,9 +34,6 @@ public:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 							   FActorComponentTickFunction* ThisTickFunction) override;
-	
-	void SetBlackboardRef(UBlackboardComponent* Blackboard) { BlackboardComponentRef = Blackboard; };
-
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FWeightedSignal GetCurrentMostInterestingSignal() const {
@@ -116,8 +113,5 @@ protected:
 		ESignalSeverity LastRecordedSeverity = ESignalSeverity::Nonperceptible;
 	
 	bool bIsThinking = true;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		UBlackboardComponent* BlackboardComponentRef = nullptr;
 	
 };

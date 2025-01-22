@@ -14,9 +14,9 @@ class PROJECTSWORDFISH_API AEnemyAIController : public AAIController
 
 public:
 	AEnemyAIController();
-	void OnSignalOriginChanged(FVector NewOrigin);
-	void OnInterestChanged(FWeightedSignal WeightedSignal);
-	void OnSignalSeverityChanged(FWeightedSignal WeightedSignal);
+	void OnSignalOriginChanged(const FVector& NewOrigin) const;
+	void OnInterestChanged(const FWeightedSignal& WeightedSignal) const;
+	void OnSignalSeverityChanged(const FWeightedSignal& WeightedSignal) const;
 	
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
@@ -27,4 +27,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
 		UFuzzyBrainComponent* Brain = nullptr;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AI")
+		UBlackboardComponent* BlackboardRef = nullptr;
 };

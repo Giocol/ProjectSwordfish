@@ -2,6 +2,7 @@
 
 #include "FuzzyBrainComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 
 AEnemyAIController::AEnemyAIController() {
@@ -10,20 +11,24 @@ AEnemyAIController::AEnemyAIController() {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AEnemyAIController::OnSignalOriginChanged(FVector NewOrigin) {
+void AEnemyAIController::OnSignalOriginChanged(const FVector& NewOrigin) const {
+	BlackboardRef->SetValueAsVector("TargetLocation", NewOrigin);
 }
 
-void AEnemyAIController::OnInterestChanged(FWeightedSignal WeightedSignal) {
+void AEnemyAIController::OnInterestChanged(const FWeightedSignal& WeightedSignal) const {
+	BlackboardRef->SetValueAsVector("TargetLocation", WeightedSignal.Signal.SignalOrigin);
+	BlackboardRef->SetValueAsFloat("TargetSignalWeight", WeightedSignal.Weight);
 }
 
-void AEnemyAIController::OnSignalSeverityChanged(FWeightedSignal WeightedSignal) {
+void AEnemyAIController::OnSignalSeverityChanged(const FWeightedSignal& WeightedSignal) const {
+	BlackboardRef->SetValueAsFloat("TargetSignalWeight", WeightedSignal.Weight);
 }
 
 void AEnemyAIController::OnPossess(APawn* InPawn) {
 	if(!BehaviorTreeRef)
 		UE_LOG(LogTemp, Error, TEXT("ERROR: Missing BehaviorTreeRef, please plug it in the editor!"));
 
-	Brain->SetBlackboardRef(GetBlackboardComponent());
+	BlackboardRef = GetBlackboardComponent();
 	RunBehaviorTree(BehaviorTreeRef);
 	
 	Super::OnPossess(InPawn);
