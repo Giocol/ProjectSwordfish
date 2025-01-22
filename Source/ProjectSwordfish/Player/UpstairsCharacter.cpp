@@ -8,6 +8,7 @@
 #include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
 #include "ProjectSwordfish/Environment/Fish/SwordfishBase.h"
+#include "ProjectSwordfish/Systems/DownstairsGameMode.h"
 #include "ProjectSwordfish/Utils/MathUtils.h"
 
 
@@ -26,6 +27,8 @@ void AUpstairsCharacter::BeginPlay() {
 	Super::BeginPlay();
 	SpearOriginalRotation = Spear->GetComponentRotation();
 	Spear->SetVisibility(false);
+
+	NoiseSystemRef = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
 }
 
 bool AUpstairsCharacter::StartFishingEvent(UFishingEventDataAsset* FishingEventData) {
@@ -114,6 +117,10 @@ void AUpstairsCharacter::Pull(float DeltaTime) {
 
 void AUpstairsCharacter::ProcessUse() {
 	Super::ProcessUse();
+
+	//TESTING ONLY
+	GenerateNoise(TESTNOISE, GetActorLocation());
+	
 	if(bHasSpear && bIsFishing) {
 		if(bIsAimInThreshold && bIsPowerInGoodThreshold) {
 			// todo: expand this condition, add timer before being able to throw

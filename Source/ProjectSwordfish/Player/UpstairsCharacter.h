@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "MainCharacter.h"
 #include "Components/FishingQTEHandler.h"
+#include "ProjectSwordfish/Environment/INoiseMaker.h"
 #include "ProjectSwordfish/UI/SliderWithTargetAreas.h"
 #include "UpstairsCharacter.generated.h"
 
@@ -21,7 +22,7 @@ struct FFishingSliderData
 };
 
 UCLASS()
-class PROJECTSWORDFISH_API AUpstairsCharacter : public AMainCharacter {
+class PROJECTSWORDFISH_API AUpstairsCharacter : public AMainCharacter, public INoiseMaker {
 	GENERATED_BODY()
 
 public:
@@ -122,6 +123,9 @@ protected:
 
 	UPROPERTY()
 		UFishingEventDataAsset* CurrentFishingEvent = nullptr;
+
+	UPROPERTY(EditDefaultsOnly)
+		UNoiseDataAsset* TESTNOISE = nullptr;
 
 protected: //Components
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
