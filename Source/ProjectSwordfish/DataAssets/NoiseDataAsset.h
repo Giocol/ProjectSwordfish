@@ -13,8 +13,10 @@ class PROJECTSWORDFISH_API UNoiseDataAsset : public UPrimaryDataAsset {
 public:
 	UPROPERTY(EditDefaultsOnly, Category = "General")
 	FName Name = "Noise Event";
-	//UPROPERTY(EditDefaultsOnly, Category = "SFX")
-	//UFMODEvent* Sound;
+
+	UPROPERTY(EditDefaultsOnly, Category = "SFX")
+	USoundCue* Sound; //would ideally be an FMOD asset
+
 	//TODO: add more seetings for sound (volume, attenuation that maybe is proportional to intensity, etc)
 	UPROPERTY(EditDefaultsOnly, Category = "Noise")
 	bool bCanAlertAI = false;
