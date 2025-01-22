@@ -110,7 +110,7 @@ protected:
 		TArray<FWeightedSignal> Memory;
 	
 	UPROPERTY()
-		APawn* Body; //TODO: this should be more specific than Pawn 
+	AEnemyBase* Body; //TODO: this should be more specific than Pawn 
 
 	UPROPERTY()
 		ESignalSeverity LastRecordedSeverity = ESignalSeverity::Nonperceptible;

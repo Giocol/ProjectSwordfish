@@ -4,6 +4,7 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "EnemyAIController.generated.h"
 
+struct FWeightedSignal;
 class UFuzzyBrainComponent;
 
 UCLASS()
@@ -13,6 +14,9 @@ class PROJECTSWORDFISH_API AEnemyAIController : public AAIController
 
 public:
 	AEnemyAIController();
+	void OnSignalOriginChanged(FVector NewOrigin);
+	void OnInterestChanged(FWeightedSignal WeightedSignal);
+	void OnSignalSeverityChanged(FWeightedSignal WeightedSignal);
 	
 protected:
 	virtual void OnPossess(APawn* InPawn) override;

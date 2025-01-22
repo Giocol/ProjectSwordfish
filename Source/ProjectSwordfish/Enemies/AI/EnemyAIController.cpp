@@ -10,6 +10,15 @@ AEnemyAIController::AEnemyAIController() {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void AEnemyAIController::OnSignalOriginChanged(FVector NewOrigin) {
+}
+
+void AEnemyAIController::OnInterestChanged(FWeightedSignal WeightedSignal) {
+}
+
+void AEnemyAIController::OnSignalSeverityChanged(FWeightedSignal WeightedSignal) {
+}
+
 void AEnemyAIController::OnPossess(APawn* InPawn) {
 	if(!BehaviorTreeRef)
 		UE_LOG(LogTemp, Error, TEXT("ERROR: Missing BehaviorTreeRef, please plug it in the editor!"));
