@@ -29,6 +29,10 @@ public:
 	
 	bool HasNewSignalBeenHeard() const { return !bHasLastNoiseSignalBeenConsumed; };
 
+protected:
+	UPROPERTY(EditDefaultsOnly)
+		float RadiusMultiplier = 10.f;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 	float LastNoiseSignalIntesity = 0.f;

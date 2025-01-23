@@ -28,21 +28,20 @@ void UHearingComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 }
 
 void UHearingComponent::OnNoiseHeard(const UNoiseDataAsset* NoiseDataAsset, const FVector& Location) {
-	////TODO: Add logic for NoiseDataAsset with bSpecifyCustomRadius == false
-	if(NoiseDataAsset->bSpecifyCustomRadius) {
-		float Distance = FVector::Distance(GetOwner()->GetActorLocation(), Location) / 100.f;
-		if(Distance < 1.f)
-			Distance = 1.f;
-		float NewIntensity = NoiseDataAsset->Intensity / FMath::Pow(Distance, NoiseDataAsset->FalloffPower);
-		DrawDebugSphere(GetWorld(), Location, NoiseDataAsset->Radius, 20, FColor::Purple, false, 1);
-		if((GetOwner()->GetActorLocation() - Location).Length() < NoiseDataAsset->Radius) {
-			UE_LOG(LogTemp, Warning, TEXT("Heard noise with intesity %f at location %s"), NewIntensity, *Location.ToString());
-			LastNoiseSignalIntesity = NewIntensity;
-			LastNoiseSignalLocation = Location;
-			LastNoiseSignal.SignalOrigin = LastNoiseSignalLocation;
-			LastNoiseSignal.SignalStrength = LastNoiseSignalIntesity;
-			bHasLastNoiseSignalBeenConsumed = false;
-		}
+	float Radius = NoiseDataAsset->bSpecifyCustomRadius ? NoiseDataAsset->Radius : NoiseDataAsset->Intensity * RadiusMultiplier;
+	
+	float Distance = FVector::Distance(GetOwner()->GetActorLocation(), Location) / 100.f;
+	if(Distance < 1.f)
+		Distance = 1.f;
+	float NewIntensity = NoiseDataAsset->Intensity / FMath::Pow(Distance, NoiseDataAsset->FalloffPower);
+	DrawDebugSphere(GetWorld(), Location, Radius, 20, FColor::Purple, false, 1);
+	if((GetOwner()->GetActorLocation() - Location).Length() < Radius) {
+		UE_LOG(LogTemp, Warning, TEXT("Heard noise with intesity %f at location %s"), NewIntensity, *Location.ToString());
+		LastNoiseSignalIntesity = NewIntensity;
+		LastNoiseSignalLocation = Location;
+		LastNoiseSignal.SignalOrigin = LastNoiseSignalLocation;
+		LastNoiseSignal.SignalStrength = LastNoiseSignalIntesity;
+		bHasLastNoiseSignalBeenConsumed = false;
 	}
 }
 
