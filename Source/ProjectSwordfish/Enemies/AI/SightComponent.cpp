@@ -124,6 +124,7 @@ float USightComponent::EvaluateSignalStrength(float Distance) const {
 		Result /= FMath::Pow(Distance / 100, DetectionFalloffPower);
 	return Result;
 }
+
 float USightComponent::EvaluateSignalStrength(FVector Location) const {
 	return EvaluateSignalStrength(FVector::Distance(GetComponentLocation(), Location));
 }
