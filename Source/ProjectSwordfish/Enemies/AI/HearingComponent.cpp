@@ -2,6 +2,7 @@
 
 #include "Kismet/GameplayStatics.h"
 #include "ProjectSwordfish/DataAssets/NoiseDataAsset.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
 #include "ProjectSwordfish/Systems/DownstairsGameMode.h"
 #include "ProjectSwordfish/Systems/NoiseSystem.h"
 
@@ -17,8 +18,8 @@ void UHearingComponent::BeginPlay() {
 	ANoiseSystem* NoiseSystemRef = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
 	NoiseSystemRef->RegisterListener(this);
 
-	//if (AEnemyBase* const OwningAI = Cast<AEnemyBase>(GetOwner()))
-	//	OwningAI->RegisterHearing(this);
+	if (AEnemyBase* const OwningAI = Cast<AEnemyBase>(GetOwner()))
+		OwningAI->RegisterHearing(this);
 }
 
 void UHearingComponent::TickComponent(float DeltaTime, ELevelTick TickType,

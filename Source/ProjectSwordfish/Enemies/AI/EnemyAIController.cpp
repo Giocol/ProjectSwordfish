@@ -12,16 +12,25 @@ AEnemyAIController::AEnemyAIController() {
 }
 
 void AEnemyAIController::OnSignalOriginChanged(const FVector& NewOrigin) const {
-	BlackboardRef->SetValueAsVector("TargetLocation", NewOrigin);
+	if(BlackboardRef)
+		BlackboardRef->SetValueAsVector("TargetLocation", NewOrigin);
+	else
+		UE_LOG(LogTemp, Error, TEXT("MISSING BLACKBOARD REF IN AICONTROLLER"))
 }
 
 void AEnemyAIController::OnInterestChanged(const FWeightedSignal& WeightedSignal) const {
-	BlackboardRef->SetValueAsVector("TargetLocation", WeightedSignal.Signal.SignalOrigin);
-	BlackboardRef->SetValueAsFloat("TargetSignalWeight", WeightedSignal.Weight);
+	if(BlackboardRef) {
+		BlackboardRef->SetValueAsVector("TargetLocation", WeightedSignal.Signal.SignalOrigin);
+		BlackboardRef->SetValueAsFloat("TargetSignalWeight", WeightedSignal.Weight);
+	} else
+		UE_LOG(LogTemp, Error, TEXT("MISSING BLACKBOARD REF IN AICONTROLLER"))
 }
 
 void AEnemyAIController::OnSignalSeverityChanged(const FWeightedSignal& WeightedSignal) const {
-	BlackboardRef->SetValueAsFloat("TargetSignalWeight", WeightedSignal.Weight);
+	if(BlackboardRef)
+		BlackboardRef->SetValueAsFloat("TargetSignalWeight", WeightedSignal.Weight);
+	else
+		UE_LOG(LogTemp, Error, TEXT("MISSING BLACKBOARD REF IN AICONTROLLER"))
 }
 
 void AEnemyAIController::OnPossess(APawn* InPawn) {

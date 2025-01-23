@@ -103,7 +103,7 @@ protected:
 	uint32 HighestWeightId = INDEX_NONE;
 	AEnemyAIController* Controller = nullptr;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 		TArray<FWeightedSignal> Memory;
 	
 	UPROPERTY()
