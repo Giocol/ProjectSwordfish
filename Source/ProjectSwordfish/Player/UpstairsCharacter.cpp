@@ -28,7 +28,8 @@ void AUpstairsCharacter::BeginPlay() {
 	SpearOriginalRotation = Spear->GetComponentRotation();
 	Spear->SetVisibility(false);
 
-	NoiseSystemRef = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
+	auto test = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	NoiseSystemRef = test->GetNoiseSystemRef();
 }
 
 bool AUpstairsCharacter::StartFishingEvent(UFishingEventDataAsset* FishingEventData) {
@@ -116,8 +117,6 @@ void AUpstairsCharacter::Pull(float DeltaTime) {
 }
 
 void AUpstairsCharacter::ProcessUse() {
-	Super::ProcessUse();
-
 	//TESTING ONLY
 	GenerateNoise(TESTNOISE, GetActorLocation());
 	

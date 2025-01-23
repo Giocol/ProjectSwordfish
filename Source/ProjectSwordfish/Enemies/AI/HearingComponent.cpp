@@ -1,6 +1,9 @@
 ﻿#include "HearingComponent.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "ProjectSwordfish/DataAssets/NoiseDataAsset.h"
+#include "ProjectSwordfish/Systems/DownstairsGameMode.h"
+#include "ProjectSwordfish/Systems/NoiseSystem.h"
 
 
 UHearingComponent::UHearingComponent() {
@@ -11,9 +14,9 @@ UHearingComponent::UHearingComponent() {
 void UHearingComponent::BeginPlay() {
 	Super::BeginPlay();
 
-	//ANoiseSystem* NoiseSystemRef = Cast<AMainGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
-	//NoiseSystemRef->RegisterListener(this);
-//
+	ANoiseSystem* NoiseSystemRef = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
+	NoiseSystemRef->RegisterListener(this);
+
 	//if (AEnemyBase* const OwningAI = Cast<AEnemyBase>(GetOwner()))
 	//	OwningAI->RegisterHearing(this);
 }
