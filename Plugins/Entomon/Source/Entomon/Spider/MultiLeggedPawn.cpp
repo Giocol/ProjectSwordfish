@@ -3,7 +3,9 @@
 #include "GaitPreset.h"
 #include "MultiLeggedPawnMovement.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Entomon/Navigation/NavVolume.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Limbs/ProceduralLimbManager.h"
 
@@ -17,6 +19,12 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 	
 	//LimbManager->AutoDetectLimbs(Mesh);
 	PrimaryActorTick.bCanEverTick = true;
+}
+
+void AMultiLeggedPawn::MoveTo(FVector Location) {
+	checkf(Navigation, TEXT("Nav Volume not found."));
+	auto PathToTarget = Navigation->FindPath(Body->GetComponentLocation(), Location, PathPreference);
+	SetPath(PathToTarget);
 }
 
 void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
@@ -108,6 +116,7 @@ FVector AMultiLeggedPawn::GetAngularVelocity() const {
 void AMultiLeggedPawn::BeginPlay() {
 	LimbManager->AutoDetectLimbs(Mesh);
 	ApplyGaitPreset(GaitPreset);
+	Navigation = Cast<ANavVolume>(UGameplayStatics::GetActorOfClass(GetWorld(), ANavVolume::StaticClass()));
 	Super::BeginPlay();
 }
 

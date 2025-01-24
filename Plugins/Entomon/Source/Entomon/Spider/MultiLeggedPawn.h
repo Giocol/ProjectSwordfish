@@ -32,6 +32,8 @@ public:
 	AMultiLeggedPawn();
 	
 	UFUNCTION(BlueprintCallable)
+	void MoveTo(FVector Location);
+	UFUNCTION(BlueprintCallable)
 	void SetPath(TArray<FNavNode> Nodes);
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
@@ -119,5 +121,5 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		class USceneComponent* Body;
 
-	
+	class ANavVolume* Navigation;
 };
