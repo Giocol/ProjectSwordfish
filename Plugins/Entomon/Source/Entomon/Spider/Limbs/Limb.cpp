@@ -134,10 +134,10 @@ int ULimb::Solve_FABRIK(UPoseableMeshComponent* Mesh, float Threshold, int Itera
 	
 	int k;
 	for (k = 0; k < Iterations; k++) {
-		FVector PreviousPosition = JointLocations[0];
 		BackwardReach(Mesh, ComponentSpaceTarget, JointLocations);
 		ForwardReach(Mesh, JointLocations);
 		EvaluateAngles(Mesh, JointLocations);
+		
 		float sqrDist = GetEndToTargetOffset(ComponentSpaceTarget, Mesh, EBoneSpaces::ComponentSpace).SquaredLength();
 		if(sqrDist < Threshold * Threshold) 
 			return k;

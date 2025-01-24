@@ -34,6 +34,8 @@ public:
 		float MaxAngularSpeed = PI;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
 		float AngularAcceleration = 10;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement")
+		bool bFaceTarget = true;
 
 	FVector AngularVelocity = FVector::ZeroVector;
 

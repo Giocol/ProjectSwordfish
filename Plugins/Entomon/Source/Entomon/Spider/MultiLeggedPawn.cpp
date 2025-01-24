@@ -3,7 +3,9 @@
 #include "GaitPreset.h"
 #include "MultiLeggedPawnMovement.h"
 #include "Components/PoseableMeshComponent.h"
+#include "Entomon/Navigation/NavVolume.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Limbs/ProceduralLimbManager.h"
 
@@ -19,6 +21,12 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void AMultiLeggedPawn::MoveTo(FVector Location) {
+	checkf(Navigation, TEXT("Nav Volume not found."));
+	auto PathToTarget = Navigation->FindPath(Body->GetComponentLocation(), Location, PathPreference);
+	SetPath(PathToTarget);
+}
+
 void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 	Path.Empty();
 	for (int i = 0; i < Nodes.Num(); ++i) {
@@ -31,7 +39,8 @@ void AMultiLeggedPawn::SetPath(TArray<FNavNode> Nodes) {
 		CorrectPath();
 	if(PathSmoothingType==EPathSmoothingType::Uniform)
 		SmoothPath();
-	SimplifyPath();
+	if (bSimplify)
+		SimplifyPath();
 }
 
 bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
@@ -39,7 +48,6 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float TargetDist = ToTarget.Length();
 	FVector ToTargetNorm = ToTarget / TargetDist;
 
-	
 	float time = MovementComponent->MaxSpeed / MovementComponent->Deceleration;
 	float brakeDistance = 0.5 * time * MovementComponent->MaxSpeed;
 
@@ -50,7 +58,7 @@ bool AMultiLeggedPawn::Move(double DeltaTime, int Target) {
 	float Dot = GetActorForwardVector().Dot(ToTargetNorm);
 	float NormalizedFacingInverse = (1+Dot)*0.5;
 	float InputModifier = (NormalizedFacingInverse + FacingBias)/(1.f+FacingBias);
-	FVector Input = GetAlteredInput(InputModifier * ToTargetNorm);
+	FVector Input = MovementComponent->bFaceTarget ? InputModifier * ToTargetNorm : ToTargetNorm;
 	
 	MovementComponent->AddInputVector(Input);
 	
@@ -81,7 +89,7 @@ void AMultiLeggedPawn::Rotate(double DeltaTime, int Target) {
 		FQuat RotationToFaceNode = FQuat::FindBetweenNormals(
 			GetActorForwardVector(),
 			PlaneTarget);
-		CombinedRotation = RotationToFaceNode * CombinedRotation;
+		CombinedRotation = MovementComponent->bFaceTarget ? RotationToFaceNode * CombinedRotation : CombinedRotation;
 	}
 	// FQuat ToLegPlaneNormal = FQuat::FindBetweenNormals(UpVector, BobOffset);
 	// float Angle = FMath::RadiansToDegrees(ToLegPlaneNormal.GetAngle());
@@ -108,6 +116,7 @@ FVector AMultiLeggedPawn::GetAngularVelocity() const {
 void AMultiLeggedPawn::BeginPlay() {
 	LimbManager->AutoDetectLimbs(Mesh);
 	ApplyGaitPreset(GaitPreset);
+	Navigation = Cast<ANavVolume>(UGameplayStatics::GetActorOfClass(GetWorld(), ANavVolume::StaticClass()));
 	Super::BeginPlay();
 }
 
