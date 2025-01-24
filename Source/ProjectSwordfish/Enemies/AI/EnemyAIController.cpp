@@ -3,6 +3,7 @@
 #include "FuzzyBrainComponent.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 
 
 AEnemyAIController::AEnemyAIController() {
@@ -37,8 +38,8 @@ void AEnemyAIController::OnPossess(APawn* InPawn) {
 	if(!BehaviorTreeRef)
 		UE_LOG(LogTemp, Error, TEXT("ERROR: Missing BehaviorTreeRef, please plug it in the editor!"));
 
-	BlackboardRef = GetBlackboardComponent();
 	RunBehaviorTree(BehaviorTreeRef);
-	
+	BlackboardRef = GetBlackboardComponent();
+
 	Super::OnPossess(InPawn);
 }	
