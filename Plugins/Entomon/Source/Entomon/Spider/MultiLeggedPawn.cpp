@@ -23,6 +23,7 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 
 void AMultiLeggedPawn::MoveTo(FVector Location) {
 	checkf(Navigation, TEXT("Nav Volume not found."));
+	bIsMovementFinished = false;
 	auto PathToTarget = Navigation->FindPath(Body->GetComponentLocation(), Location, PathPreference);
 	SetPath(PathToTarget);
 }
@@ -105,8 +106,10 @@ void AMultiLeggedPawn::FollowPath(double DeltaTime) {
 			CurrentPathId++;
 		}
 	}
-	else if(!Path.IsEmpty() && CurrentPathId >= Path.Num()-1)
+	else if(!Path.IsEmpty() && CurrentPathId >= Path.Num()-1) {
 		Rotate(DeltaTime, CurrentPathId);
+		bIsMovementFinished = true;
+	}
 }
 
 FVector AMultiLeggedPawn::GetAngularVelocity() const {

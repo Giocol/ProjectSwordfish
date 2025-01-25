@@ -112,6 +112,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="bSimplify", UIMin = 0.f, UIMax=1.f))
 		float Simplify = 0.1f;
 	TArray<FPathNode> Path;
+
 	int CurrentPathId;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gizmos", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
 		bool bDrawPath = true;
@@ -125,4 +126,8 @@ protected:
 		class USceneComponent* Body;
 
 	class ANavVolume* Navigation;
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsMovementFinished = false; 
 };
