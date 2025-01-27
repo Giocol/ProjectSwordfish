@@ -1,5 +1,6 @@
 ﻿#include "EnemyBase.h"
 
+#include "EnemyState.h"
 #include "AI/HearingComponent.h"
 #include "AI/PerceptionSignal.h"
 #include "AI/SightComponent.h"
@@ -81,6 +82,19 @@ UFuzzyBrainComponent* AEnemyBase::GetBrain() const {
 void AEnemyBase::Die(const AActor* Killer) {
 }
 
+FVector AEnemyBase::GetNextWaypointLocation() {
+	if(CurrentState == EEnemyState::Idle) {
+		if(NumberOfIdleWaypoints > 0)
+			return IdleWaypointHolder->GetNextWaypoint();
+	}
+	else if(CurrentState == EEnemyState::Suspicious) {
+		if(NumberOfSuspiciousWaypoints > 0)
+			return SuspiciousWaypointHolder->GetNextWaypoint();
+	}
+
+	return FVector::Zero();
+}
+
 TArray<AActor*> AEnemyBase::GetVisibleActorCandidatesOfClass(TSubclassOf<AActor> Class) const {
 	TArray<AActor*> Candidates;
 	for (auto SightComponent : SightComponents) {
@@ -103,6 +117,12 @@ void AEnemyBase::BeginPlay() {
 
 void AEnemyBase::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
+	
+#if WITH_EDITOR
+	IdleWaypointHolder->DrawPath(false);
+	SuspiciousWaypointHolder->DrawPath(false);
+#endif
+	
 }
 
 void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -112,12 +132,12 @@ void AEnemyBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 
 #if WITH_EDITOR
 void AEnemyBase::UpdateNavigationArrays() const {
-	//IdleWaypointHolder->UpdateWaypointArray(NumberOfIdleWaypoints, "Idle");
-	//SuspiciousWaypointHolder->UpdateWaypointArray(NumberOfSuspiciousWaypoints, "Alert");
+	IdleWaypointHolder->UpdateWaypointArray(NumberOfIdleWaypoints, "Idle");
+	SuspiciousWaypointHolder->UpdateWaypointArray(NumberOfSuspiciousWaypoints, "Alert");
 }
 
 void AEnemyBase::DeleteAllWaypoints() const {
-	//IdleWaypointHolder->DeleteAllWaypoints();
-	//SuspiciousWaypointHolder->DeleteAllWaypoints();
+	IdleWaypointHolder->DeleteAllWaypoints();
+	SuspiciousWaypointHolder->DeleteAllWaypoints();
 }
 #endif

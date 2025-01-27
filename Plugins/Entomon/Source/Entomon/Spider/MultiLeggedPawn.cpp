@@ -136,6 +136,8 @@ void AMultiLeggedPawn::Tick(float DeltaTime) {
 			DrawDebugPoint(GetWorld(), Path[i].Origin, 5.f, FColor::Emerald);
 		}
 	}
+
+	Super::Tick(DeltaTime);
 }
 
 void AMultiLeggedPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

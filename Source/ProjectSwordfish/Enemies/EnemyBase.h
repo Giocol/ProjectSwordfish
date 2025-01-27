@@ -67,13 +67,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 		void Die(const AActor* Killer);
-	//UFUNCTION(BlueprintNativeEvent)
-	//	void OnDeath();
 	
 	UHearingComponent* GetHearingComponent() const { return HearingComponent; };
 
-	//UFUNCTION(BlueprintCallable)
-	//	FVector GetNextWaypointLocation();
+	UFUNCTION(BlueprintCallable)
+		FVector GetNextWaypointLocation();
 protected:
 	TArray<AActor*> GetVisibleActorCandidatesOfClass(TSubclassOf<AActor> Class) const;
 	TArray<AActor*> GetVisibleActorCandidates() const;
