@@ -76,7 +76,6 @@ void ANavVolume::BeginPlay() {
 		LoadNavigationData();
 		if(Nodes.IsEmpty() && bRebuildOnEmptyLoad)
 			BuildNavigationData();
-			
 	}
 }
 
@@ -115,7 +114,7 @@ void ANavVolume::Populate() {
 					auto Node = FNavNode(WorldPos);
 					Node.Normal = -Normal;
 					Node.Distance = Distance;
-					Nodes.Add(Node);
+					Insert(Node);
 				}
 			}
 		}

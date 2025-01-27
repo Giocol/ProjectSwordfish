@@ -17,7 +17,7 @@ public:
 
 	void AddAngularImpulse(FVector Impulse, bool bClamp = true);
 	void AddInputRotation(FVector Input);
-	void ApproachOrientation(FQuat DeltaRotation);
+	void ApproachOrientation(FQuat InOrientation);
 
 	virtual void AddRadialImpulse(const FVector& Origin, float Radius, float Strength, ERadialImpulseFalloff Falloff, bool bVelChange) override;
 
@@ -38,6 +38,7 @@ public:
 		bool bFaceTarget = true;
 
 	FVector AngularVelocity = FVector::ZeroVector;
+	
 
 	FVector CurrentAngularInput = FVector::ZeroVector;
 	FVector LastAngularInput = FVector::ZeroVector;
