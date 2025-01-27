@@ -4,13 +4,14 @@
 #include "AI/PerceptionSignal.h"
 #include "AI/SightComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "ProjectSwordfish/Utils/WaypointHolderComponent.h"
 
 
 AEnemyBase::AEnemyBase() {
 	PrimaryActorTick.bCanEverTick = true;
 	
-	//IdleWaypointHolder = CreateDefaultSubobject<UWaypointHolderComponent>("Idle Waypoint Holder");
-	//SuspiciousWaypointHolder = CreateDefaultSubobject<UWaypointHolderComponent>("Alert Waypoint Holder");
+	IdleWaypointHolder = CreateDefaultSubobject<UWaypointHolderComponent>("Idle Waypoint Holder");
+	SuspiciousWaypointHolder = CreateDefaultSubobject<UWaypointHolderComponent>("Alert Waypoint Holder");
 }
 
 bool AEnemyBase::IsActorInView(AEnemyBase* Target, AActor* Actor, float& SignalStrength) {

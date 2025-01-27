@@ -4,6 +4,7 @@
 #include "GameFramework/Pawn.h"
 #include "EnemyBase.generated.h"
 
+class UWaypointHolderComponent;
 class AEnemyAIController;
 enum EEnemyState : uint8;
 class UFuzzyBrainComponent;
@@ -94,17 +95,17 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	
 protected:
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
-	//	int NumberOfIdleWaypoints;
-	//
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
-	//	UWaypointHolderComponent* IdleWaypointHolder;
-//
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
-	//	int NumberOfSuspiciousWaypoints;
-//
-	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
-	//	UWaypointHolderComponent* SuspiciousWaypointHolder;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
+		int NumberOfIdleWaypoints;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
+		UWaypointHolderComponent* IdleWaypointHolder;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
+		int NumberOfSuspiciousWaypoints;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Waypoints")
+		UWaypointHolderComponent* SuspiciousWaypointHolder;
 	
 	UPROPERTY()
 		TArray<USightComponent*> SightComponents;
@@ -121,14 +122,5 @@ protected:
 	UPROPERTY()
 		AEnemyAIController* EnemyController;
 
-
-	//AMainGameMode* GameMode;
-	
-	//UPROPERTY()
-	//AEnemyManager* EnemyManager;
-
 	float BaseSpeed;
-
-	//UPROPERTY()
-	//FCheckpointSave Save;
 };
