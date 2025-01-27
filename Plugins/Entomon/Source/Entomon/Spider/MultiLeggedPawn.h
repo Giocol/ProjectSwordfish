@@ -34,6 +34,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MoveTo(FVector Location);
 	UFUNCTION(BlueprintCallable)
+	void LookAt(FVector Location);
+	UFUNCTION(BlueprintCallable)
+	void ResumeMove();
+	UFUNCTION(BlueprintCallable)
 	void SetPath(TArray<FNavNode> Nodes);
 
 	class UPoseableMeshComponent* GetMesh() { return Mesh; }
@@ -46,7 +50,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	bool Move(double DeltaTime, int Target);
-	void Rotate(double DeltaTime, int Target);
+	FQuat GetTargetOrientation(int Target);
+	FQuat GetTargetOrientation(FVector Location);
 	void FollowPath(double DeltaTime);
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -120,6 +125,9 @@ protected:
 		class UPoseableMeshComponent* Mesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		class USceneComponent* Body;
+
+	FVector LookTarget = FVector::ZeroVector;
+	bool bUseLookTarget = false;
 
 	class ANavVolume* Navigation;
 };
