@@ -243,7 +243,7 @@ void UFuzzyBrainComponent::Decrement(FWeightedSignal& WeightedSignal, double Del
 	if(WeightedSignal.Weight > MaxInterest)
 		WeightedSignal.Weight = MaxInterest;
 	WeightedSignal.Weight *= FMath::Exp(-DeltaTime * PrejudiceDecay);
-	if(HighestWeightId != INDEX_NONE && WeightedSignal.Signal == Memory[HighestWeightId]
+	if(HighestWeightId != INDEX_NONE && HighestWeightId < Memory.Num() && WeightedSignal.Signal == Memory[HighestWeightId]
 		&& PreviousSeverity != GetSeverity(WeightedSignal)) {
 		
 	}
