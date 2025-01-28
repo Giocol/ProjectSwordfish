@@ -31,8 +31,9 @@ void UMultiLeggedPawnMovement::AddInputRotation(FVector Input) {
 	CurrentAngularInput += Input;
 }
 
-void UMultiLeggedPawnMovement::ApproachOrientation(FQuat DeltaRotation) {
-	FVector AsRotationVector = DeltaRotation.ToRotationVector();
+void UMultiLeggedPawnMovement::ApproachOrientation(FQuat InOrientation) {
+	// FQuat Rotation = GetOwner()->GetActorRotation().Quaternion().Inverse() * InOrientation;
+	FVector AsRotationVector = InOrientation.ToRotationVector();
 	FVector Axis;
 	float AngularDistance;
 	AsRotationVector.ToDirectionAndLength(Axis, AngularDistance);
