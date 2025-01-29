@@ -127,6 +127,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 		UNoiseDataAsset* TESTNOISE = nullptr;
 
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+		bool bHasKey = false;
+
 protected: //Components
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		UStaticMeshComponent* Spear = nullptr;
