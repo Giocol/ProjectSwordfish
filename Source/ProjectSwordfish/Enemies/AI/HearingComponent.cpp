@@ -15,8 +15,8 @@ UHearingComponent::UHearingComponent() {
 void UHearingComponent::BeginPlay() {
 	Super::BeginPlay();
 
-	ANoiseSystem* NoiseSystemRef = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
-	NoiseSystemRef->RegisterListener(this);
+	//ANoiseSystem* NoiseSystemRef = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()))->GetNoiseSystemRef();
+	//NoiseSystemRef->RegisterListener(this);
 
 	if (AEnemyBase* const OwningAI = Cast<AEnemyBase>(GetOwner()))
 		OwningAI->RegisterHearing(this);
