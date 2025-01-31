@@ -56,6 +56,7 @@ void AFirstPersonController::StartSecondaryAction(const FInputActionValue& Value
 
 void AFirstPersonController::EndSecondaryAction(const FInputActionValue& Value) {
 	characterRef->SetIsDoingSecondaryAction(false);
+	characterRef->OnSecondaryAction();
 }
 
 void AFirstPersonController::StartLeanLeft(const FInputActionValue& Value) {

@@ -24,6 +24,7 @@ public:
 	void SetIsDoingSecondaryAction(bool State) { bIsDoingSecondaryAction = State; }
 	virtual void SetIsLeaningLeft(bool State) { bIsLeaningLeft = State; }
 	virtual void SetIsLeaningRight(bool State) { bIsLeaningRight = State; }
+	virtual void OnSecondaryAction();
 
 protected:
 	virtual void BeginPlay() override;
