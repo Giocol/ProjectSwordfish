@@ -186,7 +186,7 @@ bool AMultiLeggedPawn::Trace(FVector Start, FVector Direction, FHitResult& OutHi
 }
 
 FVector AMultiLeggedPawn::GetAlteredInput(FVector Input) {
-	auto h = GetClosestWhisker(FibonacciTrace(GetActorLocation()), true);
+	auto h = GetClosestWhisker(FibonacciTrace(GetActorLocation()), false);
 	if(h.bBlockingHit) {
 		FVector ToHit = h.Location - GetActorLocation();
 		FVector ToHitDirection = ToHit.GetSafeNormal();
@@ -251,8 +251,8 @@ FHitResult AMultiLeggedPawn::GetClosestWhisker(TArray<FHitResult> Hits, bool bDr
 					BadColor.B * Alpha + MediumColor.B * invA);
 			}
 		
-			DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.Location, Color);
-			DrawDebugPoint(GetWorld(), Hit.Location, 5.f, Color);
+			//DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.Location, Color);
+			//DrawDebugPoint(GetWorld(), Hit.Location, 5.f, Color);
 		}
 	}
 	
@@ -382,7 +382,7 @@ FVector AMultiLeggedPawn::GetBobbingImpulse() {
 	if(!GaitPreset)
 		return FVector::ZeroVector;
 	FVector Result = GaitPreset->BobbingImpulse * LimbManager->GetAverageLimbUpVector().Cross(GetActorUpVector());
-	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
+	//DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
 	return Result;
 }
 

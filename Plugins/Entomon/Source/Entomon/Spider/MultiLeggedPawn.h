@@ -120,7 +120,7 @@ protected:
 
 	int CurrentPathId;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gizmos", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
-		bool bDrawPath = true;
+		bool bDrawPath = false;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;

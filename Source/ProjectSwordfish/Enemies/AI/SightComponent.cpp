@@ -35,8 +35,8 @@ bool USightComponent::IsActorVisible(AActor* Actor, float& SignalStrength) const
 			SignalStrength = EvaluateSignalStrength(Actor);
 			DebugDrawColor = FColor::Green;
 		}
-		DrawDebugLine(GetWorld(), GetComponentLocation(), Hit.Location, DebugDrawColor);
-		DrawDebugPoint(GetWorld(), Hit.Location, 10.f, DebugDrawColor);
+		//DrawDebugLine(GetWorld(), GetComponentLocation(), Hit.Location, DebugDrawColor);
+		//DrawDebugPoint(GetWorld(), Hit.Location, 10.f, DebugDrawColor);
 		return true;
 	}
 	else return false;

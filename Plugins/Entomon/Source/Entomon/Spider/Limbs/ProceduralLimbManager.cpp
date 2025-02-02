@@ -46,7 +46,7 @@ void UProceduralLimbManager::TickLimbs(float DeltaTime, float LastWalkCycleCount
 				FootPlanningIterations, TraceChannel);
 		}
 		Limbs[i]->Tick(Mesh, DeltaTime, TraceChannel);
-		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, true);
+		Limbs[i]->UpdateIK(Mesh, IKThreshold, IKIterations, false);
 		BobbingOffset+=FMath::Sin(PI * Limbs[i]->StepTimer)/Limbs.Num();
 	}
 }
