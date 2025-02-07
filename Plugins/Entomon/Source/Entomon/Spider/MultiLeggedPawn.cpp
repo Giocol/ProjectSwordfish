@@ -23,6 +23,7 @@ AMultiLeggedPawn::AMultiLeggedPawn() {
 
 void AMultiLeggedPawn::MoveTo(FVector Location) {
 	checkf(Navigation, TEXT("Nav Volume not found."));
+	bIsMovementFinished = false;
 	auto PathToTarget = Navigation->FindPath(Body->GetComponentLocation(), Location, PathPreference);
 	bUseLookTarget = false;
 	SetPath(PathToTarget);
@@ -119,8 +120,10 @@ void AMultiLeggedPawn::FollowPath(double DeltaTime) {
 			CurrentPathId++;
 		}
 	}
-	else if(!Path.IsEmpty() && CurrentPathId >= Path.Num()-1)
+	else if(!Path.IsEmpty() && CurrentPathId >= Path.Num()-1) {
 		MovementComponent->ApproachOrientation(GetTargetOrientation(CurrentPathId));
+		bIsMovementFinished = true;
+	}
 }
 
 FVector AMultiLeggedPawn::GetAngularVelocity() const {
@@ -147,6 +150,8 @@ void AMultiLeggedPawn::Tick(float DeltaTime) {
 			DrawDebugPoint(GetWorld(), Path[i].Origin, 5.f, FColor::Emerald);
 		}
 	}
+
+	Super::Tick(DeltaTime);
 }
 
 void AMultiLeggedPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -181,7 +186,7 @@ bool AMultiLeggedPawn::Trace(FVector Start, FVector Direction, FHitResult& OutHi
 }
 
 FVector AMultiLeggedPawn::GetAlteredInput(FVector Input) {
-	auto h = GetClosestWhisker(FibonacciTrace(GetActorLocation()), true);
+	auto h = GetClosestWhisker(FibonacciTrace(GetActorLocation()), false);
 	if(h.bBlockingHit) {
 		FVector ToHit = h.Location - GetActorLocation();
 		FVector ToHitDirection = ToHit.GetSafeNormal();
@@ -246,8 +251,8 @@ FHitResult AMultiLeggedPawn::GetClosestWhisker(TArray<FHitResult> Hits, bool bDr
 					BadColor.B * Alpha + MediumColor.B * invA);
 			}
 		
-			DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.Location, Color);
-			DrawDebugPoint(GetWorld(), Hit.Location, 5.f, Color);
+			//DrawDebugLine(GetWorld(), Hit.ImpactPoint, Hit.Location, Color);
+			//DrawDebugPoint(GetWorld(), Hit.Location, 5.f, Color);
 		}
 	}
 	
@@ -377,7 +382,7 @@ FVector AMultiLeggedPawn::GetBobbingImpulse() {
 	if(!GaitPreset)
 		return FVector::ZeroVector;
 	FVector Result = GaitPreset->BobbingImpulse * LimbManager->GetAverageLimbUpVector().Cross(GetActorUpVector());
-	DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
+	//DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation() + Result, 15, FColor::Red);
 	return Result;
 }
 

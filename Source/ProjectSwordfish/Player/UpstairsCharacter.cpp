@@ -7,7 +7,9 @@
 #include "Math/UnitConversion.h"
 #include "ProjectSwordfish/DataAssets/FishingEventDataAsset.h"
 #include "ProjectSwordfish/Environment/SpearableInterface.h"
+#include "ProjectSwordfish/Environment/ThrowableNoiseMaker.h"
 #include "ProjectSwordfish/Environment/Fish/SwordfishBase.h"
+#include "ProjectSwordfish/Systems/DownstairsGameMode.h"
 #include "ProjectSwordfish/Utils/MathUtils.h"
 
 
@@ -20,12 +22,20 @@ AUpstairsCharacter::AUpstairsCharacter() {
 	PullTarget = CreateDefaultSubobject<USceneComponent>(TEXT("Pull Target"));
 	PullTarget->SetupAttachment(RootComponent);
 	QTEHandler = CreateDefaultSubobject<UFishingQTEHandler>(TEXT("QTE Handler"));
+
+	ThrowableSpawnPoint = CreateDefaultSubobject<USceneComponent>("ThrowableSpawnPoint");
+	ThrowableSpawnPoint->SetupAttachment(Camera);
 }
 
 void AUpstairsCharacter::BeginPlay() {
 	Super::BeginPlay();
 	SpearOriginalRotation = Spear->GetComponentRotation();
 	Spear->SetVisibility(false);
+
+	//TESTING ONLY
+	ADownstairsGameMode* DownstairsGameMode = Cast<ADownstairsGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+	if(DownstairsGameMode)
+		NoiseSystemRef = DownstairsGameMode->GetNoiseSystemRef();
 }
 
 bool AUpstairsCharacter::StartFishingEvent(UFishingEventDataAsset* FishingEventData) {
@@ -81,6 +91,7 @@ void AUpstairsCharacter::ProcessCameraMovementInput(FVector2D Input) {
 
 void AUpstairsCharacter::Pull(float DeltaTime) {
 	//todo: this is a terrible name for the function
+	
 	if(bIsFishing) {
 		CurrentPower = FMath::Clamp(CurrentPower + PowerStep * DeltaTime, 0.0f, 1.f);
 	}
@@ -113,7 +124,9 @@ void AUpstairsCharacter::Pull(float DeltaTime) {
 }
 
 void AUpstairsCharacter::ProcessUse() {
-	Super::ProcessUse();
+	//TESTING ONLY
+	GenerateNoise(TESTNOISE, GetActorLocation());
+	
 	if(bHasSpear && bIsFishing) {
 		if(bIsAimInThreshold && bIsPowerInGoodThreshold) {
 			// todo: expand this condition, add timer before being able to throw
@@ -123,6 +136,14 @@ void AUpstairsCharacter::ProcessUse() {
 			Spear->SetSimulatePhysics(true);
 			Spear->AddImpulse(Spear->GetForwardVector()*SpearSpeed);
 		}
+	}
+}
+
+void AUpstairsCharacter::OnSecondaryAction() {
+	if(!bIsFishing) {
+		AThrowableNoiseMaker* Throwable = GetWorld()->SpawnActor<AThrowableNoiseMaker>(ThrowableClass, ThrowableSpawnPoint->GetComponentLocation(),
+												ThrowableSpawnPoint->GetComponentRotation());
+		Throwable->Throw(ThrowImpulse);
 	}
 }
 
@@ -170,7 +191,7 @@ void AUpstairsCharacter::AdjustAimVisuals(float DeltaTime) {
 	if(CurrentlySpearedActor)
 		return;
 	
-	FRotator CorrectLookAtRot = (Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
+	FRotator CorrectLookAtRot = (-Spear->GetComponentLocation() + CurrentFishingEvent->Swordfish->GetActorLocation()).Rotation();
 	float CurrentLookAtPitch = FMathUtils::DegAngleLerp(SpearOriginalRotation.Pitch, CorrectLookAtRot.Pitch, GetPowerProgress());
 	float CurrentLookAtYaw = FMathUtils::DegAngleLerp(-SpearOriginalRotation.Yaw, CorrectLookAtRot.Yaw, GetAimingProgress());
 	UE_LOG(LogTemp, Error, TEXT("%f"), CurrentLookAtYaw);

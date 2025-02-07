@@ -44,6 +44,10 @@ void AMainCharacter::Pull(float DeltaTime) {
 	UE_LOG(LogTemp, Error, TEXT("Pull shouldn't be called on MainCharacter base class!"))
 }
 
+void AMainCharacter::OnSecondaryAction() {
+	UE_LOG(LogTemp, Error, TEXT("OnSecondaryAction shouldn't be called on MainCharacter base class!"))
+}
+
 void AMainCharacter::BeginPlay() {
 	Super::BeginPlay();
 }

@@ -7,6 +7,9 @@
 #include "GameFramework/Pawn.h"
 #include "Entomon/Navigation/NavNode.h"
 #include "Entomon/Navigation/PathNode.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
+#include "ProjectSwordfish/Enemies/EnemyBase.h"
 
 #include "MultiLeggedPawn.generated.h"
 
@@ -24,7 +27,7 @@ enum class EPathSmoothingType : uint8 {
 };
 	
 UCLASS()
-class ENTOMON_API AMultiLeggedPawn : public APawn
+class ENTOMON_API AMultiLeggedPawn : public AEnemyBase
 {
 	GENERATED_BODY()
 
@@ -114,9 +117,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(AllowPrivateAccess="true", EditCondition="bSimplify", UIMin = 0.f, UIMax=1.f))
 		float Simplify = 0.1f;
 	TArray<FPathNode> Path;
+
 	int CurrentPathId;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gizmos", meta=(AllowPrivateAccess="true", InlineEditConditionToggle))
-		bool bDrawPath = true;
+		bool bDrawPath = false;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta=(AllowPrivateAccess="true"))
 		UProceduralLimbManager* LimbManager;
@@ -130,4 +134,8 @@ protected:
 	bool bUseLookTarget = false;
 
 	class ANavVolume* Navigation;
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+		bool bIsMovementFinished = false; 
 };

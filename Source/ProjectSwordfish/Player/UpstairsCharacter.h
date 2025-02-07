@@ -3,9 +3,11 @@
 #include "CoreMinimal.h"
 #include "MainCharacter.h"
 #include "Components/FishingQTEHandler.h"
+#include "ProjectSwordfish/Environment/INoiseMaker.h"
 #include "ProjectSwordfish/UI/SliderWithTargetAreas.h"
 #include "UpstairsCharacter.generated.h"
 
+class AThrowableNoiseMaker;
 class UFishingQTEHandler;
 class UFishingEventDataAsset;
 ///<summary>
@@ -21,7 +23,7 @@ struct FFishingSliderData
 };
 
 UCLASS()
-class PROJECTSWORDFISH_API AUpstairsCharacter : public AMainCharacter {
+class PROJECTSWORDFISH_API AUpstairsCharacter : public AMainCharacter, public INoiseMaker {
 	GENERATED_BODY()
 
 public:
@@ -68,7 +70,8 @@ public:
 	virtual void ProcessUse() override;
 	virtual void SetIsLeaningLeft(bool State) override { QTEHandler->SetIsLeaningLeft(State); Super::SetIsLeaningLeft(State); };
 	virtual void SetIsLeaningRight(bool State) override { QTEHandler->SetIsLeaningRight(State); Super::SetIsLeaningLeft(State); };
-
+	virtual void OnSecondaryAction() override;
+	
 public:
 	virtual void Tick(float DeltaTime) override;
 
@@ -123,6 +126,22 @@ protected:
 	UPROPERTY()
 		UFishingEventDataAsset* CurrentFishingEvent = nullptr;
 
+	UPROPERTY(EditDefaultsOnly)
+		UNoiseDataAsset* TESTNOISE = nullptr;
+
+	UPROPERTY(BlueprintReadWrite, VisibleAnywhere)
+		bool bHasKey = false;
+
+
+	UPROPERTY(EditDefaultsOnly)
+		USceneComponent* ThrowableSpawnPoint = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly)
+		TSubclassOf<AThrowableNoiseMaker> ThrowableClass = nullptr;
+
+	UPROPERTY(EditDefaultsOnly)
+		float ThrowImpulse = 1000.f;
+	
 protected: //Components
 	UPROPERTY(EditDefaultsOnly, Category = "Fishing")
 		UStaticMeshComponent* Spear = nullptr;

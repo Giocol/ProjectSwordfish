@@ -153,7 +153,7 @@ void ULimb::InitializeIK(UPoseableMeshComponent* Mesh, TArray<FVector>& JointLoc
 	OffsetDirection.Normalize();
 
 	FVector Leaf = Mesh->GetBoneLocationByName(Joints.Last().GetName(), EBoneSpaces::WorldSpace);
-	DrawDebugDirectionalArrow(GetWorld(), Leaf, Leaf + Transform.TransformVector(OffsetDirection * 100), 25, FColor::White);
+	//DrawDebugDirectionalArrow(GetWorld(), Leaf, Leaf + Transform.TransformVector(OffsetDirection * 100), 25, FColor::White);
 	Reach(Mesh, OffsetDirection);
 	
 	for(int i = 0; i < Joints.Num(); ++i) {
@@ -251,11 +251,11 @@ FVector ULimb::GetJointLocation(int Id, TArray<FVector> JointLocations) {
 
 void ULimb::DrawIK(UPoseableMeshComponent* Mesh, float Threshold) {
 	auto Transform = Mesh->GetComponentTransform();
-	DrawDebugBox(Mesh->GetWorld(), FootPlan.Current.GetLocation(), FVector::OneVector * 2 * Threshold, FColor::Green);
-	DrawDebugDirectionalArrow(Mesh->GetWorld(), FootPlan.Current.GetLocation(), FootPlan.Current.GetLocation() + FootPlan.Current.UpVector * 35.f, 50.f,
-		FColor::Purple, false, -1, 0, 1.5f);
+	//DrawDebugBox(Mesh->GetWorld(), FootPlan.Current.GetLocation(), FVector::OneVector * 2 * Threshold, FColor::Green);
+	//DrawDebugDirectionalArrow(Mesh->GetWorld(), FootPlan.Current.GetLocation(), FootPlan.Current.GetLocation() + FootPlan.Current.UpVector * 35.f, 50.f,
+	//	FColor::Purple, false, -1, 0, 1.5f);
 	FVector End = Transform.TransformPosition(RestingTargetLocation);
-	DrawDebugLine(Mesh->GetWorld(), FootPlan.Current.Location, End, FColor::Yellow);
+	//DrawDebugLine(Mesh->GetWorld(), FootPlan.Current.Location, End, FColor::Yellow);
 	// DrawDebugSphere(GetWorld(), Transform.TransformPosition(HipLocation), MaxLength, 16, FColor::Yellow);
 }
 
